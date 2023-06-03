@@ -6,6 +6,8 @@ import 'package:myboard/screens/profile_screen.dart';
 import 'package:myboard/screens/settings_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+
+
 class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -22,8 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     adItems.addAll(generateSampleItems(DateTime.now(), 6));
-    adItems
-        .addAll(generateSampleItems(DateTime.now().add(Duration(days: 1)), 23));
+    adItems.addAll(generateSampleItems(DateTime.now().add(Duration(days: 1)), 23));
   }
 
   List<AdItem> generateSampleItems(DateTime date, int count) {
@@ -47,7 +48,48 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Board'),
+        leading: Image.asset('../assets/myboard_logo2.png'),
+        actions: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      // Handle search button pressed
+                      // Add your logic here
+                    },
+                    icon: Icon(Icons.search),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      // Handle button pressed
+                      // Add your logic here
+                    },
+                    icon: Icon(Icons.shopping_cart),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      // Handle button pressed
+                      // Add your logic here
+                    },
+                    icon: Icon(Icons.notifications),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      // Handle button pressed
+                      // Add your logic here
+                    },
+                    icon: Icon(Icons.settings),
+                  ),
+                  // Add more icons as needed
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -86,6 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
 
 class ExpandableCard extends StatefulWidget {
   final AdItem adItem;

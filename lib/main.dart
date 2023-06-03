@@ -40,7 +40,9 @@ class MyApp extends StatelessWidget {
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         home: ProgressOverlay(
-          child: HomeScreen(),
+          child: Scaffold(
+            body: LoginScreen(),
+          ),
         ),
       ),
     );
