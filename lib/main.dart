@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/user/user_cubit.dart';
 import 'package:myboard/repositories/user_repository.dart';
+import 'package:myboard/screens/ad_creation_screen.dart';
+import 'package:myboard/screens/change_password_screen.dart';
 import 'package:myboard/screens/home_screen.dart';
 import 'package:myboard/screens/login_screen.dart';
+import 'package:myboard/screens/play_screen.dart';
+import 'package:myboard/screens/profile_screen.dart';
+import 'package:myboard/screens/settings_screen.dart';
 import 'package:myboard/screens/signup_screen.dart';
+import 'package:myboard/screens/update_profile_screen.dart';
 
 void main() {
   runApp(MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   @override
@@ -20,14 +25,50 @@ class MyApp extends StatelessWidget {
         title: 'MyBoard',
         routes: {
           '/home': (context) => HomeScreen(),
+          '/settings': (context) => SettingsScreen(),
+          '/change_password': (context) => ChangePasswordScreen(),
+          '/update_profile': (context) => UpdateProfileScreen(),
+          '/profile': (context) => ProfileScreen(),
+          '/update_profile': (context) => UpdateProfileScreen(),
+          '/ad_creation': (context) => AdCreationScreen(),
+          '/settings': (context) => SettingsScreen(),
+          '/play': (context) => PlayScreen(),
         },
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primarySwatch: Colors.blue,
+          primarySwatch: Colors.teal,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: LoginScreen(),
+        home: ProgressOverlay(
+          child: HomeScreen(),
+        ),
       ),
+    );
+  }
+}
+
+class ProgressOverlay extends StatelessWidget {
+  final Widget child;
+  final bool isLoading;
+
+  ProgressOverlay({
+    required this.child,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        child,
+        if (isLoading)
+          Container(
+            color: Colors.black54,
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+      ],
     );
   }
 }
