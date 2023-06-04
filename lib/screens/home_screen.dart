@@ -5,8 +5,9 @@ import 'package:myboard/screens/play_screen.dart';
 import 'package:myboard/screens/profile_screen.dart';
 import 'package:myboard/screens/settings_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
-
-
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
+import 'package:time_slot/time_slot_from_list.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -48,7 +49,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Image.asset('../assets/myboard_logo2.png'),
+        backgroundColor: Colors.white,
+        leading: Image.asset('../assets/myboard_logo1.png'),
         actions: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -61,28 +63,28 @@ class _HomeScreenState extends State<HomeScreen> {
                       // Handle search button pressed
                       // Add your logic here
                     },
-                    icon: Icon(Icons.search),
+                    icon: Icon(Icons.search, color: Colors.teal),
                   ),
                   IconButton(
                     onPressed: () {
                       // Handle button pressed
                       // Add your logic here
                     },
-                    icon: Icon(Icons.shopping_cart),
+                    icon: Icon(Icons.shopping_cart, color: Colors.teal),
                   ),
                   IconButton(
                     onPressed: () {
                       // Handle button pressed
                       // Add your logic here
                     },
-                    icon: Icon(Icons.notifications),
+                    icon: Icon(Icons.notifications, color: Colors.teal),
                   ),
                   IconButton(
                     onPressed: () {
                       // Handle button pressed
                       // Add your logic here
                     },
-                    icon: Icon(Icons.settings),
+                    icon: Icon(Icons.settings, color: Colors.teal),
                   ),
                   // Add more icons as needed
                 ],
@@ -115,12 +117,30 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           SizedBox(height: 16.0),
-          Expanded(
-            child: ListView(
-              children: adItems
-                  .where((adItem) => isSameDay(adItem.timeSlot, _selectedDay))
-                  .map((adItem) => ExpandableCard(adItem: adItem))
-                  .toList(),
+          TimesSlotGridViewFromList(
+            locale: "en",
+            // Replace with the desired locale
+            initTime: DateTime.now(),
+            crossAxisCount: 4,
+            listDates: adItems
+                .where((adItem) => isSameDay(adItem.timeSlot, _selectedDay))
+                .map((adItem) => adItem.timeSlot)
+                .toList(),
+            onChange: (value) {
+              setState(() {
+                _selectedDay = value;
+              });
+            },
+          ),
+          Positioned(
+            bottom: 16.0,
+            right: 16.0,
+            child: FloatingActionButton(
+              onPressed: () {
+                // Handle play button pressed
+                // Add your logic here
+              },
+              child: Icon(Icons.play_arrow),
             ),
           ),
         ],

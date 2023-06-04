@@ -11,8 +11,13 @@ import 'package:myboard/screens/profile_screen.dart';
 import 'package:myboard/screens/settings_screen.dart';
 import 'package:myboard/screens/signup_screen.dart';
 import 'package:myboard/screens/update_profile_screen.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('en');
+  await initializeDateFormatting('ar');
   runApp(MyApp());
 }
 
