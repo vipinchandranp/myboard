@@ -16,15 +16,15 @@ class _HomeScreenState extends State<HomeScreen> {
   List<AdItem> adItems = [];
 
   VideoPlayerController? _videoPlayerController;
-
   bool _isVideoPlaying = false;
+  int _currentVideoIndex = -1;
 
   @override
   void initState() {
     super.initState();
     adItems.addAll(generateSampleItems(DateTime.now(), 6));
-    adItems.addAll(generateSampleItems(
-        DateTime.now().add(Duration(days: 1)), 23));
+    adItems
+        .addAll(generateSampleItems(DateTime.now().add(Duration(days: 1)), 23));
 
     // Initialize the video player controller
     _videoPlayerController =
@@ -60,9 +60,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return samples;
   }
 
-  void _playVideo() {
+  void _playVideo(int index) {
     setState(() {
       _isVideoPlaying = true;
+      _currentVideoIndex = index;
       _videoPlayerController!.play();
     });
   }
@@ -79,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
+        leading: Image.asset('assets/myboard_logo1.png'),
         title: Container(
           height: kToolbarHeight,
           child: Image.asset(
@@ -155,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: GridView.builder(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
+                crossAxisCount: 1,
                 childAspectRatio: 1.0,
                 crossAxisSpacing: 5,
                 mainAxisSpacing: 5,
@@ -186,62 +188,68 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             if (adItem.isLive)
                               Icon(
-                                Icons.circle,
-                                color: adItem.isRejected ? Colors.red : Colors.green,
+                                Icons.live_tv,
+                                color: adItem.isRejected
+                                    ? Colors.red
+                                    : Colors.green,
                               ),
+                            PopupMenuButton<String>(
+                              itemBuilder: (context) => [
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text('Delete'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'approve',
+                                  child: Text('Approve'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'reject',
+                                  child: Text('Reject'),
+                                ),
+                              ],
+                              onSelected: (value) {
+                                // Handle menu item selected
+                                if (value == 'approve') {
+                                  setState(() {
+                                    adItem.isLive = true;
+                                    adItem.isRejected = false;
+                                  });
+                                } else if (value == 'reject') {
+                                  setState(() {
+                                    adItem.isLive = true;
+                                    adItem.isRejected = true;
+                                  });
+                                }
+                              },
+                            ),
                           ],
                         ),
-                        SizedBox(height: 8),
-                        PopupMenuButton<String>(
-                          itemBuilder: (context) => [
-                            PopupMenuItem(
-                              value: 'delete',
-                              child: Text('Delete'),
-                            ),
-                            PopupMenuItem(
-                              value: 'approve',
-                              child: Text('Approve'),
-                            ),
-                            PopupMenuItem(
-                              value: 'reject',
-                              child: Text('Reject'),
-                            ),
-                          ],
-                          onSelected: (value) {
-                            // Handle menu item selected
-                            if (value == 'approve') {
-                              setState(() {
-                                adItem.isLive = true;
-                                adItem.isRejected = false;
-                              });
-                            } else if (value == 'reject') {
-                              setState(() {
-                                adItem.isLive = true;
-                                adItem.isRejected = true;
-                              });
-                            }
-                          },
-                        ),
+
                         Expanded(
                           child: Stack(
                             children: [
-                              if (_videoPlayerController!.value.isInitialized)
+                              if (_currentVideoIndex == index &&
+                                  _videoPlayerController!.value.isInitialized)
                                 AspectRatio(
-                                  aspectRatio: _videoPlayerController!.value.aspectRatio,
+                                  aspectRatio:
+                                  _videoPlayerController!.value.aspectRatio,
                                   child: VideoPlayer(_videoPlayerController!),
                                 ),
-                              if (!_isVideoPlaying)
+                              if (!_isVideoPlaying ||
+                                  _currentVideoIndex != index)
                                 Positioned.fill(
                                   child: Align(
                                     alignment: Alignment.center,
                                     child: ElevatedButton.icon(
-                                      onPressed: _playVideo,
+                                      onPressed: () => _playVideo(index),
                                       icon: Icon(Icons.play_arrow),
                                       label: Text('Preview'),
                                     ),
                                   ),
                                 ),
-                              if (_isVideoPlaying)
+                              if (_isVideoPlaying &&
+                                  _currentVideoIndex == index)
                                 Positioned.fill(
                                   child: GestureDetector(
                                     onTap: _pauseVideo,
@@ -273,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   allowScrubbing: true,
                                   colors: VideoProgressColors(
                                     playedColor: Colors.red,
-                                    bufferedColor: Colors.grey,
+                                    bufferedColor: Colors.grey
                                   ),
                                 ),
                               ),
