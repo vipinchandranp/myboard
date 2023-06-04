@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:myboard/screens/ad_creation_screen.dart';
-import 'package:myboard/screens/login_screen.dart';
-import 'package:myboard/screens/play_screen.dart';
-import 'package:myboard/screens/profile_screen.dart';
-import 'package:myboard/screens/settings_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
-import 'package:time_slot/time_slot_from_list.dart';
+import 'package:flutter/services.dart';
+import 'package:video_player/video_player.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -21,11 +15,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<AdItem> adItems = [];
 
+  VideoPlayerController? _videoPlayerController;
+
+  bool _isVideoPlaying = false;
+
   @override
   void initState() {
     super.initState();
     adItems.addAll(generateSampleItems(DateTime.now(), 6));
-    adItems.addAll(generateSampleItems(DateTime.now().add(Duration(days: 1)), 23));
+    adItems.addAll(generateSampleItems(
+        DateTime.now().add(Duration(days: 1)), 23));
+
+    // Initialize the video player controller
+    _videoPlayerController =
+        VideoPlayerController.asset(adItems[0].videoAssetPath);
+    _videoPlayerController!.initialize().then((_) {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _videoPlayerController!.dispose();
+    super.dispose();
   }
 
   List<AdItem> generateSampleItems(DateTime date, int count) {
@@ -39,18 +51,42 @@ class _HomeScreenState extends State<HomeScreen> {
           timeSlot: date,
           status: AdStatus.Pending,
           isEnabled: true,
+          videoAssetPath: 'assets/videos/samplevideo.mp4',
+          isLive: false,
+          isRejected: false,
         ),
       );
     }
     return samples;
   }
 
+  void _playVideo() {
+    setState(() {
+      _isVideoPlaying = true;
+      _videoPlayerController!.play();
+    });
+  }
+
+  void _pauseVideo() {
+    setState(() {
+      _isVideoPlaying = false;
+      _videoPlayerController!.pause();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
+        title: Container(
+          height: kToolbarHeight,
+          child: Image.asset(
+            'assets/myboard_logo1.png',
+            fit: BoxFit.contain,
+          ),
+        ),
         backgroundColor: Colors.white,
-        leading: Image.asset('../assets/myboard_logo1.png'),
         actions: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -86,7 +122,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                     icon: Icon(Icons.settings, color: Colors.teal),
                   ),
-                  // Add more icons as needed
                 ],
               ),
             ),
@@ -117,21 +152,142 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           SizedBox(height: 16.0),
-          TimesSlotGridViewFromList(
-            locale: "en",
-            // Replace with the desired locale
-            initTime: DateTime.now(),
-            crossAxisCount: 4,
-            listDates: adItems
-                .where((adItem) => isSameDay(adItem.timeSlot, _selectedDay))
-                .map((adItem) => adItem.timeSlot)
-                .toList(),
-            onChange: (value) {
-              setState(() {
-                _selectedDay = value;
-              });
-            },
+          Expanded(
+            child: GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                childAspectRatio: 1.0,
+                crossAxisSpacing: 5,
+                mainAxisSpacing: 5,
+              ),
+              itemCount: adItems.length,
+              itemBuilder: (context, index) {
+                final adItem = adItems[index];
+                return GestureDetector(
+                  onTap: () {
+                    // Handle grid item tap
+                    // Add your logic here
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    color: Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              adItem.userName,
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.black,
+                              ),
+                            ),
+                            if (adItem.isLive)
+                              Icon(
+                                Icons.circle,
+                                color: adItem.isRejected ? Colors.red : Colors.green,
+                              ),
+                          ],
+                        ),
+                        SizedBox(height: 8),
+                        PopupMenuButton<String>(
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Delete'),
+                            ),
+                            PopupMenuItem(
+                              value: 'approve',
+                              child: Text('Approve'),
+                            ),
+                            PopupMenuItem(
+                              value: 'reject',
+                              child: Text('Reject'),
+                            ),
+                          ],
+                          onSelected: (value) {
+                            // Handle menu item selected
+                            if (value == 'approve') {
+                              setState(() {
+                                adItem.isLive = true;
+                                adItem.isRejected = false;
+                              });
+                            } else if (value == 'reject') {
+                              setState(() {
+                                adItem.isLive = true;
+                                adItem.isRejected = true;
+                              });
+                            }
+                          },
+                        ),
+                        Expanded(
+                          child: Stack(
+                            children: [
+                              if (_videoPlayerController!.value.isInitialized)
+                                AspectRatio(
+                                  aspectRatio: _videoPlayerController!.value.aspectRatio,
+                                  child: VideoPlayer(_videoPlayerController!),
+                                ),
+                              if (!_isVideoPlaying)
+                                Positioned.fill(
+                                  child: Align(
+                                    alignment: Alignment.center,
+                                    child: ElevatedButton.icon(
+                                      onPressed: _playVideo,
+                                      icon: Icon(Icons.play_arrow),
+                                      label: Text('Preview'),
+                                    ),
+                                  ),
+                                ),
+                              if (_isVideoPlaying)
+                                Positioned.fill(
+                                  child: GestureDetector(
+                                    onTap: _pauseVideo,
+                                    child: Stack(
+                                      children: [
+                                        VideoPlayer(_videoPlayerController!),
+                                        Positioned.fill(
+                                          child: Container(
+                                            color: Colors.black54,
+                                            child: Center(
+                                              child: Icon(
+                                                Icons.pause,
+                                                size: 50,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: VideoProgressIndicator(
+                                  _videoPlayerController!,
+                                  allowScrubbing: true,
+                                  colors: VideoProgressColors(
+                                    playedColor: Colors.red,
+                                    bufferedColor: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
+          SizedBox(height: 16.0),
           Positioned(
             bottom: 16.0,
             right: 16.0,
@@ -149,102 +305,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-
-class ExpandableCard extends StatefulWidget {
-  final AdItem adItem;
-
-  ExpandableCard({required this.adItem});
-
-  @override
-  _ExpandableCardState createState() => _ExpandableCardState();
-}
-
-class _ExpandableCardState extends State<ExpandableCard> {
-  bool _isExpanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ExpansionTile(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.menu),
-                SizedBox(width: 8.0),
-                Text(widget.adItem.userName),
-              ],
-            ),
-            IconButton(
-              icon: Icon(Icons.more_vert),
-              onPressed: () {
-                // Handle menu button pressed
-                // Add your logic here
-              },
-            ),
-          ],
-        ),
-        leading: _isExpanded
-            ? Icon(Icons.keyboard_arrow_up)
-            : Icon(Icons.keyboard_arrow_down),
-        onExpansionChanged: (value) {
-          setState(() {
-            _isExpanded = value;
-          });
-        },
-        children: [
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Icon(Icons.play_arrow),
-                SizedBox(width: 8.0),
-                Text(widget.adItem.description),
-              ],
-            ),
-          ),
-          SizedBox(height: 8.0),
-          Row(
-            children: [
-              Icon(
-                Icons.star,
-                color: widget.adItem.rating >= 1 ? Colors.yellow : Colors.grey,
-              ),
-              Icon(
-                Icons.star,
-                color: widget.adItem.rating >= 2 ? Colors.yellow : Colors.grey,
-              ),
-              Icon(
-                Icons.star,
-                color: widget.adItem.rating >= 3 ? Colors.yellow : Colors.grey,
-              ),
-              Icon(
-                Icons.star,
-                color: widget.adItem.rating >= 4 ? Colors.yellow : Colors.grey,
-              ),
-              Icon(
-                Icons.star,
-                color: widget.adItem.rating >= 5 ? Colors.yellow : Colors.grey,
-              ),
-            ],
-          ),
-          SizedBox(height: 8.0),
-          Text('Time Slot: ${widget.adItem.timeSlot}'),
-          SizedBox(height: 8.0),
-          ElevatedButton(
-            onPressed: () {
-              // Preview button pressed
-              // Add your logic here
-            },
-            child: Text('Preview'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class AdItem {
   final String userName;
   final String description;
@@ -252,6 +312,9 @@ class AdItem {
   final DateTime timeSlot;
   final bool isEnabled;
   final AdStatus status;
+  final String videoAssetPath;
+  bool isLive;
+  bool isRejected;
 
   AdItem({
     required this.userName,
@@ -260,6 +323,9 @@ class AdItem {
     required this.timeSlot,
     required this.isEnabled,
     required this.status,
+    required this.videoAssetPath,
+    this.isLive = false,
+    this.isRejected = false,
   });
 }
 
