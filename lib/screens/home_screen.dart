@@ -155,12 +155,97 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ],
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Stack(
         children: [
-          buildCalendarTab(),
-          buildAdsTab(),
+          TabBarView(
+            controller: _tabController,
+            children: [
+              buildCalendarTab(),
+              buildAdsTab(),
+            ],
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            bottom: 0,
+            child: GestureDetector(
+              onHorizontalDragEnd: (DragEndDetails details) {
+                if (details.primaryVelocity! > 0) {
+                  Scaffold.of(context).openDrawer();
+                }
+              },
+              child: Container(
+                width: 40,
+                color: Colors.transparent,
+                alignment: Alignment.center,
+                child: RotatedBox(
+                  quarterTurns: 3,
+                  child: Text(
+                    'Swipe to see\nside navigation',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blueGrey[800],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Drawer Header',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Drawer subheader',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.dashboard),
+              title: Text('Dashboard'),
+              onTap: () {
+                // Handle dashboard item tap
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.person),
+              title: Text('Account'),
+              onTap: () {
+                // Handle account item tap
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.settings),
+              title: Text('Settings'),
+              onTap: () {
+                // Handle settings item tap
+              },
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: Container(
         height: 56,
