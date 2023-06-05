@@ -8,7 +8,8 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
@@ -28,10 +29,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _tabController = TabController(length: 5, vsync: this);
 
     adItems.addAll(generateSampleItems(DateTime.now(), 6));
-    adItems.addAll(generateSampleItems(DateTime.now().add(Duration(days: 1)), 23));
+    adItems
+        .addAll(generateSampleItems(DateTime.now().add(Duration(days: 1)), 23));
 
     // Initialize the video player controller
-    _videoPlayerController = VideoPlayerController.asset(adItems[0].videoAssetPath);
+    _videoPlayerController =
+        VideoPlayerController.asset(adItems[0].videoAssetPath);
     _videoPlayerController!.initialize().then((_) {
       setState(() {});
     });
@@ -83,11 +86,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Image.asset('assets/myboard_logo1.png'),
-        title: Container(
-          height: kToolbarHeight,
-          child: Text('My Board'),
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: Image.asset('assets/myboard_logo1.png'),
+              onPressed: () {
+                // Open the drawer when the menu icon is pressed
+                Scaffold.of(context).openDrawer();
+              },
+            );
+          },
         ),
+        title: Text('My Board'),
         backgroundColor: Colors.blueGrey[800],
         bottom: TabBar(
           controller: _tabController,
@@ -115,82 +125,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ],
         ),
         actions: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      // Handle QR code scanner button pressed
-                      // Add your logic here
-                    },
-                    child: Icon(Icons.qr_code_scanner, color: Colors.teal),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      // Handle button pressed
-                      // Add your logic here
-                    },
-                    icon: Icon(Icons.shopping_cart, color: Colors.teal),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      // Handle button pressed
-                      // Add your logic here
-                    },
-                    icon: Icon(Icons.notifications, color: Colors.teal),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      // Handle button pressed
-                      // Add your logic here
-                    },
-                    icon: Icon(Icons.settings, color: Colors.teal),
-                  ),
-                ],
-              ),
-            ),
+          IconButton(
+            onPressed: () {
+              // Handle button pressed
+              // Add your logic here
+            },
+            icon: Icon(Icons.shopping_cart, color: Colors.teal),
           ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          TabBarView(
-            controller: _tabController,
-            children: [
-              buildCalendarTab(),
-              buildAdsTab(),
-            ],
+          IconButton(
+            onPressed: () {
+              // Handle button pressed
+              // Add your logic here
+            },
+            icon: Icon(Icons.notifications, color: Colors.teal),
           ),
-          Positioned(
-            top: 0,
-            left: 0,
-            bottom: 0,
-            child: GestureDetector(
-              onHorizontalDragEnd: (DragEndDetails details) {
-                if (details.primaryVelocity! > 0) {
-                  Scaffold.of(context).openDrawer();
-                }
-              },
-              child: Container(
-                width: 40,
-                color: Colors.transparent,
-                alignment: Alignment.center,
-                child: RotatedBox(
-                  quarterTurns: 3,
-                  child: Text(
-                    'Swipe to see\nside navigation',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          IconButton(
+            onPressed: () {
+              // Handle button pressed
+              // Add your logic here
+            },
+            icon: Icon(Icons.settings, color: Colors.teal),
           ),
         ],
       ),
@@ -205,47 +159,63 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Drawer Header',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                    ),
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundImage: AssetImage('assets/myboard_logo1.png'),
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Drawer subheader',
+                    'My Board',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
             ),
             ListTile(
-              leading: Icon(Icons.dashboard),
-              title: Text('Dashboard'),
+              leading: Icon(Icons.home),
+              title: Text('Home'),
               onTap: () {
-                // Handle dashboard item tap
+                // Handle drawer item tap
+                // Add your logic here
               },
             ),
             ListTile(
               leading: Icon(Icons.person),
-              title: Text('Account'),
+              title: Text('Profile'),
               onTap: () {
-                // Handle account item tap
+                // Handle drawer item tap
+                // Add your logic here
               },
             ),
             ListTile(
               leading: Icon(Icons.settings),
               title: Text('Settings'),
               onTap: () {
-                // Handle settings item tap
+                // Handle drawer item tap
+                // Add your logic here
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.logout),
+              title: Text('Logout'),
+              onTap: () {
+                // Handle drawer item tap
+                // Add your logic here
               },
             ),
           ],
         ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          buildCalendarTab(),
+          buildAdsTab(),
+        ],
       ),
       bottomNavigationBar: Container(
         height: 56,
@@ -341,7 +311,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           if (adItem.isLive)
                             Icon(
                               Icons.live_tv,
-                              color: adItem.isRejected ? Colors.red : Colors.green,
+                              color:
+                                  adItem.isRejected ? Colors.red : Colors.green,
                             ),
                           PopupMenuButton<String>(
                             itemBuilder: (context) => [
@@ -456,7 +427,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             if (_currentVideoIndex == index &&
                                 _videoPlayerController!.value.isInitialized)
                               AspectRatio(
-                                aspectRatio: _videoPlayerController!.value.aspectRatio,
+                                aspectRatio:
+                                    _videoPlayerController!.value.aspectRatio,
                                 child: VideoPlayer(_videoPlayerController!),
                               ),
                             if (!_isVideoPlaying || _currentVideoIndex != index)
