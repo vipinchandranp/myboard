@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:myboard/screens/create_bord_screen.dart';
+import 'package:myboard/screens/notification_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -101,6 +103,7 @@ class _HomeScreenState extends State<HomeScreen>
         backgroundColor: Colors.blueGrey[800],
         bottom: TabBar(
           controller: _tabController,
+          indicatorColor: Colors.white,
           tabs: [
             Tab(
               text: 'Create Board',
@@ -134,8 +137,11 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           IconButton(
             onPressed: () {
-              // Handle button pressed
-              // Add your logic here
+              // Open the notification screen when the notification icon is clicked
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationScreen()),
+              );
             },
             icon: Icon(Icons.notifications, color: Colors.teal),
           ),
@@ -161,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundImage: AssetImage('assets/myboard_logo1.png'),
+                    backgroundImage: AssetImage('assets/profile_image.jpg'),
                   ),
                   SizedBox(height: 8),
                   Text(
@@ -213,7 +219,10 @@ class _HomeScreenState extends State<HomeScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
+          buildCreateBoard(),
+          buildMaps(),
           buildCalendarTab(),
+          buildMyBoard(),
           buildAdsTab(),
         ],
       ),
@@ -294,7 +303,17 @@ class _HomeScreenState extends State<HomeScreen>
                 },
                 child: Container(
                   padding: const EdgeInsets.all(16),
-                  color: Colors.white,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/canvas.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                    border: Border.all(
+                      color: Colors.brown[400]!,
+                      width: 1.0,
+                    ),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -312,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen>
                             Icon(
                               Icons.live_tv,
                               color:
-                                  adItem.isRejected ? Colors.red : Colors.green,
+                              adItem.isRejected ? Colors.red : Colors.green,
                             ),
                           PopupMenuButton<String>(
                             itemBuilder: (context) => [
@@ -428,7 +447,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 _videoPlayerController!.value.isInitialized)
                               AspectRatio(
                                 aspectRatio:
-                                    _videoPlayerController!.value.aspectRatio,
+                                _videoPlayerController!.value.aspectRatio,
                                 child: VideoPlayer(_videoPlayerController!),
                               ),
                             if (!_isVideoPlaying || _currentVideoIndex != index)
@@ -490,6 +509,15 @@ class _HomeScreenState extends State<HomeScreen>
         ],
       ),
     );
+  }
+  Widget buildCreateBoard() {
+    return CreateBoardScreen();
+  }
+  Widget buildMyBoard() {
+    return SingleChildScrollView();
+  }
+  Widget buildMaps() {
+    return SingleChildScrollView();
   }
 }
 
