@@ -1,12 +1,29 @@
 import 'package:flutter/material.dart';
 
+class BoardItem {
+  final String text;
+  final Color color;
+
+  BoardItem({
+    required this.text,
+    required this.color,
+  });
+}
+
 class CreateBoardScreen extends StatefulWidget {
   @override
   _CreateBoardScreenState createState() => _CreateBoardScreenState();
 }
 
 class _CreateBoardScreenState extends State<CreateBoardScreen> {
-  List<Widget> _draggedItems = [];
+  TextEditingController _textEditingController = TextEditingController();
+  List<BoardItem> _boardItems = [];
+
+  @override
+  void dispose() {
+    _textEditingController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,61 +31,49 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
       appBar: AppBar(
         title: Text('Create Board'),
       ),
-      body: Row(
+      body: Column(
         children: [
           Expanded(
-            flex: 2,
-            child: buildMenuGrid(),
+            child: ListView.builder(
+              itemCount: _boardItems.length,
+              itemBuilder: (context, index) {
+                final boardItem = _boardItems[index];
+                return ListTile(
+                  title: Text(boardItem.text),
+                  tileColor: boardItem.color,
+                );
+              },
+            ),
           ),
-          Expanded(
-            flex: 5,
-            child: buildContainer(),
+          TextField(
+            maxLines: null,
+            controller: _textEditingController,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: 'Enter the text here...',
+            ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Handle saving the content
+          _saveContent();
+        },
+        child: Icon(Icons.save),
       ),
     );
   }
 
-  Widget buildMenuGrid() {
-    return GridView.count(
-      crossAxisCount: 3,
-      children: [
-        // Add your draggable items here
-        Draggable(
-          child: Container(
-            color: Colors.blue,
-            child: Center(child: Text('Draggable 1')),
-          ),
-          feedback: Container(
-            color: Colors.blue.withOpacity(0.5),
-            child: Center(child: Text('Draggable 1')),
-          ),
-          childWhenDragging: Container(),
-        ),
-        Draggable(
-          child: Container(
-            color: Colors.green,
-            child: Center(child: Text('Draggable 2')),
-          ),
-          feedback: Container(
-            color: Colors.green.withOpacity(0.5),
-            child: Center(child: Text('Draggable 2')),
-          ),
-          childWhenDragging: Container(),
-        ),
-        // Add more draggable items as needed
-      ],
+  void _saveContent() {
+    final String text = _textEditingController.text;
+    final BoardItem boardItem = BoardItem(
+      text: text,
+      color: Colors.yellow, // You can customize the color here
     );
-  }
-
-  Widget buildContainer() {
-    return Container(
-      color: Colors.grey,
-      child: Stack(
-        children: [
-          ..._draggedItems,
-        ],
-      ),
-    );
+    setState(() {
+      _boardItems.add(boardItem);
+      _textEditingController.clear();
+    });
   }
 }

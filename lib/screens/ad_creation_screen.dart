@@ -5,7 +5,20 @@ import 'package:image_picker/image_picker.dart';
 import 'package:myboard/screens/qr-code.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-class AdCreationScreen extends StatelessWidget {
+class AdCreationScreen extends StatefulWidget {
+  @override
+  _AdCreationScreenState createState() => _AdCreationScreenState();
+}
+
+class _AdCreationScreenState extends State<AdCreationScreen> {
+  TextEditingController _textEditingController = TextEditingController();
+
+  @override
+  void dispose() {
+    _textEditingController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,9 +30,13 @@ class AdCreationScreen extends StatelessWidget {
         children: [
           Expanded(
             child: ListView(
+              padding: EdgeInsets.all(16.0),
               children: [
                 // Media items
                 // Add your media items vertically here
+                TextEditorWidget(
+                  controller: _textEditingController,
+                ),
               ],
             ),
           ),
@@ -42,6 +59,29 @@ class AdCreationScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class TextEditorWidget extends StatelessWidget {
+  final TextEditingController controller;
+
+  const TextEditorWidget({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      padding: EdgeInsets.all(8.0),
+      child: TextField(
+        controller: controller,
+        maxLines: null,
+        decoration: InputDecoration.collapsed(hintText: 'Enter your text...'),
+        style: TextStyle(fontSize: 16.0),
       ),
     );
   }
