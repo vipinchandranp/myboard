@@ -16,4 +16,16 @@ class BoardCubit extends Cubit<BoardState> {
       emit(BoardLoaded([newBoard]));
     }
   }
+
+  void deleteBoard(Board boardToDelete) {
+    if (state is BoardLoaded) {
+      final List<Board> updatedBoards = (state as BoardLoaded)
+          .boards
+          .where((board) => !(board.title == boardToDelete.title && board.description == boardToDelete.description))
+          .toList();
+
+      emit(BoardLoaded(updatedBoards));
+    }
+  }
+
 }

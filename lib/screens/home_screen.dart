@@ -3,27 +3,7 @@ import 'package:myboard/screens/create_board_screen.dart';
 import 'package:myboard/screens/notification_screen.dart';
 import 'package:myboard/screens/pin_board_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
+class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,20 +47,6 @@ class _HomeScreenState extends State<HomeScreen>
             icon: Icon(Icons.settings, color: Colors.teal),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          tabs: [
-            Tab(
-              text: 'Create Board',
-              icon: Icon(Icons.create),
-            ),
-            Tab(
-              text: 'Pin',
-              icon: Icon(Icons.push_pin),
-            ),
-          ],
-        ),
       ),
       drawer: Drawer(
         child: ListView(
@@ -144,12 +110,15 @@ class _HomeScreenState extends State<HomeScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          CreateBoardScreen(),
-          PinBoardScreen(),
-        ],
+      body: PinBoardScreen(),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.edit),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => CreateBoardScreen()),
+          );
+        },
       ),
       bottomNavigationBar: Container(
         height: 56,
