@@ -17,15 +17,39 @@ class BoardCubit extends Cubit<BoardState> {
     }
   }
 
-  void deleteBoard(Board boardToDelete) {
+  void deleteBoard(Board board) {
     if (state is BoardLoaded) {
-      final List<Board> updatedBoards = (state as BoardLoaded)
-          .boards
-          .where((board) => !(board.title == boardToDelete.title && board.description == boardToDelete.description))
-          .toList();
-
-      emit(BoardLoaded(updatedBoards));
+      final List<Board> currentBoards = (state as BoardLoaded).boards;
+      currentBoards.remove(board);
+      emit(BoardLoaded(currentBoards));
     }
   }
 
+  void addDateTimeSlot(Board board, DateTimeSlot dateTimeSlot) {
+    if (state is BoardLoaded) {
+      final List<Board> currentBoards = (state as BoardLoaded).boards;
+      final index = currentBoards.indexOf(board);
+      if (index != -1) {
+        final updatedBoard = currentBoards[index].copyWith(
+          dateTimeSlot: dateTimeSlot,
+        );
+        currentBoards[index] = updatedBoard;
+        emit(BoardLoaded(currentBoards));
+      }
+    }
+  }
+
+  void updateBoardDateTime(Board board, DateTimeSlot dateTimeSlot) {
+    if (state is BoardLoaded) {
+      final List<Board> currentBoards = (state as BoardLoaded).boards;
+      final index = currentBoards.indexOf(board);
+      if (index != -1) {
+        final updatedBoard = currentBoards[index].copyWith(
+          dateTimeSlot: dateTimeSlot,
+        );
+        currentBoards[index] = updatedBoard;
+        emit(BoardLoaded(currentBoards));
+      }
+    }
+  }
 }
