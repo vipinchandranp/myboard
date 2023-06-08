@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:myboard/models/my_board_user.dart';
+import 'package:myboard/models/user.dart';
 
 class UserRepository {
   final String _apiUrl = 'https://your-backend-url.com/api/users';

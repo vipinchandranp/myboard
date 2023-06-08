@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/user/user_event.dart';
 import 'package:myboard/bloc/user/user_state.dart';
-import 'package:myboard/models/my_board_user.dart';
+import 'package:myboard/models/user.dart';
 import 'package:myboard/repositories/user_repository.dart';
 
 

@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:myboard/models/my_board_user.dart';
+import 'package:myboard/models/user.dart';
 import 'package:myboard/repositories/user_repository.dart';
 
 class UserState extends Equatable {
