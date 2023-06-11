@@ -7,5 +7,5 @@ class BoardInitial extends BoardState {}
 class BoardLoaded extends BoardState {
   final List<Board> boards;
 
-  BoardLoaded(this.boards);
+  BoardLoaded({required this.boards});
 }

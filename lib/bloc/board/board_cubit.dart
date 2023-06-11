@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/models/board.dart';
-import 'board_state.dart';
+import 'package:myboard/bloc/board/board_state.dart';
 
 class BoardCubit extends Cubit<BoardState> {
   BoardCubit() : super(BoardInitial());
@@ -9,47 +9,78 @@ class BoardCubit extends Cubit<BoardState> {
     final newBoard = Board(title: title, description: description);
 
     if (state is BoardLoaded) {
-      final List<Board> currentBoards = (state as BoardLoaded).boards;
+      final currentBoards = List<Board>.from((state as BoardLoaded).boards);
       currentBoards.add(newBoard);
-      emit(BoardLoaded(currentBoards));
+      emit(BoardLoaded(boards: currentBoards));
     } else {
-      emit(BoardLoaded([newBoard]));
+      emit(BoardLoaded(boards: [newBoard]));
     }
   }
 
   void deleteBoard(Board board) {
     if (state is BoardLoaded) {
-      final List<Board> currentBoards = (state as BoardLoaded).boards;
+      final currentBoards = List<Board>.from((state as BoardLoaded).boards);
       currentBoards.remove(board);
-      emit(BoardLoaded(currentBoards));
+      emit(BoardLoaded(boards: currentBoards));
     }
   }
 
-  void addDateTimeSlot(Board board, DateTimeSlot dateTimeSlot) {
+  void addDateTimeSlots(Board board, Map<String, DateTimeSlot> dateTimeSlots) {
     if (state is BoardLoaded) {
-      final List<Board> currentBoards = (state as BoardLoaded).boards;
+      final currentBoards = List<Board>.from((state as BoardLoaded).boards);
       final index = currentBoards.indexOf(board);
       if (index != -1) {
         final updatedBoard = currentBoards[index].copyWith(
-          dateTimeSlot: dateTimeSlot,
+          displayDateTimeMap: dateTimeSlots,
         );
         currentBoards[index] = updatedBoard;
-        emit(BoardLoaded(currentBoards));
+        emit(BoardLoaded(boards: currentBoards));
       }
     }
   }
 
-  void updateBoardDateTime(Board board, DateTimeSlot dateTimeSlot) {
+  void updateBoardDateTime(
+      Board board, String display, DateTimeSlot dateTimeSlot) {
     if (state is BoardLoaded) {
-      final List<Board> currentBoards = (state as BoardLoaded).boards;
+      final currentBoards = List<Board>.from((state as BoardLoaded).boards);
       final index = currentBoards.indexOf(board);
       if (index != -1) {
         final updatedBoard = currentBoards[index].copyWith(
-          dateTimeSlot: dateTimeSlot,
+          displayDateTimeMap: {
+            ...board.displayDateTimeMap,
+            display: dateTimeSlot
+          },
         );
         currentBoards[index] = updatedBoard;
-        emit(BoardLoaded(currentBoards));
+        emit(BoardLoaded(boards: currentBoards));
       }
     }
+  }
+
+  void updateSelectedDisplays(Board board, List<String> selectedDisplays) {
+    if (state is BoardLoaded) {
+      final List<Board> updatedBoards = (state as BoardLoaded).boards.map((b) {
+        if (b == board) {
+          return b.copyWith(selectedDisplays: selectedDisplays);
+        }
+        return b;
+      }).toList();
+
+      emit(BoardLoaded(boards: updatedBoards));
+    }
+  }
+
+  void updateBoard(Board board, DateTimeSlot selectedData) {
+    // Create a new modifiable map based on the existing map
+    final Map<String, DateTimeSlot> updatedMap = Map.from(board.displayDateTimeMap);
+
+    // Perform the necessary updates to the map with the selected data
+    updatedMap[selectedData.display] = selectedData;
+
+    // Create a new Board object with the updated map
+    final updatedBoard = board.copyWith(displayDateTimeMap: updatedMap);
+
+    // Update the board using the BoardCubit
+    emit(BoardLoaded(boards: [updatedBoard]));
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/board/board_cubit.dart';
 import 'package:myboard/bloc/board/board_state.dart';
 import 'package:myboard/models/board.dart';
+import 'package:myboard/screens/schedule_screen.dart';
 
 class PinBoardScreen extends StatelessWidget {
   final TextEditingController _searchController = TextEditingController();
@@ -15,12 +16,17 @@ class PinBoardScreen extends StatelessWidget {
     '3:00 PM - 4:00 PM',
   ];
 
+  final List<String> availableDisplays = [
+    'Display1',
+    'Display2',
+  ];
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BoardCubit, BoardState>(
       builder: (context, state) {
         if (state is BoardLoaded) {
-          final boards = state.boards;
+          final List<Board> boards = state.boards;
 
           return Column(
             children: [
@@ -58,7 +64,7 @@ class PinBoardScreen extends StatelessWidget {
                 child: ListView.builder(
                   itemCount: boards.length,
                   itemBuilder: (context, index) {
-                    final board = boards[index];
+                    final Board board = boards[index];
                     if (_searchController.text.isEmpty ||
                         board.title
                             .toLowerCase()
@@ -71,14 +77,39 @@ class PinBoardScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(board.description),
-                              if (board.dateTimeSlot != null)
+                              if (board.displayDateTimeMap.isNotEmpty)
+                                for (var entry
+                                in board.displayDateTimeMap.entries)
+                                  Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Display: ${entry.key}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        'Date: ${entry.value.date.toLocal()}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        'Start Time: ${entry.value.startTime.format(context)}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        'End Time: ${entry.value.endTime.format(context)}',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                              if (board.selectedDisplays.isNotEmpty)
+                              // Display selected displays
                                 Text(
-                                  'Selected Date: ${board.dateTimeSlot!.date.toLocal()}',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              if (board.dateTimeSlot != null)
-                                Text(
-                                  'Selected Time Slot: ${board.dateTimeSlot!.timeSlot}',
+                                  'Selected Displays: ${board.selectedDisplays.join(", ")}',
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                             ],
@@ -97,39 +128,26 @@ class PinBoardScreen extends StatelessWidget {
                                 ),
                               ),
                               PopupMenuItem<int>(
-                                value: 2,
-                                child: ListTile(
-                                  leading: Icon(Icons.calendar_today),
-                                  title: Text('Select Date and Time'),
-                                  onTap: () async {
-                                    final selectedDateTime =
-                                    await Navigator.push<DateTimeSlot>(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            SelectDateTimeScreen(
-                                              availableTimeSlots:
-                                              availableTimeSlots,
-                                            ),
-                                      ),
-                                    );
-
-                                    if (selectedDateTime != null) {
-                                      context
-                                          .read<BoardCubit>()
-                                          .addDateTimeSlot(
-                                          board, selectedDateTime);
-                                    }
-                                  },
-                                ),
-                              ),
-                              PopupMenuItem<int>(
                                 value: 3,
                                 child: ListTile(
-                                  leading: Icon(Icons.location_on),
-                                  title: Text('Select Location'),
+                                  leading: Icon(Icons.schedule),
+                                  title: Text('Schedule'),
                                   onTap: () {
-                                    // Location operation
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ScheduleScreen(
+                                          onConfirm: (selectedData) {
+                                            context
+                                                .read<BoardCubit>()
+                                                .updateBoard(board, selectedData);
+                                            Navigator.pop(context);
+                                          },
+                                          availableDisplays:
+                                          availableDisplays, // Add this line
+                                        ),
+                                      ),
+                                    );
                                   },
                                 ),
                               ),
@@ -185,107 +203,6 @@ class PinBoardScreen extends StatelessWidget {
           return Center(child: CircularProgressIndicator());
         }
       },
-    );
-  }
-}
-
-
-
-class SelectDateTimeScreen extends StatefulWidget {
-  final List<String> availableTimeSlots;
-
-  SelectDateTimeScreen({required this.availableTimeSlots});
-
-  @override
-  _SelectDateTimeScreenState createState() => _SelectDateTimeScreenState();
-}
-
-class _SelectDateTimeScreenState extends State<SelectDateTimeScreen> {
-  DateTime? selectedDate;
-  String? selectedTimeSlot;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Select Date and Time'),
-      ),
-      body: Column(
-        children: [
-          ElevatedButton(
-            onPressed: () async {
-              final DateTime? pickedDate = await showDatePicker(
-                context: context,
-                initialDate: DateTime.now(),
-                firstDate: DateTime.now(),
-                lastDate: DateTime.now().add(Duration(days: 30)),
-              );
-
-              if (pickedDate != null) {
-                setState(() {
-                  selectedDate = pickedDate;
-                });
-              }
-            },
-            child: Text(selectedDate != null
-                ? 'Selected Date: ${selectedDate!.toLocal()}'
-                : 'Select Date'),
-          ),
-          SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
-              itemCount: widget.availableTimeSlots.length,
-              itemBuilder: (context, index) {
-                final timeSlot = widget.availableTimeSlots[index];
-                return ListTile(
-                  title: Text(timeSlot),
-                  onTap: () {
-                    setState(() {
-                      selectedTimeSlot = timeSlot;
-                    });
-                  },
-                  tileColor: selectedTimeSlot == timeSlot
-                      ? Colors.yellowAccent
-                      : Colors.transparent,
-                );
-              },
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (selectedDate != null && selectedTimeSlot != null) {
-                Navigator.pop(
-                  context,
-                  DateTimeSlot(
-                    date: selectedDate!,
-                    timeSlot: selectedTimeSlot!,
-                  ),
-                );
-              } else {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text('Missing Selection'),
-                      content: Text(
-                          'Please select both date and time slot before proceeding.'),
-                      actions: <Widget>[
-                        TextButton(
-                          child: Text('OK'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-              }
-            },
-            child: Text('Confirm Selection'),
-          ),
-        ],
-      ),
     );
   }
 }

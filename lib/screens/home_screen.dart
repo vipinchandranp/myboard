@@ -3,6 +3,11 @@ import 'package:myboard/screens/create_board_screen.dart';
 import 'package:myboard/screens/notification_screen.dart';
 import 'package:myboard/screens/pin_board_screen.dart';
 
+import 'package:flutter/material.dart';
+import 'package:myboard/screens/create_board_screen.dart';
+import 'package:myboard/screens/notification_screen.dart';
+import 'package:myboard/screens/pin_board_screen.dart';
+
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -110,7 +115,7 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: PinBoardScreen(),
+      body: PinBoardScreen(), // Pass the context to the PinBoardScreen
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.edit),
         onPressed: () {
