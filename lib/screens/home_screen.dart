@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:myboard/bloc/board/board_cubit.dart';
+import 'package:myboard/bloc/board/board_state.dart';
+import 'package:myboard/models/board.dart';
 import 'package:myboard/screens/create_board_screen.dart';
 import 'package:myboard/screens/notification_screen.dart';
 import 'package:myboard/screens/pin_board_screen.dart';
-
-import 'package:flutter/material.dart';
-import 'package:myboard/screens/create_board_screen.dart';
-import 'package:myboard/screens/notification_screen.dart';
-import 'package:myboard/screens/pin_board_screen.dart';
+import 'package:myboard/screens/play_live_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -115,7 +115,16 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: PinBoardScreen(), // Pass the context to the PinBoardScreen
+      body: BlocBuilder<BoardCubit, BoardState>(
+        builder: (context, state) {
+          if (state is BoardLoaded) {
+            final List<Board> boards = state.boards;
+            return PinBoardScreen();
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.edit),
         onPressed: () {
@@ -133,8 +142,12 @@ class HomeScreen extends StatelessWidget {
           children: [
             IconButton(
               onPressed: () {
-                // Handle play button pressed
-                // Add your logic here
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PlayLiveScreen(),
+                  ),
+                );
               },
               icon: Icon(Icons.play_arrow, color: Colors.white),
             ),
