@@ -64,7 +64,6 @@ flutter:
   assets:
     - assets/myboard_logo2.png
     - assets/myboard_logo1.png
-    - assets/videos/samplevideo.mp4
     - assets/canvas.jpg
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
