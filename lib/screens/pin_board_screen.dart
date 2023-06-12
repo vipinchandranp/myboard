@@ -41,7 +41,8 @@ class PinBoardScreen extends StatelessWidget {
                     return boards
                         .map((board) => board.title)
                         .where((option) =>
-                    option.toLowerCase().substring(0, 3) == searchValue)
+                    option.toLowerCase().substring(0, 3) ==
+                        searchValue)
                         .toList();
                   },
                   onSelected: (selectedTitle) {
@@ -132,22 +133,21 @@ class PinBoardScreen extends StatelessWidget {
                                 child: ListTile(
                                   leading: Icon(Icons.schedule),
                                   title: Text('Schedule'),
-                                  onTap: () {
-                                    Navigator.push(
+                                  onTap: () async {
+                                    final selectedData = await Navigator.push<DateTimeSlot>(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => ScheduleScreen(
                                           onConfirm: (selectedData) {
-                                            context
-                                                .read<BoardCubit>()
-                                                .updateBoard(board, selectedData);
-                                            Navigator.pop(context);
+                                            Navigator.pop(context, selectedData);
                                           },
-                                          availableDisplays:
-                                          availableDisplays, // Add this line
+                                          availableDisplays: availableDisplays,
                                         ),
                                       ),
                                     );
+                                    if (selectedData != null) {
+                                      context.read<BoardCubit>().updateBoard(board, selectedData);
+                                    }
                                   },
                                 ),
                               ),

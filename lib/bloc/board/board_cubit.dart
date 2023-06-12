@@ -9,9 +9,9 @@ class BoardCubit extends Cubit<BoardState> {
     final newBoard = Board(title: title, description: description);
 
     if (state is BoardLoaded) {
-      final currentBoards = List<Board>.from((state as BoardLoaded).boards);
+      final currentBoards = (state as BoardLoaded).boards;
       currentBoards.add(newBoard);
-      emit(BoardLoaded(boards: currentBoards));
+      emit(BoardLoaded(boards: currentBoards.toList()));
     } else {
       emit(BoardLoaded(boards: [newBoard]));
     }
@@ -71,16 +71,17 @@ class BoardCubit extends Cubit<BoardState> {
   }
 
   void updateBoard(Board board, DateTimeSlot selectedData) {
-    // Create a new modifiable map based on the existing map
-    final Map<String, DateTimeSlot> updatedMap = Map.from(board.displayDateTimeMap);
+    if (state is BoardLoaded) {
+      final List<Board> updatedBoards = (state as BoardLoaded).boards.map((b) {
+        if (b == board) {
+          final updatedMap = Map<String, DateTimeSlot>.from(b.displayDateTimeMap);
+          updatedMap[selectedData.display] = selectedData;
+          return b.copyWith(displayDateTimeMap: updatedMap);
+        }
+        return b;
+      }).toList();
 
-    // Perform the necessary updates to the map with the selected data
-    updatedMap[selectedData.display] = selectedData;
-
-    // Create a new Board object with the updated map
-    final updatedBoard = board.copyWith(displayDateTimeMap: updatedMap);
-
-    // Update the board using the BoardCubit
-    emit(BoardLoaded(boards: [updatedBoard]));
+      emit(BoardLoaded(boards: updatedBoards));
+    }
   }
 }
