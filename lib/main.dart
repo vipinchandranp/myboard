@@ -53,6 +53,8 @@ class MyApp extends StatelessWidget {
           '/ad_creation': (context) => AdCreationScreen(),
           '/settings': (context) => SettingsScreen(),
           '/play': (context) => PlayScreen(),
+          '/signup': (context) => SignupScreen(),
+          '/login': (context) => LoginScreen(),
         },
         debugShowCheckedModeBanner: false,
         theme: ThemeData(

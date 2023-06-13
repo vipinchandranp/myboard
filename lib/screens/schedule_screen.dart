@@ -1,32 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:myboard/bloc/board/board_cubit.dart';
-import 'package:myboard/bloc/board/board_state.dart';
 import 'package:myboard/models/board.dart';
 
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:myboard/bloc/board/board_cubit.dart';
-import 'package:myboard/bloc/board/board_state.dart';
-import 'package:myboard/models/board.dart';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:myboard/bloc/board/board_cubit.dart';
-import 'package:myboard/bloc/board/board_state.dart';
-import 'package:myboard/models/board.dart';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:myboard/bloc/board/board_cubit.dart';
-import 'package:myboard/bloc/board/board_state.dart';
-import 'package:myboard/models/board.dart';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:myboard/bloc/board/board_cubit.dart';
-import 'package:myboard/bloc/board/board_state.dart';
-import 'package:myboard/models/board.dart';
 
 class ScheduleScreen extends StatefulWidget {
   final Function(DateTimeSlot) onConfirm;

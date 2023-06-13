@@ -134,19 +134,23 @@ class PinBoardScreen extends StatelessWidget {
                                   leading: Icon(Icons.schedule),
                                   title: Text('Schedule'),
                                   onTap: () async {
-                                    final selectedData = await Navigator.push<DateTimeSlot>(
+                                    final selectedData =
+                                    await Navigator.push<DateTimeSlot>(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => ScheduleScreen(
                                           onConfirm: (selectedData) {
-                                            Navigator.pop(context, selectedData);
+                                            Navigator.pop(
+                                                context, selectedData);
                                           },
                                           availableDisplays: availableDisplays,
                                         ),
                                       ),
                                     );
                                     if (selectedData != null) {
-                                      context.read<BoardCubit>().updateBoard(board, selectedData);
+                                      context
+                                          .read<BoardCubit>()
+                                          .updateBoard(board, selectedData);
                                     }
                                   },
                                 ),

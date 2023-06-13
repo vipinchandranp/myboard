@@ -13,11 +13,11 @@ class UserCubit extends Cubit<UserState> {
 
   UserCubit(this.userRepository) : super(UserInitial());
 
-  Future<void> signUp(String email, String password, String name, String phoneNumber) async {
+  Future<void> signUp(String email, String password, String name,) async {
     emit(UserLoading());
 
     try {
-      MyBoardUser user = await userRepository.signUp(email, password, name, phoneNumber);
+      MyBoardUser user = await userRepository.signUp(email, password, name);
       emit(UserAuthenticated(user));
     } catch (e) {
       emit(UserError(message: e.toString()));

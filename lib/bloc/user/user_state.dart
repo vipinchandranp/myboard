@@ -36,3 +36,14 @@ class UserError extends UserState {
   @override
   List<Object> get props => [message];
 }
+
+class UserSignupSuccess extends UserState {}
+
+class UserSignupError extends UserState {
+  final String errorMessage;
+
+  UserSignupError(this.errorMessage);
+
+  @override
+  List<Object> get props => [errorMessage];
+}

@@ -23,14 +23,13 @@ class UserRepository {
   }
 
   // Signup
-  Future<MyBoardUser> signUp(String email, String password, String name, String phoneNumber) async {
+  Future<MyBoardUser> signUp(String email, String password, String name) async {
     final response = await http.post(
       Uri.parse('$_apiUrl/signup'),
       body: jsonEncode(<String, String>{
         'email': email,
         'password': password,
-        'name': name,
-        'phoneNumber': phoneNumber,
+        'name': name
       }),
     );
 
