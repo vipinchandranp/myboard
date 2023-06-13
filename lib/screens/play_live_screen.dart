@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:myboard/models/board.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/board/board_cubit.dart';
@@ -12,11 +12,27 @@ class PlayLiveScreen extends StatefulWidget {
 
 class _PlayLiveScreenState extends State<PlayLiveScreen> {
   late Board? currentBoard;
+  Timer? timer;
 
   @override
   void initState() {
     super.initState();
     currentBoard = getCurrentBoard();
+    startTimer();
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  void startTimer() {
+    timer = Timer.periodic(Duration(seconds: 1), (Timer timer) {
+      setState(() {
+        currentBoard = getCurrentBoard();
+      });
+    });
   }
 
   Board? getCurrentBoard() {
@@ -24,8 +40,7 @@ class _PlayLiveScreenState extends State<PlayLiveScreen> {
     final boardCubit = context.read<BoardCubit>();
     final boardState = boardCubit.state;
     if (boardState is BoardLoaded) {
-      final boards = boardState.boards;
-      for (final board in boards) {
+      for (final board in boardState.boards) {
         final timeSlots = board.displayDateTimeMap.values.toList();
         for (final timeSlot in timeSlots) {
           final startTime = DateTime(
