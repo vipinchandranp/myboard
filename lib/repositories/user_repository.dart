@@ -1,22 +1,30 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:myboard/config/api_config.dart';
 import 'package:myboard/models/user.dart';
+import 'package:myboard/models/login_response.dart';
 
 class UserRepository {
-  final String _apiUrl = 'https://your-backend-url.com/api/users';
+  final String _apiUrl = APIConfig.getRootURL();
 
   // Login
-  Future<MyBoardUser> signIn(String email, String password) async {
+  Future<LoginResponse> signIn(String username, String password) async {
     final response = await http.post(
-      Uri.parse('$_apiUrl/login'),
+      Uri.parse('$_apiUrl/v1/users/login'),
+      headers: {'Content-Type': 'application/json'},
+      // Set the Content-Type header
       body: jsonEncode(<String, String>{
-        'email': email,
         'password': password,
+        'username': username,
       }),
     );
 
     if (response.statusCode == 200) {
-      return MyBoardUser.fromMap(jsonDecode(response.body));
+      final loginResponse = LoginResponse.fromMap(jsonDecode(response.body));
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', loginResponse.token);
+      return loginResponse;
     } else {
       throw Exception('Failed to log in');
     }
@@ -29,7 +37,7 @@ class UserRepository {
       body: jsonEncode(<String, String>{
         'email': email,
         'password': password,
-        'name': name
+        'name': name,
       }),
     );
 

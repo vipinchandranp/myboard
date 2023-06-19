@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/user/user_cubit.dart';
-import 'package:myboard/bloc/user/user_state.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController _usernameController = TextEditingController();
@@ -47,7 +46,7 @@ class LoginScreen extends StatelessWidget {
               SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: () {
-                  context.read<UserCubit>().login(
+                  context.read<UserCubit>().signIn(
                     context,
                     _usernameController.text,
                     _passwordController.text,

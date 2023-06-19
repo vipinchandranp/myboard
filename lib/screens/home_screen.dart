@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/board/board_cubit.dart';
 import 'package:myboard/bloc/board/board_state.dart';
+import 'package:myboard/bloc/user/user_cubit.dart';
+import 'package:myboard/bloc/user/user_state.dart';
 import 'package:myboard/models/board.dart';
 import 'package:myboard/screens/create_board_screen.dart';
+import 'package:myboard/screens/notification_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:myboard/bloc/user/user_cubit.dart';
+import 'package:myboard/bloc/user/user_state.dart';
 import 'package:myboard/screens/notification_screen.dart';
 import 'package:myboard/screens/pin_board_screen.dart';
 import 'package:myboard/screens/play_live_screen.dart';
@@ -18,13 +25,27 @@ class HomeScreen extends StatelessWidget {
             return IconButton(
               icon: Image.asset('assets/myboard_logo1.png'),
               onPressed: () {
-                // Open the drawer when the menu icon is pressed
                 Scaffold.of(context).openDrawer();
               },
             );
           },
         ),
-        title: Text('My Board'),
+        title: BlocBuilder<UserCubit, UserState>(
+          builder: (context, state) {
+            if (state is UserAuthenticated) {
+              final user = state.user;
+              return Text(
+                "${user.username}'s board",
+                style: TextStyle(fontSize: 18),
+              );
+            } else {
+              return Text(
+                'My Board',
+                style: TextStyle(fontSize: 18),
+              );
+            }
+          },
+        ),
         backgroundColor: Colors.blueGrey[800],
         actions: [
           IconButton(
@@ -36,7 +57,6 @@ class HomeScreen extends StatelessWidget {
           ),
           IconButton(
             onPressed: () {
-              // Open the notification screen when the notification icon is clicked
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => NotificationScreen()),
@@ -69,13 +89,22 @@ class HomeScreen extends StatelessWidget {
                     backgroundImage: AssetImage('assets/profile_image.jpg'),
                   ),
                   SizedBox(height: 8),
-                  Text(
-                    'My Board',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  BlocBuilder<UserCubit, UserState>(
+                    builder: (context, state) {
+                      if (state is UserAuthenticated) {
+                        final user = state.user;
+                        return Text(
+                          user.username,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      } else {
+                        return SizedBox.shrink();
+                      }
+                    },
                   ),
                 ],
               ),

@@ -5,15 +5,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/user/user_event.dart';
 import 'package:myboard/bloc/user/user_state.dart';
 import 'package:myboard/models/user.dart';
+import 'package:myboard/models/login_response.dart';
 import 'package:myboard/repositories/user_repository.dart';
-
 
 class UserCubit extends Cubit<UserState> {
   final UserRepository userRepository;
 
   UserCubit(this.userRepository) : super(UserInitial());
 
-  Future<void> signUp(String email, String password, String name,) async {
+  Future<void> signUp(String email, String password, String name) async {
     emit(UserLoading());
 
     try {
@@ -24,26 +24,17 @@ class UserCubit extends Cubit<UserState> {
     }
   }
 
-  Future<void> login(BuildContext context, String username, String password) async {
-    //emit(UserLoading());
+  Future<void> signIn(BuildContext context, String username, String password) async {
+    emit(UserLoading());
 
     try {
-      // Simulating an asynchronous login process
-      //await Future.delayed(Duration(seconds: 2));
+      LoginResponse response = await userRepository.signIn(username, password);
+      MyBoardUser user = response.user;
+      emit(UserAuthenticated(user));
 
-      // Replace this with your actual authentication logic
-      // For example, calling a method in UserRepository
-      //final user = await userRepository.authenticate(username, password);
-
-      // If authentication is successful, emit UserAuthenticated state
-      //emit(UserAuthenticated(user));
-
-      // Navigate to the home screen
       Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
-      // If authentication fails, emit UserError state
       emit(UserError(message: 'Failed to login. Please try again.'));
     }
   }
-
 }
