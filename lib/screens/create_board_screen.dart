@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/board/board_cubit.dart';
+import 'package:myboard/bloc/board/board_state.dart';
+import 'package:myboard/models/board.dart';
+import 'package:myboard/models/user.dart';
+import 'package:myboard/utils/user_utils.dart';
 
 class CreateBoardScreen extends StatefulWidget {
+  final MyBoardUser? user; // Update the type to accept nullable MyBoardUser
+
+  CreateBoardScreen({this.user});
+
   @override
   _CreateBoardScreenState createState() => _CreateBoardScreenState();
 }
@@ -14,10 +22,16 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
 
   void _submitForm(BuildContext context) {
     if (_formKey.currentState!.validate()) {
-      BlocProvider.of<BoardCubit>(context).createBoard(
-        _titleController.text,
-        _descriptionController.text,
+      final board = Board(
+        userId: UserUtils.getLoggedInUser(context)?.id ?? '', // Updated line
+        title: _titleController.text,
+        description: _descriptionController.text,
       );
+
+      BlocProvider.of<BoardCubit>(context).createBoard(board);
+
+      saveBoardItemToBackend(
+          board); // Pass the Board object to the backend function
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -30,6 +44,13 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
       _descriptionController.clear();
       Navigator.pop(context);
     }
+  }
+
+  // Function to save the board item to the backend
+  void saveBoardItemToBackend(Board board) {
+    // TODO: Implement the backend saving logic here
+    // Include the board object in the API request or function call
+    // to save the board item along with the user ID
   }
 
   @override
@@ -68,9 +89,9 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _submitForm(context),
-        child: Icon(Icons.save), // this is the floppy disk icon
+        child: Icon(Icons.save),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // place it to bottom right corner
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

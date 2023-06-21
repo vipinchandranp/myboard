@@ -2,12 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class Board {
+  final String? id; // Add id parameter
+  final String userId; // Add userId parameter
   final String title;
   final String description;
   final Map<String, DateTimeSlot> displayDateTimeMap;
   final List<String> selectedDisplays;
 
   Board({
+    this.id, // Add id parameter
+    required this.userId, // Add userId parameter
     required this.title,
     required this.description,
     this.displayDateTimeMap = const {},
@@ -15,12 +19,16 @@ class Board {
   });
 
   Board copyWith({
+    String? id, // Add id parameter
+    String? userId, // Add userId parameter
     String? title,
     String? description,
     Map<String, DateTimeSlot>? displayDateTimeMap,
     List<String>? selectedDisplays,
   }) {
     return Board(
+      id: id ?? this.id, // Add id parameter
+      userId: userId ?? this.userId, // Add userId parameter
       title: title ?? this.title,
       description: description ?? this.description,
       displayDateTimeMap: displayDateTimeMap ?? this.displayDateTimeMap,

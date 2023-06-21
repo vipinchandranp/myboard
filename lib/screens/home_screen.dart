@@ -5,6 +5,7 @@ import 'package:myboard/bloc/board/board_state.dart';
 import 'package:myboard/bloc/user/user_cubit.dart';
 import 'package:myboard/bloc/user/user_state.dart';
 import 'package:myboard/models/board.dart';
+import 'package:myboard/models/user.dart';
 import 'package:myboard/screens/create_board_screen.dart';
 import 'package:myboard/screens/notification_screen.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +15,7 @@ import 'package:myboard/bloc/user/user_state.dart';
 import 'package:myboard/screens/notification_screen.dart';
 import 'package:myboard/screens/pin_board_screen.dart';
 import 'package:myboard/screens/play_live_screen.dart';
-
+import 'package:myboard/utils/user_utils.dart';
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -157,9 +158,9 @@ class HomeScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.edit),
         onPressed: () {
-          Navigator.push(
+            Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => CreateBoardScreen()),
+            MaterialPageRoute(builder: (context) => CreateBoardScreen(user: UserUtils.getLoggedInUser(context) )),
           );
         },
       ),

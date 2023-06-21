@@ -1,12 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/models/board.dart';
 import 'package:myboard/bloc/board/board_state.dart';
+import 'package:myboard/repositories/board_repository.dart';
 
 class BoardCubit extends Cubit<BoardState> {
-  BoardCubit() : super(BoardInitial());
+  final BoardRepository boardRepository;
 
-  void createBoard(String title, String description) {
-    final newBoard = Board(title: title, description: description);
+  BoardCubit(this.boardRepository) : super(BoardInitial());
+
+  void createBoard(Board newBoard) {
+    boardRepository.saveBoardItem(newBoard); // Save the board to the repository
 
     if (state is BoardLoaded) {
       final currentBoards = (state as BoardLoaded).boards;
@@ -48,7 +51,7 @@ class BoardCubit extends Cubit<BoardState> {
         final updatedBoard = currentBoards[index].copyWith(
           displayDateTimeMap: {
             ...board.displayDateTimeMap,
-            display: dateTimeSlot
+            display: dateTimeSlot,
           },
         );
         currentBoards[index] = updatedBoard;
@@ -74,7 +77,8 @@ class BoardCubit extends Cubit<BoardState> {
     if (state is BoardLoaded) {
       final List<Board> updatedBoards = (state as BoardLoaded).boards.map((b) {
         if (b == board) {
-          final updatedMap = Map<String, DateTimeSlot>.from(b.displayDateTimeMap);
+          final updatedMap =
+              Map<String, DateTimeSlot>.from(b.displayDateTimeMap);
           updatedMap[selectedData.display] = selectedData;
           return b.copyWith(displayDateTimeMap: updatedMap);
         }

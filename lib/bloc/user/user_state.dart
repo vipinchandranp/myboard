@@ -1,40 +1,33 @@
-import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:myboard/models/user.dart';
-import 'package:myboard/repositories/user_repository.dart';
 
-class UserState extends Equatable {
+abstract class UserState extends Equatable {
   const UserState();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class UserLoading extends UserState {}
 
-class UserInitial extends UserState {
-  const UserInitial();
-
-  @override
-  List<Object> get props => [];
-}
+class UserInitial extends UserState {}
 
 class UserAuthenticated extends UserState {
   final MyBoardUser user;
 
-  UserAuthenticated(this.user);
+  const UserAuthenticated(this.user);
 
   @override
-  List<Object> get props => [user];
+  List<Object?> get props => [user];
 }
 
 class UserError extends UserState {
   final String message;
 
-  UserError({required this.message});
+  const UserError({required this.message});
 
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }
 
 class UserSignupSuccess extends UserState {}
@@ -42,8 +35,8 @@ class UserSignupSuccess extends UserState {}
 class UserSignupError extends UserState {
   final String errorMessage;
 
-  UserSignupError(this.errorMessage);
+  const UserSignupError(this.errorMessage);
 
   @override
-  List<Object> get props => [errorMessage];
+  List<Object?> get props => [errorMessage];
 }

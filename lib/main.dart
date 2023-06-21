@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/board/board_cubit.dart';
 import 'package:myboard/bloc/user/user_cubit.dart';
+import 'package:myboard/repositories/board_repository.dart';
 import 'package:myboard/repositories/user_repository.dart';
 import 'package:myboard/screens/ad_creation_screen.dart';
 import 'package:myboard/screens/change_password_screen.dart';
@@ -15,9 +16,10 @@ import 'package:myboard/screens/update_profile_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final userRepository = UserRepository();
+  final boardRepository = BoardRepository();
 
   await initializeDateFormatting('en');
   await initializeDateFormatting('ar');
@@ -25,7 +27,7 @@ void main() async{
   runApp(MultiBlocProvider(
     providers: [
       BlocProvider<BoardCubit>(
-        create: (context) => BoardCubit(),
+        create: (context) => BoardCubit(boardRepository),
       ),
       BlocProvider<UserCubit>(
         create: (context) => UserCubit(userRepository),

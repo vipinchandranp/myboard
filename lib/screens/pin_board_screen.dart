@@ -111,7 +111,8 @@ class PinBoardScreen extends StatelessWidget {
                               // Display selected displays
                                 Text(
                                   'Selected Displays: ${board.selectedDisplays.join(", ")}',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold),
                                 ),
                             ],
                           ),
@@ -151,6 +152,8 @@ class PinBoardScreen extends StatelessWidget {
                                       context
                                           .read<BoardCubit>()
                                           .updateBoard(board, selectedData);
+                                      // TODO: Save the board item to the backend
+                                      // Call the saveBoardItem function or API here
                                     }
                                   },
                                 ),
