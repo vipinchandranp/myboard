@@ -23,15 +23,14 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
   void _submitForm(BuildContext context) {
     if (_formKey.currentState!.validate()) {
       final board = Board(
-        userId: UserUtils.getLoggedInUser(context)?.id ?? '', // Updated line
+        userId: UserUtils.getLoggedInUser(context)?.id ?? '',
         title: _titleController.text,
         description: _descriptionController.text,
       );
 
-      BlocProvider.of<BoardCubit>(context).createBoard(board);
+      BlocProvider.of<BoardCubit>(context).createBoard(board, context);
 
-      saveBoardItemToBackend(
-          board); // Pass the Board object to the backend function
+      saveBoardItemToBackend(board); // Pass the Board object to the backend function
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -56,6 +55,12 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Form(
         key: _formKey,
         child: Padding(

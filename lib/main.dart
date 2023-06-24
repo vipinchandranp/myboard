@@ -24,17 +24,26 @@ void main() async {
   await initializeDateFormatting('en');
   await initializeDateFormatting('ar');
 
-  runApp(MultiBlocProvider(
+  runApp(MultiRepositoryProvider(
     providers: [
-      BlocProvider<BoardCubit>(
-        create: (context) => BoardCubit(boardRepository),
-      ),
-      BlocProvider<UserCubit>(
-        create: (context) => UserCubit(userRepository),
-      ),
-      // Add more Cubits or BLoCs if needed.
+      RepositoryProvider<BoardRepository>.value(value: boardRepository),
+      RepositoryProvider<UserRepository>.value(value: userRepository),
+      // Add more repositories if needed.
     ],
-    child: MyApp(),
+    child: MultiBlocProvider(
+      providers: [
+        BlocProvider<BoardCubit>(
+          create: (context) => BoardCubit(context.read<BoardRepository>()),
+        ),
+        BlocProvider<UserCubit>(
+          create: (context) => UserCubit(
+            userRepository: context.read<UserRepository>(),
+          ),
+        ),
+        // Add more Cubits or BLoCs if needed.
+      ],
+      child: MyApp(),
+    ),
   ));
 }
 
@@ -42,7 +51,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => UserCubit(UserRepository()),
+      create: (context) =>
+          UserCubit(userRepository: context.read<UserRepository>()),
       child: MaterialApp(
         title: 'MyBoard',
         routes: {
@@ -51,9 +61,7 @@ class MyApp extends StatelessWidget {
           '/change_password': (context) => ChangePasswordScreen(),
           '/update_profile': (context) => UpdateProfileScreen(),
           '/profile': (context) => ProfileScreen(),
-          '/update_profile': (context) => UpdateProfileScreen(),
           '/ad_creation': (context) => AdCreationScreen(),
-          '/settings': (context) => SettingsScreen(),
           '/play': (context) => PlayScreen(),
           '/signup': (context) => SignupScreen(),
           '/login': (context) => LoginScreen(),

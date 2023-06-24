@@ -18,6 +18,22 @@ class Board {
     this.selectedDisplays = const [],
   });
 
+  factory Board.fromJson(Map<String, dynamic> json) {
+    return Board(
+      userId: json['userId'],
+      title: json['title'],
+      description: json['description'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'userId': userId,
+      'title': title,
+      'description': description,
+    };
+  }
+
   Board copyWith({
     String? id, // Add id parameter
     String? userId, // Add userId parameter
@@ -27,8 +43,10 @@ class Board {
     List<String>? selectedDisplays,
   }) {
     return Board(
-      id: id ?? this.id, // Add id parameter
-      userId: userId ?? this.userId, // Add userId parameter
+      id: id ?? this.id,
+      // Add id parameter
+      userId: userId ?? this.userId,
+      // Add userId parameter
       title: title ?? this.title,
       description: description ?? this.description,
       displayDateTimeMap: displayDateTimeMap ?? this.displayDateTimeMap,

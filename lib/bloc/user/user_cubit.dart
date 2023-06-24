@@ -7,11 +7,18 @@ import 'package:myboard/bloc/user/user_state.dart';
 import 'package:myboard/models/user.dart';
 import 'package:myboard/models/login_response.dart';
 import 'package:myboard/repositories/user_repository.dart';
+import 'package:myboard/models/board.dart';
+import 'package:myboard/bloc/board/board_cubit.dart';
+import 'package:myboard/bloc/board/board_state.dart';
 
 class UserCubit extends Cubit<UserState> {
   final UserRepository userRepository;
 
-  UserCubit(this.userRepository) : super(UserInitial());
+  UserCubit({
+    required this.userRepository,
+  }) : super(UserInitial()) {
+
+  }
 
   Future<void> signUp(String email, String password, String name) async {
     emit(UserLoading());
@@ -31,6 +38,10 @@ class UserCubit extends Cubit<UserState> {
       LoginResponse response = await userRepository.signIn(username, password);
       MyBoardUser user = response.user;
       emit(UserAuthenticated(user));
+
+      // Fetch board items for the logged-in user
+      BoardCubit boardCubit = BlocProvider.of<BoardCubit>(context);
+      await boardCubit.fetchBoardItems(user);
 
       Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {

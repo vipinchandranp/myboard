@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/board/board_cubit.dart';
 import 'package:myboard/bloc/board/board_state.dart';
 import 'package:myboard/models/board.dart';
+import 'package:myboard/models/user.dart';
 import 'package:myboard/screens/schedule_screen.dart';
+import 'package:myboard/utils/user_utils.dart';
 
 class PinBoardScreen extends StatelessWidget {
   final TextEditingController _searchController = TextEditingController();
@@ -23,7 +25,10 @@ class PinBoardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<BoardCubit, BoardState>(
+    return BlocConsumer<BoardCubit, BoardState>(
+      listener: (context, state) {
+        // Handle state changes if needed
+      },
       builder: (context, state) {
         if (state is BoardLoaded) {
           final List<Board> boards = state.boards;
@@ -79,8 +84,7 @@ class PinBoardScreen extends StatelessWidget {
                             children: [
                               Text(board.description),
                               if (board.displayDateTimeMap.isNotEmpty)
-                                for (var entry
-                                in board.displayDateTimeMap.entries)
+                                for (var entry in board.displayDateTimeMap.entries)
                                   Column(
                                     crossAxisAlignment:
                                     CrossAxisAlignment.start,
