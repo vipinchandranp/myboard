@@ -87,9 +87,9 @@ class PinBoardScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(board.description),
-                              if (board.displayDateTimeMap.isNotEmpty)
+                              if (board.displayDetails.isNotEmpty)
                                 for (var entry
-                                    in board.displayDateTimeMap.entries)
+                                    in board.displayDetails.entries)
                                   Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -163,6 +163,11 @@ class PinBoardScreen extends StatelessWidget {
                                       ),
                                     );
                                     // Handle selectedData
+                                    if (selectedData != null) {
+                                      context
+                                          .read<BoardCubit>()
+                                          .updateBoard(board, selectedData);
+                                    }
                                   },
                                 ),
                               ),

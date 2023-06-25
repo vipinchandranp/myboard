@@ -54,12 +54,12 @@ class BoardRepository {
   Future<void> updateBoard(Board board) async {
     // Convert the displayDateTimeMap to JSON
     final updatedDisplayDateTimeMap = <String, DateTimeSlot>{};
-    board.displayDateTimeMap.forEach((key, value) {
+    board.displayDetails.forEach((key, value) {
       updatedDisplayDateTimeMap[key] = value;
     });
 
     // Create the board object with the updated displayDateTimeMap
-    final updatedBoard = board.copyWith(displayDateTimeMap: updatedDisplayDateTimeMap);
+    final updatedBoard = board.copyWith(displayDetails: updatedDisplayDateTimeMap);
 
     // Convert the updated board object to JSON
     final boardJson = jsonEncode(updatedBoard.toJson());

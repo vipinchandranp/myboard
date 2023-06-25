@@ -47,7 +47,7 @@ class BoardCubit extends Cubit<BoardState> {
       final index = currentBoards.indexOf(board);
       if (index != -1) {
         final updatedBoard = currentBoards[index].copyWith(
-          displayDateTimeMap: dateTimeSlots,
+          displayDetails: dateTimeSlots,
         );
         currentBoards[index] = updatedBoard;
         emit(BoardLoaded(boards: currentBoards));
@@ -61,8 +61,8 @@ class BoardCubit extends Cubit<BoardState> {
       final index = currentBoards.indexOf(board);
       if (index != -1) {
         final updatedBoard = currentBoards[index].copyWith(
-          displayDateTimeMap: {
-            ...board.displayDateTimeMap,
+          displayDetails: {
+            ...board.displayDetails,
             display: dateTimeSlot,
           },
         );
@@ -89,11 +89,11 @@ class BoardCubit extends Cubit<BoardState> {
     if (state is BoardLoaded) {
       final List<Board> updatedBoards = (state as BoardLoaded).boards.map((b) {
         if (b == board) {
-          final updatedMap = Map<String, DateTimeSlot>.from(b.displayDateTimeMap);
+          final updatedMap = Map<String, DateTimeSlot>.from(b.displayDetails);
           updatedMap[selectedData.display] = selectedData;
-          final updatedBoard = b.copyWith(displayDateTimeMap: updatedMap);
+          final updatedBoard = b.copyWith(displayDetails: updatedMap);
           // Make the API call to update the board item
-          boardRepository.saveBoardItem(updatedBoard);
+          boardRepository.updateBoard(updatedBoard);
           return updatedBoard;
         }
         return b;

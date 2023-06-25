@@ -7,7 +7,7 @@ class Board {
   final String userId; // Add userId parameter
   final String title;
   final String description;
-  final Map<String, DateTimeSlot> displayDateTimeMap;
+  final Map<String, DateTimeSlot> displayDetails;
   final List<String> selectedDisplays;
 
   Board({
@@ -15,30 +15,30 @@ class Board {
     required this.userId, // Add userId parameter
     required this.title,
     required this.description,
-    this.displayDateTimeMap = const {},
+    this.displayDetails = const {},
     this.selectedDisplays = const [],
   });
 
   factory Board.fromJson(Map<String, dynamic> json) {
-    final displayDateTimeMapJson = json['displayDateTimeMap'];
+    final displayDetails = json['displayDetails'];
 
-    // Check if the displayDateTimeMapJson is null or empty
-    if (displayDateTimeMapJson == null || displayDateTimeMapJson.isEmpty) {
+    // Check if the displayDetails is null or empty
+    if (displayDetails == null || displayDetails.isEmpty) {
       return Board(
         id: json['id'],
         userId: json['userId'],
         title: json['title'],
         description: json['description'],
-        displayDateTimeMap: {},
+        displayDetails: {},
       );
     }
 
-    final displayDateTimeMap = <String, DateTimeSlot>{};
+    final displayDetailsMap = <String, DateTimeSlot>{};
 
-    displayDateTimeMapJson.forEach((key, value) {
+    displayDetails.forEach((key, value) {
       final dateTimeSlotJson = value as Map<String, dynamic>;
       final dateTimeSlot = DateTimeSlot.fromJson(dateTimeSlotJson);
-      displayDateTimeMap[key] = dateTimeSlot;
+      displayDetailsMap[key] = dateTimeSlot;
     });
 
     return Board(
@@ -46,13 +46,13 @@ class Board {
       userId: json['userId'],
       title: json['title'],
       description: json['description'],
-      displayDateTimeMap: displayDateTimeMap,
+      displayDetails: displayDetailsMap,
     );
   }
 
   Map<String, dynamic> toJson() {
     final displayDateTimeMapJson =
-        Map<String, dynamic>.from(displayDateTimeMap.map(
+        Map<String, dynamic>.from(displayDetails.map(
       (key, value) => MapEntry(key, {
         'date': value.date.toIso8601String(),
         'startTime':
@@ -67,7 +67,7 @@ class Board {
       'userId': userId,
       'title': title,
       'description': description,
-      'displayDateTimeMap': displayDateTimeMapJson,
+      'displayDetails': displayDateTimeMapJson,
     };
   }
 
@@ -76,7 +76,7 @@ class Board {
     String? userId, // Add userId parameter
     String? title,
     String? description,
-    Map<String, DateTimeSlot>? displayDateTimeMap,
+    Map<String, DateTimeSlot>? displayDetails,
     List<String>? selectedDisplays,
   }) {
     return Board(
@@ -86,15 +86,15 @@ class Board {
       // Add userId parameter
       title: title ?? this.title,
       description: description ?? this.description,
-      displayDateTimeMap: displayDateTimeMap ?? this.displayDateTimeMap,
+      displayDetails: displayDetails ?? this.displayDetails,
       selectedDisplays: selectedDisplays ?? this.selectedDisplays,
     );
   }
 
   Board updateDateTimeSlot(String display, DateTimeSlot dateTimeSlot) {
-    final updatedMap = Map<String, DateTimeSlot>.from(displayDateTimeMap);
+    final updatedMap = Map<String, DateTimeSlot>.from(displayDetails);
     updatedMap[display] = dateTimeSlot;
-    return copyWith(displayDateTimeMap: updatedMap);
+    return copyWith(displayDetails: updatedMap);
   }
 }
 
