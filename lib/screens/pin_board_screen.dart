@@ -23,6 +23,11 @@ class PinBoardScreen extends StatelessWidget {
     'Display2',
   ];
 
+  final List<String> availableUsernames = [
+    'User1',
+    'User2',
+  ];
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<BoardCubit, BoardState>(
@@ -46,8 +51,7 @@ class PinBoardScreen extends StatelessWidget {
                     return boards
                         .map((board) => board.title)
                         .where((option) =>
-                    option.toLowerCase().substring(0, 3) ==
-                        searchValue)
+                            option.toLowerCase().substring(0, 3) == searchValue)
                         .toList();
                   },
                   onSelected: (selectedTitle) {
@@ -84,10 +88,11 @@ class PinBoardScreen extends StatelessWidget {
                             children: [
                               Text(board.description),
                               if (board.displayDateTimeMap.isNotEmpty)
-                                for (var entry in board.displayDateTimeMap.entries)
+                                for (var entry
+                                    in board.displayDateTimeMap.entries)
                                   Column(
                                     crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Display: ${entry.key}',
@@ -112,11 +117,10 @@ class PinBoardScreen extends StatelessWidget {
                                     ],
                                   ),
                               if (board.selectedDisplays.isNotEmpty)
-                              // Display selected displays
+                                // Display selected displays
                                 Text(
                                   'Selected Displays: ${board.selectedDisplays.join(", ")}',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                             ],
                           ),
@@ -140,25 +144,25 @@ class PinBoardScreen extends StatelessWidget {
                                   title: Text('Schedule'),
                                   onTap: () async {
                                     final selectedData =
-                                    await Navigator.push<DateTimeSlot>(
+                                        await Navigator.push<DateTimeSlot>(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => ScheduleScreen(
-                                          onConfirm: (selectedData) {
+                                          onConfirm: (selectedData) async {
+                                            context
+                                                .read<BoardCubit>()
+                                                .updateBoard(
+                                                    board, selectedData);
                                             Navigator.pop(
                                                 context, selectedData);
                                           },
                                           availableDisplays: availableDisplays,
+                                          availableUsernames:
+                                              availableUsernames,
                                         ),
                                       ),
                                     );
-                                    if (selectedData != null) {
-                                      context
-                                          .read<BoardCubit>()
-                                          .updateBoard(board, selectedData);
-                                      // TODO: Save the board item to the backend
-                                      // Call the saveBoardItem function or API here
-                                    }
+                                    // Handle selectedData
                                   },
                                 ),
                               ),

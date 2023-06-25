@@ -85,13 +85,16 @@ class BoardCubit extends Cubit<BoardState> {
     }
   }
 
-  void updateBoard(Board board, DateTimeSlot selectedData) {
+  void updateBoard(Board board, DateTimeSlot selectedData) async {
     if (state is BoardLoaded) {
       final List<Board> updatedBoards = (state as BoardLoaded).boards.map((b) {
         if (b == board) {
           final updatedMap = Map<String, DateTimeSlot>.from(b.displayDateTimeMap);
           updatedMap[selectedData.display] = selectedData;
-          return b.copyWith(displayDateTimeMap: updatedMap);
+          final updatedBoard = b.copyWith(displayDateTimeMap: updatedMap);
+          // Make the API call to update the board item
+          boardRepository.saveBoardItem(updatedBoard);
+          return updatedBoard;
         }
         return b;
       }).toList();

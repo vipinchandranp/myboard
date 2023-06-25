@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:myboard/models/board.dart';
-
+import 'package:intl/intl.dart';
 
 class ScheduleScreen extends StatefulWidget {
   final Function(DateTimeSlot) onConfirm;
   final List<String> availableDisplays;
+  final List<String> availableUsernames;
 
   ScheduleScreen({
     required this.onConfirm,
     required this.availableDisplays,
+    required this.availableUsernames,
   });
 
   @override
@@ -20,15 +23,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   late TimeOfDay selectedStartTime;
   late TimeOfDay selectedEndTime;
   late String selectedDisplay;
+  TextEditingController _usernameController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     selectedDate = DateTime.now();
     selectedStartTime = TimeOfDay.now();
-    selectedEndTime =
-        selectedStartTime.replacing(hour: selectedStartTime.hour + 1);
-    selectedDisplay = widget.availableDisplays.first; // Initialize with the first item
+    selectedEndTime = selectedStartTime.replacing(hour: selectedStartTime.hour);
+    selectedDisplay = widget.availableDisplays.first;
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -53,7 +56,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     if (pickedTime != null && pickedTime != selectedStartTime) {
       setState(() {
         selectedStartTime = pickedTime;
-        selectedEndTime = pickedTime.replacing(hour: pickedTime.hour + 1);
+        selectedEndTime = pickedTime.replacing(hour: pickedTime.hour);
       });
     }
   }
@@ -86,17 +89,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         children: [
           ListTile(
             title: Text('Date'),
-            subtitle: Text('${selectedDate.toLocal()}'),
+            subtitle: Text(DateFormat('yyyy-MM-dd').format(selectedDate)),
             onTap: () => _selectDate(context),
           ),
           ListTile(
             title: Text('Start Time'),
-            subtitle: Text('${selectedStartTime.format(context)}'),
+            subtitle: Text(selectedStartTime.format(context)),
             onTap: () => _selectStartTime(context),
           ),
           ListTile(
             title: Text('End Time'),
-            subtitle: Text('${selectedEndTime.format(context)}'),
+            subtitle: Text(selectedEndTime.format(context)),
             onTap: () => _selectEndTime(context),
           ),
           ListTile(
@@ -116,6 +119,31 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               },
             ),
           ),
+          ListTile(
+            title: Text('Username'),
+            subtitle: TypeAheadField<String>(
+              textFieldConfiguration: TextFieldConfiguration(
+                controller: _usernameController,
+                decoration: InputDecoration(
+                  hintText: 'Enter a username',
+                ),
+              ),
+              suggestionsCallback: (pattern) {
+                return widget.availableUsernames
+                    .where((username) =>
+                    username.toLowerCase().contains(pattern.toLowerCase()))
+                    .toList();
+              },
+              itemBuilder: (context, username) {
+                return ListTile(
+                  title: Text(username),
+                );
+              },
+              onSuggestionSelected: (username) {
+                _usernameController.text = username;
+              },
+            ),
+          ),
           ElevatedButton(
             onPressed: () {
               final dateTimeSlot = DateTimeSlot(
@@ -123,9 +151,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 startTime: selectedStartTime,
                 endTime: selectedEndTime,
                 display: selectedDisplay,
+                username: _usernameController.text,
               );
               widget.onConfirm(dateTimeSlot);
-              Navigator.pop(context); // Navigate back to the previous screen (PinBoardScreen)
             },
             child: Text('Confirm'),
           ),

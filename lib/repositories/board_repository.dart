@@ -33,10 +33,9 @@ class BoardRepository {
 
   Future<List<Board>> getBoardItems(MyBoardUser? user) async {
     try {
-      if(user == null)
-        throw Exception('No Authenticated user found');
-      final response = await http
-          .get(Uri.parse('$_apiUrl/v1/board/items/${user.id}'));
+      if (user == null) throw Exception('No Authenticated user found');
+      final response =
+          await http.get(Uri.parse('$_apiUrl/v1/board/items/${user.id}'));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as List<dynamic>;
         final boards = data.map((item) => Board.fromJson(item)).toList();
@@ -49,6 +48,38 @@ class BoardRepository {
       // Handle exception
       print('Exception: $e');
       throw Exception('Failed to fetch board items');
+    }
+  }
+
+  Future<void> updateBoard(Board board) async {
+    // Convert the displayDateTimeMap to JSON
+    final updatedDisplayDateTimeMap = <String, DateTimeSlot>{};
+    board.displayDateTimeMap.forEach((key, value) {
+      updatedDisplayDateTimeMap[key] = value;
+    });
+
+    // Create the board object with the updated displayDateTimeMap
+    final updatedBoard = board.copyWith(displayDateTimeMap: updatedDisplayDateTimeMap);
+
+    // Convert the updated board object to JSON
+    final boardJson = jsonEncode(updatedBoard.toJson());
+    try {
+      final response = await http.put(
+        Uri.parse('$_apiUrl/v1/board/update/${board.id}'),
+        body: boardJson,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        // Board item updated successfully
+        print('Board item updated successfully');
+      } else {
+        // Failed to update board item
+        print('Failed to update board item');
+      }
+    } catch (e) {
+      // Handle any errors that occurred during the API call
+      print('API error: $e');
     }
   }
 }
