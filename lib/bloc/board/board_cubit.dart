@@ -15,7 +15,8 @@ class BoardCubit extends Cubit<BoardState> {
     await boardRepository.saveBoardItem(newBoard); // Save the board to the repository
 
     try {
-      final boards = await boardRepository.getBoardItems(UserUtils.getLoggedInUser(context)); // Fetch all boards from the repository
+      final boards =
+      await boardRepository.getBoardItems(UserUtils.getLoggedInUser(context)); // Fetch all boards from the repository
       emit(BoardLoaded(boards: boards));
     } catch (e) {
       emit(BoardError(message: 'Failed to fetch board items.'));
@@ -41,65 +42,24 @@ class BoardCubit extends Cubit<BoardState> {
     }
   }
 
-  void addDateTimeSlots(Board board, Map<String, DateTimeSlot> dateTimeSlots) {
+
+  void updateBoard(Board board, DateTimeSlot dateTimeSlot, BuildContext context) async {
     if (state is BoardLoaded) {
       final currentBoards = List<Board>.from((state as BoardLoaded).boards);
       final index = currentBoards.indexOf(board);
       if (index != -1) {
-        final updatedBoard = currentBoards[index].copyWith(
-          displayDetails: dateTimeSlots,
-        );
-        currentBoards[index] = updatedBoard;
-        emit(BoardLoaded(boards: currentBoards));
+        currentBoards[index].displayDetails.add(dateTimeSlot);
+        boardRepository.updateBoard(currentBoards[index]);
+        final boards = await boardRepository.getBoardItems(UserUtils.getLoggedInUser(context));
+        emit(BoardLoaded(boards: boards));
       }
     }
   }
 
-  void updateBoardDateTime(Board board, String display, DateTimeSlot dateTimeSlot) {
-    if (state is BoardLoaded) {
-      final currentBoards = List<Board>.from((state as BoardLoaded).boards);
-      final index = currentBoards.indexOf(board);
-      if (index != -1) {
-        final updatedBoard = currentBoards[index].copyWith(
-          displayDetails: {
-            ...board.displayDetails,
-            display: dateTimeSlot,
-          },
-        );
-        currentBoards[index] = updatedBoard;
-        emit(BoardLoaded(boards: currentBoards));
-      }
-    }
-  }
 
-  void updateSelectedDisplays(Board board, List<String> selectedDisplays) {
-    if (state is BoardLoaded) {
-      final List<Board> updatedBoards = (state as BoardLoaded).boards.map((b) {
-        if (b == board) {
-          return b.copyWith(selectedDisplays: selectedDisplays);
-        }
-        return b;
-      }).toList();
 
-      emit(BoardLoaded(boards: updatedBoards));
-    }
-  }
-
-  void updateBoard(Board board, DateTimeSlot selectedData) async {
-    if (state is BoardLoaded) {
-      final List<Board> updatedBoards = (state as BoardLoaded).boards.map((b) {
-        if (b == board) {
-          final updatedMap = Map<String, DateTimeSlot>.from(b.displayDetails);
-          updatedMap[selectedData.display] = selectedData;
-          final updatedBoard = b.copyWith(displayDetails: updatedMap);
-          // Make the API call to update the board item
-          boardRepository.updateBoard(updatedBoard);
-          return updatedBoard;
-        }
-        return b;
-      }).toList();
-
-      emit(BoardLoaded(boards: updatedBoards));
-    }
+  void setAvailableDisplays(List<String> displays) {
+    // Update the state with the available displays
+    emit(BoardDisplaysLoaded(displays));
   }
 }

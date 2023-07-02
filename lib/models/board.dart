@@ -7,17 +7,25 @@ class Board {
   final String userId; // Add userId parameter
   final String title;
   final String description;
-  final Map<String, DateTimeSlot> displayDetails;
-  final List<String> selectedDisplays;
+  final List<DateTimeSlot> displayDetails;
 
   Board({
     this.id, // Add id parameter
     required this.userId, // Add userId parameter
     required this.title,
     required this.description,
-    this.displayDetails = const {},
-    this.selectedDisplays = const [],
+    this.displayDetails = const [],
   });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Board &&
+              runtimeType == other.runtimeType &&
+              id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 
   factory Board.fromJson(Map<String, dynamic> json) {
     final displayDetails = json['displayDetails'];
@@ -29,45 +37,33 @@ class Board {
         userId: json['userId'],
         title: json['title'],
         description: json['description'],
-        displayDetails: {},
+        displayDetails: [],
       );
     }
 
-    final displayDetailsMap = <String, DateTimeSlot>{};
-
-    displayDetails.forEach((key, value) {
-      final dateTimeSlotJson = value as Map<String, dynamic>;
-      final dateTimeSlot = DateTimeSlot.fromJson(dateTimeSlotJson);
-      displayDetailsMap[key] = dateTimeSlot;
-    });
+    final displayDetailsList = List<Map<String, dynamic>>.from(displayDetails);
+    final List<DateTimeSlot> dateTimeSlots =
+    displayDetailsList.map((data) => DateTimeSlot.fromJson(data)).toList();
 
     return Board(
       id: json['id'],
       userId: json['userId'],
       title: json['title'],
       description: json['description'],
-      displayDetails: displayDetailsMap,
+      displayDetails: dateTimeSlots,
     );
   }
 
   Map<String, dynamic> toJson() {
-    final displayDateTimeMapJson =
-        Map<String, dynamic>.from(displayDetails.map(
-      (key, value) => MapEntry(key, {
-        'date': value.date.toIso8601String(),
-        'startTime':
-            '${value.startTime.hour.toString().padLeft(2, '0')}:${value.startTime.minute.toString().padLeft(2, '0')}',
-        'endTime':
-            '${value.endTime.hour.toString().padLeft(2, '0')}:${value.endTime.minute.toString().padLeft(2, '0')}',
-        'display': value.display,
-      }),
-    ));
+    final List<Map<String, dynamic>> displayDetailsJson =
+    displayDetails.map((dateTimeSlot) => dateTimeSlot.toJson()).toList();
 
     return {
+      'id': id,
       'userId': userId,
       'title': title,
       'description': description,
-      'displayDetails': displayDateTimeMapJson,
+      'displayDetails': displayDetailsJson,
     };
   }
 
@@ -76,46 +72,39 @@ class Board {
     String? userId, // Add userId parameter
     String? title,
     String? description,
-    Map<String, DateTimeSlot>? displayDetails,
-    List<String>? selectedDisplays,
+    List<DateTimeSlot>? displayDetails
   }) {
     return Board(
       id: id ?? this.id,
-      // Add id parameter
       userId: userId ?? this.userId,
-      // Add userId parameter
       title: title ?? this.title,
       description: description ?? this.description,
       displayDetails: displayDetails ?? this.displayDetails,
-      selectedDisplays: selectedDisplays ?? this.selectedDisplays,
     );
   }
 
-  Board updateDateTimeSlot(String display, DateTimeSlot dateTimeSlot) {
-    final updatedMap = Map<String, DateTimeSlot>.from(displayDetails);
-    updatedMap[display] = dateTimeSlot;
-    return copyWith(displayDetails: updatedMap);
-  }
 }
 
 class DateTimeSlot {
+  final String? id;
   final DateTime date;
   final TimeOfDay startTime;
   final TimeOfDay endTime;
   final String display;
-  final String? username;
+  final String username;
 
   DateTimeSlot({
+    this.id,
     required this.date,
     required this.startTime,
     required this.endTime,
     required this.display,
-    this.username,
+    required this.username,
   });
 
   factory DateTimeSlot.fromJson(Map<String, dynamic> json) {
-    final timeFormatter = DateFormat('HH:mm');
     return DateTimeSlot(
+      id: json['id'],
       date: DateTime.parse(json['date']),
       startTime: _parseTime(json['startTime']),
       endTime: _parseTime(json['endTime']),
@@ -133,6 +122,7 @@ class DateTimeSlot {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'date': date.toIso8601String(),
       'startTime': _formatTime(startTime),
       'endTime': _formatTime(endTime),

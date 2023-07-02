@@ -5,13 +5,9 @@ import 'package:intl/intl.dart';
 
 class ScheduleScreen extends StatefulWidget {
   final Function(DateTimeSlot) onConfirm;
-  final List<String> availableDisplays;
-  final List<String> availableUsernames;
 
   ScheduleScreen({
     required this.onConfirm,
-    required this.availableDisplays,
-    required this.availableUsernames,
   });
 
   @override
@@ -22,8 +18,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   late DateTime selectedDate;
   late TimeOfDay selectedStartTime;
   late TimeOfDay selectedEndTime;
-  late String selectedDisplay;
   TextEditingController _usernameController = TextEditingController();
+  TextEditingController _displayController = TextEditingController();
+  List<String>? availableUsernames = [];
+  List<String>? availableDisplays = [];
 
   @override
   void initState() {
@@ -31,7 +29,39 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     selectedDate = DateTime.now();
     selectedStartTime = TimeOfDay.now();
     selectedEndTime = selectedStartTime.replacing(hour: selectedStartTime.hour);
-    selectedDisplay = widget.availableDisplays.first;
+
+    // Load the available usernames during initialization
+    loadAvailableUsernames();
+  }
+
+  Future<void> loadAvailableUsernames() async {
+    // Make an API call to fetch the list of available usernames
+    // For example:
+    // final usernames = await yourApiService.getAvailableUsernames();
+    // setState(() {
+    //   availableUsernames = usernames;
+    // });
+
+    // Placeholder code to demonstrate the functionality
+    await Future.delayed(Duration(seconds: 1));
+    setState(() {
+      availableUsernames = ['user1', 'user2', 'user3'];
+    });
+  }
+
+  Future<void> fetchDisplaysForUsername(String username) async {
+    // Make an API call to fetch the displays for the selected username
+    // For example:
+    // final displays = await yourApiService.getDisplaysForUsername(username);
+    // setState(() {
+    //   availableDisplays = displays;
+    // });
+
+    // Placeholder code to demonstrate the functionality
+    await Future.delayed(Duration(seconds: 1));
+    setState(() {
+      availableDisplays = ['Display1', 'Display2', 'Display3'];
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -75,8 +105,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   void _onDisplaySelected(String display) {
     setState(() {
-      selectedDisplay = display;
+      _displayController.text = display;
     });
+  }
+
+  void _onUsernameSelected(String username) {
+    setState(() {
+      _usernameController.text = username;
+    });
+
+    // Fetch the displays for the selected username
+    fetchDisplaysForUsername(username);
   }
 
   @override
@@ -104,18 +143,26 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           ),
           ListTile(
             title: Text('Display'),
-            subtitle: DropdownButton<String>(
-              value: selectedDisplay,
-              items: widget.availableDisplays.map((display) {
-                return DropdownMenuItem<String>(
-                  value: display,
-                  child: Text(display),
+            subtitle: TypeAheadField<String>(
+              textFieldConfiguration: TextFieldConfiguration(
+                controller: _displayController,
+                decoration: InputDecoration(
+                  hintText: 'Enter a display',
+                ),
+              ),
+              suggestionsCallback: (pattern) {
+                return availableDisplays
+                    ?.where((display) =>
+                    display.toLowerCase().contains(pattern.toLowerCase()))
+                    .toList() ?? [];
+              },
+              itemBuilder: (context, username) {
+                return ListTile(
+                  title: Text(username),
                 );
-              }).toList(),
-              onChanged: (String? value) {
-                if (value != null) {
-                  _onDisplaySelected(value);
-                }
+              },
+              onSuggestionSelected: (username) {
+                _onUsernameSelected(username);
               },
             ),
           ),
@@ -129,10 +176,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 ),
               ),
               suggestionsCallback: (pattern) {
-                return widget.availableUsernames
-                    .where((username) =>
+                return availableUsernames
+                    ?.where((username) =>
                     username.toLowerCase().contains(pattern.toLowerCase()))
-                    .toList();
+                    .toList() ?? [];
               },
               itemBuilder: (context, username) {
                 return ListTile(
@@ -140,7 +187,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 );
               },
               onSuggestionSelected: (username) {
-                _usernameController.text = username;
+                _onUsernameSelected(username);
               },
             ),
           ),
@@ -150,7 +197,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 date: selectedDate,
                 startTime: selectedStartTime,
                 endTime: selectedEndTime,
-                display: selectedDisplay,
+                display: _displayController.text,
                 username: _usernameController.text,
               );
               widget.onConfirm(dateTimeSlot);

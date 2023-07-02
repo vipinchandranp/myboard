@@ -41,7 +41,7 @@ class _PlayLiveScreenState extends State<PlayLiveScreen> {
     final boardState = boardCubit.state;
     if (boardState is BoardLoaded) {
       for (final board in boardState.boards) {
-        final timeSlots = board.displayDetails.values.toList();
+        final timeSlots = board.displayDetails.toList();
         for (final timeSlot in timeSlots) {
           final startTime = DateTime(
             now.year,

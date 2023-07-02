@@ -29,3 +29,9 @@ class BoardError extends BoardState {
   @override
   List<Object?> get props => [message];
 }
+
+class BoardDisplaysLoaded extends BoardState {
+  final List<String> displays;
+
+  BoardDisplaysLoaded(this.displays);
+}

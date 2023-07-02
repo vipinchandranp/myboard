@@ -52,17 +52,9 @@ class BoardRepository {
   }
 
   Future<void> updateBoard(Board board) async {
-    // Convert the displayDateTimeMap to JSON
-    final updatedDisplayDateTimeMap = <String, DateTimeSlot>{};
-    board.displayDetails.forEach((key, value) {
-      updatedDisplayDateTimeMap[key] = value;
-    });
-
-    // Create the board object with the updated displayDateTimeMap
-    final updatedBoard = board.copyWith(displayDetails: updatedDisplayDateTimeMap);
 
     // Convert the updated board object to JSON
-    final boardJson = jsonEncode(updatedBoard.toJson());
+    final boardJson = jsonEncode(board.toJson());
     try {
       final response = await http.put(
         Uri.parse('$_apiUrl/v1/board/update/${board.id}'),
