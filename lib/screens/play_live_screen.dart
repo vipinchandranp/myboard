@@ -41,8 +41,8 @@ class _PlayLiveScreenState extends State<PlayLiveScreen> {
     final boardState = boardCubit.state;
     if (boardState is BoardLoaded) {
       for (final board in boardState.boards) {
-        final timeSlots = board.displayDetails.toList();
-        for (final timeSlot in timeSlots) {
+        final timeSlots = board.displayDetails?.toList();
+        for (final timeSlot in timeSlots!) {
           final startTime = DateTime(
             now.year,
             now.month,
@@ -85,7 +85,7 @@ class _PlayLiveScreenState extends State<PlayLiveScreen> {
             ),
             SizedBox(height: 10),
             Text(
-              currentBoard!.title,
+              currentBoard!.title ?? '',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -93,7 +93,7 @@ class _PlayLiveScreenState extends State<PlayLiveScreen> {
             ),
             SizedBox(height: 10),
             Text(
-              currentBoard!.description,
+              currentBoard!.description ?? '',
               style: TextStyle(fontSize: 16),
             ),
           ],

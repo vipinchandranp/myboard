@@ -19,7 +19,7 @@ class BoardScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final boardItem = boardItems[index];
           return ListTile(
-            title: Text(boardItem.title),
+            title: Text(boardItem.title ?? ''),
           );
         },
       ),

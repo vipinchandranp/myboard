@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/board/board_cubit.dart';
-import 'package:myboard/bloc/board/board_state.dart';
 import 'package:myboard/models/board.dart';
 import 'package:myboard/models/user.dart';
 import 'package:myboard/utils/user_utils.dart';
 
 class CreateBoardScreen extends StatefulWidget {
-  final MyBoardUser? user; // Update the type to accept nullable MyBoardUser
+  final MyBoardUser? user;
 
   CreateBoardScreen({this.user});
 
@@ -22,15 +21,16 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
 
   void _submitForm(BuildContext context) {
     if (_formKey.currentState!.validate()) {
-      final board = Board(
-        userId: UserUtils.getLoggedInUser(context)?.id ?? '',
-        title: _titleController.text,
-        description: _descriptionController.text,
-      );
+      String userId = UserUtils.getLoggedInUser(context)?.id ?? '';
+      String title = _titleController.text;
+      String description = _descriptionController.text;
+
+      var board = Board();
+      board.userId = userId;
+      board.title = title;
+      board.description = description;
 
       BlocProvider.of<BoardCubit>(context).createBoard(board, context);
-
-      saveBoardItemToBackend(board); // Pass the Board object to the backend function
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -41,26 +41,12 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
 
       _titleController.clear();
       _descriptionController.clear();
-      Navigator.pop(context);
     }
-  }
-
-  // Function to save the board item to the backend
-  void saveBoardItemToBackend(Board board) {
-    // TODO: Implement the backend saving logic here
-    // Include the board object in the API request or function call
-    // to save the board item along with the user ID
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       body: Form(
         key: _formKey,
         child: Padding(
@@ -92,11 +78,6 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _submitForm(context),
-        child: Icon(Icons.save),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

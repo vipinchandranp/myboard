@@ -1,88 +1,165 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class Board {
-  final String? id; // Add id parameter
-  final String userId; // Add userId parameter
-  final String title;
-  final String description;
-  final List<DateTimeSlot> displayDetails;
+  String? _id; // Add id parameter
+  String? _userId; // Add userId parameter
+  String? _title;
+  String? _description;
+  int? _rating;
+  List<Comment>? _comments;
+  List<DateTimeSlot>? _displayDetails;
 
-  Board({
-    this.id, // Add id parameter
-    required this.userId, // Add userId parameter
-    required this.title,
-    required this.description,
-    this.displayDetails = const [],
-  });
+  Board(
+      {String? id,
+      String? userId,
+      String? title,
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-          other is Board &&
-              runtimeType == other.runtimeType &&
-              id == other.id;
+      String? description,
+      int? rating,
+      List<Comment>? comments,
+      List<DateTimeSlot>? displayDetails})
+      : _id = id,
+        _userId = userId,
+        _title = title,
+        _description = description,
+        _rating = rating,
+        _comments = comments,
+        _displayDetails = displayDetails;
 
-  @override
-  int get hashCode => id.hashCode;
+
+  String? get id => _id;
+
+  set id(String? id){
+    _id = id;
+  }
+
+  int? get rating => _rating;
+
+  set rating(int? rating) {
+    _rating = rating;
+  }
+
+  String? get userId => _userId;
+
+  set userId(String? userId) {
+    _userId = userId;
+  }
+
+  String? get title => _title;
+
+  set title(String? title) {
+    _title = title;
+  }
+
+  String? get description => _description;
+
+  set description(String? description) {
+    _description = description;
+  }
+
+  List<Comment>? get comments => _comments;
+
+  set comments(List<Comment>? comments) {
+    _comments = comments;
+  }
+
+  List<DateTimeSlot>? get displayDetails => _displayDetails;
+
+  set displayDetails(List<DateTimeSlot>? displayDetails) {
+    _displayDetails = displayDetails;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': _id,
+      'userId': _userId,
+      'title': _title,
+      'description': _description,
+      'rating': _rating,
+      'comments': _comments?.map((comment) => comment.toJson()).toList(),
+      'displayDetails': _displayDetails?.map((dateTimeSlot) => dateTimeSlot.toJson()).toList(),
+    };
+  }
 
   factory Board.fromJson(Map<String, dynamic> json) {
-    final displayDetails = json['displayDetails'];
+    return Board()
+      ..id = json['id']
+      ..userId = json['userId']
+      ..title = json['title']
+      ..description = json['description']
+      ..rating = json['rating'] // Updated data type to int
+      ..comments = json['comments'] != null
+          ? List<Comment>.from(json['comments'].map((comment) => Comment.fromJson(comment)))
+          : []
+      ..displayDetails = json['displayDetails'] != null
+          ? List<DateTimeSlot>.from(json['displayDetails'].map((slot) => DateTimeSlot.fromJson(slot)))
+          : [];
+  }
 
-    // Check if the displayDetails is null or empty
-    if (displayDetails == null || displayDetails.isEmpty) {
-      return Board(
-        id: json['id'],
-        userId: json['userId'],
-        title: json['title'],
-        description: json['description'],
-        displayDetails: [],
-      );
-    }
 
-    final displayDetailsList = List<Map<String, dynamic>>.from(displayDetails);
-    final List<DateTimeSlot> dateTimeSlots =
-    displayDetailsList.map((data) => DateTimeSlot.fromJson(data)).toList();
+}
 
-    return Board(
-      id: json['id'],
-      userId: json['userId'],
-      title: json['title'],
-      description: json['description'],
-      displayDetails: dateTimeSlots,
+class Comment {
+  final String text;
+  final String username;
+  final DateTime date;
+  final List<Reply> replies;
+
+  Comment({
+    required this.text,
+    required this.username,
+    required this.date,
+    required this.replies,
+  });
+
+  factory Comment.fromJson(Map<String, dynamic> json) {
+    return Comment(
+      text: json['text'],
+      username: json['username'],
+      date: DateTime.parse(json['date']),
+      replies: json['replies'] != null
+          ? List<Reply>.from(
+              json['replies'].map((reply) => Reply.fromJson(reply)))
+          : [],
     );
   }
 
   Map<String, dynamic> toJson() {
-    final List<Map<String, dynamic>> displayDetailsJson =
-    displayDetails.map((dateTimeSlot) => dateTimeSlot.toJson()).toList();
-
     return {
-      'id': id,
-      'userId': userId,
-      'title': title,
-      'description': description,
-      'displayDetails': displayDetailsJson,
+      'text': text,
+      'username': username,
+      'date': date.toIso8601String(),
+      'replies': replies.map((reply) => reply.toJson()).toList(),
     };
   }
+}
 
-  Board copyWith({
-    String? id, // Add id parameter
-    String? userId, // Add userId parameter
-    String? title,
-    String? description,
-    List<DateTimeSlot>? displayDetails
-  }) {
-    return Board(
-      id: id ?? this.id,
-      userId: userId ?? this.userId,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      displayDetails: displayDetails ?? this.displayDetails,
+class Reply {
+  final String text;
+  final String username;
+  final DateTime date;
+
+  Reply({
+    required this.text,
+    required this.username,
+    required this.date,
+  });
+
+  factory Reply.fromJson(Map<String, dynamic> json) {
+    return Reply(
+      text: json['text'],
+      username: json['username'],
+      date: DateTime.parse(json['date']),
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'text': text,
+      'username': username,
+      'date': date.toIso8601String(),
+    };
+  }
 }
 
 class DateTimeSlot {

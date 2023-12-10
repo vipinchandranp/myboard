@@ -1,3 +1,4 @@
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,8 @@ import 'package:myboard/repositories/user_repository.dart';
 import 'package:myboard/models/board.dart';
 import 'package:myboard/bloc/board/board_cubit.dart';
 import 'package:myboard/bloc/board/board_state.dart';
+import 'package:myboard/screens/custom_dialog.dart';
+import 'package:myboard/screens/loading.dart';
 
 class UserCubit extends Cubit<UserState> {
   final UserRepository userRepository;
@@ -19,6 +22,25 @@ class UserCubit extends Cubit<UserState> {
   }) : super(UserInitial()) {
 
   }
+
+  Future<void> signInWithGoogle() async {
+    // Your Google Sign-In logic here
+  }
+
+  Future<List<String>> getAvailableUsers(String pattern) async {
+    try {
+      if (pattern == null) {
+        throw Exception("No authenticated user found");
+      }
+      List<String> userList = await userRepository.getAvailableUsers(pattern);
+      return userList;
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to fetch users');
+    }
+  }
+
 
   Future<void> signUp(String email, String password, String name) async {
     emit(UserLoading());
@@ -32,20 +54,19 @@ class UserCubit extends Cubit<UserState> {
   }
 
   Future<void> signIn(BuildContext context, String username, String password) async {
+    LoadingHelper.showLoading(context);
     emit(UserLoading());
 
     try {
-      LoginResponse response = await userRepository.signIn(username, password);
-      MyBoardUser user = response.user;
-      emit(UserAuthenticated(user));
+      String response = await userRepository.signIn(username, password);
 
       // Fetch board items for the logged-in user
-      BoardCubit boardCubit = BlocProvider.of<BoardCubit>(context);
-      await boardCubit.fetchBoardItems(user);
 
-      Navigator.pushReplacementNamed(context, '/home');
+      LoadingHelper.hideLoading(context);
+      Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
       emit(UserError(message: 'Failed to login. Please try again.'));
+    }finally{
     }
   }
 }

@@ -8,25 +8,57 @@ import 'package:myboard/models/login_response.dart';
 class UserRepository {
   final String _apiUrl = APIConfig.getRootURL();
 
-  // Login
-  Future<LoginResponse> signIn(String username, String password) async {
-    final response = await http.post(
-      Uri.parse('$_apiUrl/v1/users/login'),
-      headers: {'Content-Type': 'application/json'},
-      // Set the Content-Type header
-      body: jsonEncode(<String, String>{
-        'password': password,
-        'username': username,
-      }),
+  Future<String> signIn(String username, String password) async {
+    final response = await http.get(
+      Uri.parse(APIConfig.getRootURL() +
+          '/v1/users/login?username=$username&password=$password'),
+      headers: {
+        'Content-Type': 'application/json'
+      },
     );
 
-    if (response.statusCode == 200) {
-      final loginResponse = LoginResponse.fromMap(jsonDecode(response.body));
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', loginResponse.token);
-      return loginResponse;
+    // Log headers for debugging
+    print('Response Headers: ${response.headers['Authorization']}');
+
+    // Check if the response is from an OPTIONS request
+    if (response.statusCode == 200 && response.request?.method != 'OPTIONS') {
+      // Save the token to shared_preferences
+      // Decode the JSON response to extract the token
+      final jsonResponse = json.decode(response.body);
+
+      // Extract the token from the decoded JSON response
+      final token = jsonResponse['token'];
+
+      await saveTokenToSharedPreferences(token);
+
+      return "LoggedIn successfully";
     } else {
       throw Exception('Failed to log in');
+    }
+  }
+
+  Future<void> saveTokenToSharedPreferences(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
+  }
+
+  Future<List<String>> getAvailableUsers(String pattern) async {
+    try {
+      if (pattern == null) throw Exception('No Authenticated user found');
+      final response =
+          await http.get(Uri.parse('$_apiUrl/v1/users/${pattern}'));
+      if (response.statusCode == 200) {
+        List<dynamic> tempUserList = jsonDecode(response.body);
+        List<String> stringList = tempUserList.cast<String>();
+        return stringList;
+      } else {
+        // Handle error case
+        return [];
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to fetch users');
     }
   }
 
@@ -44,7 +76,7 @@ class UserRepository {
     if (response.statusCode == 201) {
       return MyBoardUser.fromMap(jsonDecode(response.body));
     } else {
-      throw Exception('Failed to sign up');
+      throw Exception('Signedup successfully');
     }
   }
 

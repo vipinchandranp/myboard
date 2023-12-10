@@ -1,17 +1,25 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:myboard/bloc/user/user_cubit.dart';
 import 'package:myboard/models/board.dart';
 import 'package:intl/intl.dart';
+import 'package:myboard/repositories/board_repository.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
 class ScheduleScreen extends StatefulWidget {
   final Function(DateTimeSlot) onConfirm;
+  BuildContext context;
 
   ScheduleScreen({
     required this.onConfirm,
+    required this.context
   });
 
   @override
-  _ScheduleScreenState createState() => _ScheduleScreenState();
+  _ScheduleScreenState createState() => _ScheduleScreenState(context);
 }
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
@@ -22,6 +30,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   TextEditingController _displayController = TextEditingController();
   List<String>? availableUsernames = [];
   List<String>? availableDisplays = [];
+  late BuildContext _context;
+  _ScheduleScreenState(BuildContext context){
+    _context = context;
+  }
 
   @override
   void initState() {
@@ -30,23 +42,19 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     selectedStartTime = TimeOfDay.now();
     selectedEndTime = selectedStartTime.replacing(hour: selectedStartTime.hour);
 
-    // Load the available usernames during initialization
-    loadAvailableUsernames();
   }
 
-  Future<void> loadAvailableUsernames() async {
-    // Make an API call to fetch the list of available usernames
-    // For example:
-    // final usernames = await yourApiService.getAvailableUsernames();
-    // setState(() {
-    //   availableUsernames = usernames;
-    // });
 
-    // Placeholder code to demonstrate the functionality
-    await Future.delayed(Duration(seconds: 1));
-    setState(() {
-      availableUsernames = ['user1', 'user2', 'user3'];
-    });
+  Future<Iterable<String>> fetchAvailableUsernames(String pattern) async {
+    try {
+      final UserCubit userCubit = context.read<UserCubit>();
+      List<String> userList = await userCubit.getAvailableUsers(pattern);
+      return userList;
+    } catch (error) {
+      // Handle errors here (inside the async function)
+      // The code inside this block is executed if the Future throws an error.
+      return [];
+    }
   }
 
   Future<void> fetchDisplaysForUsername(String username) async {
@@ -120,91 +128,98 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Select Date and Time'),
-      ),
-      body: Column(
-        children: [
-          ListTile(
-            title: Text('Date'),
-            subtitle: Text(DateFormat('yyyy-MM-dd').format(selectedDate)),
-            onTap: () => _selectDate(context),
-          ),
-          ListTile(
-            title: Text('Start Time'),
-            subtitle: Text(selectedStartTime.format(context)),
-            onTap: () => _selectStartTime(context),
-          ),
-          ListTile(
-            title: Text('End Time'),
-            subtitle: Text(selectedEndTime.format(context)),
-            onTap: () => _selectEndTime(context),
-          ),
-          ListTile(
-            title: Text('Display'),
-            subtitle: TypeAheadField<String>(
-              textFieldConfiguration: TextFieldConfiguration(
-                controller: _displayController,
-                decoration: InputDecoration(
-                  hintText: 'Enter a display',
+    return Container(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Select Date and Time'),
+        ),
+        body: Container(
+          child: Center(
+            child: FractionallySizedBox(
+              widthFactor: 0.9, // Set width to 60% of the screen
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ListTile(
+                        title: Text('Date'),
+                        subtitle:
+                            Text(DateFormat('yyyy-MM-dd').format(selectedDate)),
+                        onTap: () => _selectDate(context),
+                      ),
+                      ListTile(
+                        title: Text('Start Time'),
+                        subtitle: Text(selectedStartTime.format(context)),
+                        onTap: () => _selectStartTime(context),
+                      ),
+                      ListTile(
+                        title: Text('End Time'),
+                        subtitle: Text(selectedEndTime.format(context)),
+                        onTap: () => _selectEndTime(context),
+                      ),
+                      SizedBox(height: 16.0),
+                      ListTile(
+                        title: Text('Username'),
+                        subtitle: Builder(builder: (context) {
+                          final userCubit = context.watch<UserCubit>();
+                          return TypeAheadField<String>(
+                            textFieldConfiguration: TextFieldConfiguration(
+                              controller: _usernameController,
+                              decoration: InputDecoration(
+                                hintText: 'Enter a username',
+                              ),
+                            ),
+                            suggestionsCallback: (pattern) async {
+                              return await userCubit.getAvailableUsers(pattern);
+                            },
+                            itemBuilder: (context, username) {
+                              return ListTile(
+                                title: Text(username),
+                              );
+                            },
+                            onSuggestionSelected: (username) {
+                              _onUsernameSelected(username);
+                            },
+                          );
+                        }),
+                      ),
+                      SizedBox(height: 16.0),
+                      Center(
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final dateTimeSlot = DateTimeSlot(
+                                date: selectedDate,
+                                startTime: selectedStartTime,
+                                endTime: selectedEndTime,
+                                display: _displayController.text,
+                                username: _usernameController.text,
+                              );
+                              widget.onConfirm(dateTimeSlot);
+                            },
+                            style: ButtonStyle(
+                              minimumSize: MaterialStateProperty.all(Size(40,
+                                  40)), // Set the minimum size of the button
+                            ),
+                            child: Text('Confirm'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              suggestionsCallback: (pattern) {
-                return availableDisplays
-                    ?.where((display) =>
-                    display.toLowerCase().contains(pattern.toLowerCase()))
-                    .toList() ?? [];
-              },
-              itemBuilder: (context, username) {
-                return ListTile(
-                  title: Text(username),
-                );
-              },
-              onSuggestionSelected: (username) {
-                _onUsernameSelected(username);
-              },
             ),
           ),
-          ListTile(
-            title: Text('Username'),
-            subtitle: TypeAheadField<String>(
-              textFieldConfiguration: TextFieldConfiguration(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  hintText: 'Enter a username',
-                ),
-              ),
-              suggestionsCallback: (pattern) {
-                return availableUsernames
-                    ?.where((username) =>
-                    username.toLowerCase().contains(pattern.toLowerCase()))
-                    .toList() ?? [];
-              },
-              itemBuilder: (context, username) {
-                return ListTile(
-                  title: Text(username),
-                );
-              },
-              onSuggestionSelected: (username) {
-                _onUsernameSelected(username);
-              },
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final dateTimeSlot = DateTimeSlot(
-                date: selectedDate,
-                startTime: selectedStartTime,
-                endTime: selectedEndTime,
-                display: _displayController.text,
-                username: _usernameController.text,
-              );
-              widget.onConfirm(dateTimeSlot);
-            },
-            child: Text('Confirm'),
-          ),
-        ],
+        ),
       ),
     );
   }
