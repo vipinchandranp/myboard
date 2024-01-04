@@ -1,35 +1,47 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:myboard/models/display_details.dart';
 
 class Board {
-  String? _id; // Add id parameter
-  String? _userId; // Add userId parameter
+  String? _id;
+  String? _userId;
   String? _title;
   String? _description;
   int? _rating;
   List<Comment>? _comments;
-  List<DateTimeSlot>? _displayDetails;
+  List<DisplayDetails>? _displayDetails;
+  List<DateTimeSlot>? _dateTimeSlots; // Added this line for DateTimeSlot
+  bool? _isApproved;
+  XFile? _imageFile;
 
-  Board(
-      {String? id,
-      String? userId,
-      String? title,
-
-      String? description,
-      int? rating,
-      List<Comment>? comments,
-      List<DateTimeSlot>? displayDetails})
-      : _id = id,
+  Board({
+    String? id,
+    String? userId,
+    String? title,
+    String? description,
+    int? rating,
+    List<Comment>? comments,
+    List<DisplayDetails>? displayDetails,
+    List<DateTimeSlot>? dateTimeSlots, // Added this line for DateTimeSlot
+    bool? isApproved,
+    XFile? imageFile,
+  })  : _id = id,
         _userId = userId,
         _title = title,
         _description = description,
         _rating = rating,
         _comments = comments,
-        _displayDetails = displayDetails;
-
+        _displayDetails = displayDetails,
+        _dateTimeSlots = dateTimeSlots,
+        // Added this line for DateTimeSlot
+        _isApproved = isApproved,
+        _imageFile = imageFile;
 
   String? get id => _id;
 
-  set id(String? id){
+  set id(String? id) {
     _id = id;
   }
 
@@ -63,10 +75,29 @@ class Board {
     _comments = comments;
   }
 
-  List<DateTimeSlot>? get displayDetails => _displayDetails;
+  List<DisplayDetails>? get displayDetails => _displayDetails;
 
-  set displayDetails(List<DateTimeSlot>? displayDetails) {
+  set displayDetails(List<DisplayDetails>? displayDetails) {
     _displayDetails = displayDetails;
+  }
+
+  List<DateTimeSlot>? get dateTimeSlots =>
+      _dateTimeSlots; // Added this line for DateTimeSlot
+
+  set dateTimeSlots(List<DateTimeSlot>? dateTimeSlots) {
+    _dateTimeSlots = dateTimeSlots;
+  }
+
+  bool? get isApproved => _isApproved;
+
+  set isApproved(bool? isApproved) {
+    _isApproved = isApproved;
+  }
+
+  XFile? get imageFile => _imageFile;
+
+  set imageFile(XFile? imageFile) {
+    _imageFile = imageFile;
   }
 
   Map<String, dynamic> toJson() {
@@ -77,26 +108,41 @@ class Board {
       'description': _description,
       'rating': _rating,
       'comments': _comments?.map((comment) => comment.toJson()).toList(),
-      'displayDetails': _displayDetails?.map((dateTimeSlot) => dateTimeSlot.toJson()).toList(),
+      'displayDetails':
+          _displayDetails?.map((display) => display.toJson()).toList(),
+      'dateTimeSlots':
+          _dateTimeSlots?.map((dateTimeSlot) => dateTimeSlot.toJson()).toList(),
+      // Added this line for DateTimeSlot
+      'isApproved': _isApproved,
+      'imageFile': _imageFile?.path,
     };
   }
 
   factory Board.fromJson(Map<String, dynamic> json) {
-    return Board()
-      ..id = json['id']
-      ..userId = json['userId']
-      ..title = json['title']
-      ..description = json['description']
-      ..rating = json['rating'] // Updated data type to int
-      ..comments = json['comments'] != null
-          ? List<Comment>.from(json['comments'].map((comment) => Comment.fromJson(comment)))
-          : []
-      ..displayDetails = json['displayDetails'] != null
-          ? List<DateTimeSlot>.from(json['displayDetails'].map((slot) => DateTimeSlot.fromJson(slot)))
-          : [];
+    return Board(
+      id: json['id'],
+      userId: json['userId'],
+      title: json['title'],
+      description: json['description'],
+      rating: json['rating'],
+      comments: json['comments'] != null
+          ? List<Comment>.from(
+              json['comments'].map((comment) => Comment.fromJson(comment)))
+          : [],
+      displayDetails: json['displayDetails'] != null
+          ? List<DisplayDetails>.from(json['displayDetails']
+              .map((display) => DisplayDetails.fromJson(display)))
+          : [],
+      dateTimeSlots:
+          json['dateTimeSlots'] != null // Added this line for DateTimeSlot
+              ? List<DateTimeSlot>.from(json['dateTimeSlots']
+                  .map((dateTimeSlot) => DateTimeSlot.fromJson(dateTimeSlot)))
+              : [],
+      // Added this line for DateTimeSlot
+      isApproved: json['isApproved'],
+      imageFile: json['imageFile'] != null ? XFile(json['imageFile']) : null,
+    );
   }
-
-
 }
 
 class Comment {
@@ -169,6 +215,8 @@ class DateTimeSlot {
   final TimeOfDay endTime;
   final String display;
   final String username;
+  final double? latitude;
+  final double? longitude;
 
   DateTimeSlot({
     this.id,
@@ -177,6 +225,8 @@ class DateTimeSlot {
     required this.endTime,
     required this.display,
     required this.username,
+    this.latitude,
+    this.longitude,
   });
 
   factory DateTimeSlot.fromJson(Map<String, dynamic> json) {

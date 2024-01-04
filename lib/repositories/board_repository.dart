@@ -15,8 +15,10 @@ class BoardRepository {
 
   Future<void> saveBoardItem(BuildContext context, Board board) async {
     try {
+      final TokenInterceptorHttpClient tokenInterceptor = getIt<TokenInterceptorHttpClient>();
+
       var bodyBoard = jsonEncode(board);
-      final response = await http.post(Uri.parse('$_apiUrl/v1/board/save'),
+      final response = await tokenInterceptor.post(Uri.parse('$_apiUrl/v1/board/save'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(board)
       );

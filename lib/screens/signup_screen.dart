@@ -43,8 +43,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
     // Validate phone number
     if (!_isValidPhoneNumber(phoneNumber)) {
-      _showErrorDialog('Invalid phone number.');
-      return;
+      //_showErrorDialog('Invalid phone number.');
+      //return;
     }
 
     // Additional validation for email can be added here
@@ -78,9 +78,14 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   bool _isValidPhoneNumber(String phoneNumber) {
-    // Validate if the phone number has exactly 10 digits
-    return RegExp(r'^\d{10}$').hasMatch(phoneNumber);
+    // Remove any non-digit characters from the phone number
+    String cleanedPhoneNumber = phoneNumber.replaceAll(RegExp(r'\D'), '');
+
+    // Validate if the cleaned phone number has exactly 10 digits
+    return RegExp(r'^\d{10}$').hasMatch(cleanedPhoneNumber);
   }
+
+
 
   void _showErrorDialog(String message) {
     showDialog(

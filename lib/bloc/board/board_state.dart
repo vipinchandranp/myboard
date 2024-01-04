@@ -1,11 +1,12 @@
 import 'package:equatable/equatable.dart';
-import 'package:myboard/models/board.dart';
+import 'package:flutter/widgets.dart';
+import 'package:myboard/models/board.dart'; // Import this for BuildContext
 
-abstract class BoardState extends Equatable {
+class BoardState extends Equatable {
   const BoardState();
 
   @override
-  List<Object?> get props => [];
+  List<Object> get props => [];
 }
 
 class BoardInitial extends BoardState {}
@@ -15,23 +16,26 @@ class BoardLoading extends BoardState {}
 class BoardLoaded extends BoardState {
   final List<Board> boards;
 
-  BoardLoaded({required this.boards});
+  const BoardLoaded({required this.boards});
 
   @override
-  List<Object?> get props => [boards];
+  List<Object> get props => [boards];
 }
 
 class BoardError extends BoardState {
   final String message;
 
-  BoardError({required this.message});
+  const BoardError({required this.message});
 
   @override
-  List<Object?> get props => [message];
+  List<Object> get props => [message];
 }
 
 class BoardDisplaysLoaded extends BoardState {
   final List<String> displays;
 
-  BoardDisplaysLoaded(this.displays);
+  const BoardDisplaysLoaded(this.displays);
+
+  @override
+  List<Object> get props => [displays];
 }

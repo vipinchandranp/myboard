@@ -8,7 +8,6 @@ import 'package:myboard/models/board.dart';
 import 'package:myboard/screens/create_board_screen.dart';
 import 'package:myboard/screens/notification_screen.dart';
 import 'package:myboard/screens/pin_board_screen.dart';
-import 'package:myboard/screens/play_live_screen.dart';
 import 'package:myboard/utils/user_utils.dart';
 class MyBoardScreen extends StatelessWidget {
   @override
@@ -111,12 +110,6 @@ class MyBoardScreen extends StatelessWidget {
           children: [
             IconButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PlayLiveScreen(),
-                  ),
-                );
               },
               icon: Icon(Icons.play_arrow, color: Colors.white),
             ),

@@ -11,6 +11,14 @@ class BoardCubit extends Cubit<BoardState> {
 
   BoardCubit(this.boardRepository) : super(BoardInitial());
 
+  List<Board> get boards {
+    if (state is BoardLoaded) {
+      return (state as BoardLoaded).boards;
+    } else {
+      return []; // or throw an exception, depending on your use case
+    }
+  }
+
   void createBoard(Board newBoard, BuildContext context) async {
     await boardRepository.saveBoardItem(context, newBoard); // Save the board to the repository
 
@@ -44,20 +52,11 @@ class BoardCubit extends Cubit<BoardState> {
 
 
   void updateBoard(Board board, DateTimeSlot dateTimeSlot, BuildContext context) async {
-    if (state is BoardLoaded) {
-      final currentBoards = List<Board>.from((state as BoardLoaded).boards);
-      final index = currentBoards.indexOf(board);
-      if (index != -1) {
-        final displayDetails = currentBoards[index].displayDetails;
-        if(displayDetails != null){
-          displayDetails.add(dateTimeSlot); // Add the dateTimeSlot to displayDetails
-        }
-        boardRepository.updateBoard(currentBoards[index]);
-        final boards = await boardRepository.getBoardItems();
-        emit(BoardLoaded(boards: boards));
-      }
-    }
+
   }
+
+
+
 
 
 

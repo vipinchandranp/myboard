@@ -33,6 +33,7 @@ void main() {
   void setupDependencies() {
     // Register TokenInterceptorHttpClient as a singleton
     getIt.registerSingleton<TokenInterceptorHttpClient>(TokenInterceptorHttpClient());
+    getIt.registerSingleton<BoardRepository>(BoardRepository());
 
     // You can register other dependencies if needed
     // getIt.registerSingleton<YourServiceClass>(YourServiceClass());
