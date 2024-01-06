@@ -56,40 +56,19 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
 
       _titleController.clear();
       _descriptionController.clear();
-      setState(() {
-
-      });
+      setState(() {});
     }
   }
-
 
   XFile? _pickedFile;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _getImage() async {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    setState(() async {
-      if (pickedFile != null) {
-        if (kIsWeb) {
-          // For web, you might need to handle the file differently
-          // based on your requirements.
-        } else {
-          // Read the file and convert it to bytes
-          File file = File(pickedFile.path);
-          List<int> bytes = await file.readAsBytes();
-
-          // Now you can use the 'bytes' list as needed
-          // For example, you can convert it to Uint8List
-          Uint8List uint8List = Uint8List.fromList(bytes);
-        }
-      } else {
-        print("No image selected");
-      }
+    setState(() {
+      _pickedFile = pickedFile;
     });
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -106,13 +85,13 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
                 if (_pickedFile != null)
                   Column(
                     children: [
-                      Image.file(
-                        File(_pickedFile!.path),
+                      Image.network(
+                        _pickedFile!.path,
                         height: 200,
                         fit: BoxFit.cover,
                       ),
                       SizedBox(height: 16),
-                      Text('Uploaded File Content:')
+                      Text('Uploaded File Content:'),
                     ],
                   ),
                 SizedBox(height: 8),

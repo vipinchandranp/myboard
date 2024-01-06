@@ -23,9 +23,7 @@ class TokenInterceptorHttpClient implements http.BaseClient {
       {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
     final authorizedHeaders = await _addAuthorizationHeader(headers);
     return _inner.post(url,
-        headers: authorizedHeaders,
-        body: body,
-        encoding: encoding);
+        headers: authorizedHeaders, body: body, encoding: encoding);
   }
 
   @override
@@ -33,9 +31,7 @@ class TokenInterceptorHttpClient implements http.BaseClient {
       {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
     final authorizedHeaders = await _addAuthorizationHeader(headers);
     return _inner.put(url,
-        headers: authorizedHeaders,
-        body: body,
-        encoding: encoding);
+        headers: authorizedHeaders, body: body, encoding: encoding);
   }
 
   @override
@@ -43,9 +39,7 @@ class TokenInterceptorHttpClient implements http.BaseClient {
       {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
     final authorizedHeaders = await _addAuthorizationHeader(headers);
     return _inner.patch(url,
-        headers: authorizedHeaders,
-        body: body,
-        encoding: encoding);
+        headers: authorizedHeaders, body: body, encoding: encoding);
   }
 
   @override
@@ -53,15 +47,13 @@ class TokenInterceptorHttpClient implements http.BaseClient {
       {Object? body, Encoding? encoding, Map<String, String>? headers}) async {
     final authorizedHeaders = await _addAuthorizationHeader(headers);
     return _inner.delete(url,
-        body: body,
-        encoding: encoding,
-        headers: authorizedHeaders);
+        body: body, encoding: encoding, headers: authorizedHeaders);
   }
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final authorizedHeaders =
-    await _addAuthorizationHeader(request.headers, baseRequest: request);
+        await _addAuthorizationHeader(request.headers, baseRequest: request);
     return _inner.send(authorizedHeaders as http.BaseRequest);
   }
 
@@ -95,13 +87,18 @@ class TokenInterceptorHttpClient implements http.BaseClient {
   Future<Map<String, String>?> _addAuthorizationHeader(
       Map<String, String>? headers,
       {http.BaseRequest? baseRequest}) async {
-    headers ??= <String, String>{};
+    headers = Map.from(headers ?? <String, String>{});
 
     String? token = await _getToken();
 
     if (token != null && token.isNotEmpty) {
       print(token);
       headers['Authorization'] = 'Bearer $token';
+    }
+
+    if (baseRequest != null) {
+      baseRequest.headers.addAll(headers);
+      return baseRequest.headers as Map<String, String>;
     }
 
     return headers;

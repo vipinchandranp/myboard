@@ -20,11 +20,10 @@ class BoardCubit extends Cubit<BoardState> {
   }
 
   void createBoard(Board newBoard, BuildContext context) async {
-    await boardRepository.saveBoardItem(context, newBoard); // Save the board to the repository
+    await boardRepository.saveBoardItem(context, newBoard);
 
     try {
-      final boards =
-      await boardRepository.getBoardItems(); // Fetch all boards from the repository
+      final boards = await boardRepository.getBoardItems();
       emit(BoardLoaded(boards: boards));
     } catch (e) {
       emit(BoardError(message: 'Failed to fetch board items.'));
@@ -50,15 +49,8 @@ class BoardCubit extends Cubit<BoardState> {
     }
   }
 
-
-  void updateBoard(Board board, DateTimeSlot dateTimeSlot, BuildContext context) async {
-
-  }
-
-
-
-
-
+  void updateBoard(
+      Board board, DateTimeSlot dateTimeSlot, BuildContext context) async {}
 
   void setAvailableDisplays(List<String> displays) {
     // Update the state with the available displays

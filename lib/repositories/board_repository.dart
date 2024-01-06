@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:myboard/config/api_config.dart';
@@ -15,38 +16,56 @@ class BoardRepository {
 
   Future<void> saveBoardItem(BuildContext context, Board board) async {
     try {
-      final TokenInterceptorHttpClient tokenInterceptor = getIt<TokenInterceptorHttpClient>();
+      final TokenInterceptorHttpClient tokenInterceptor =
+          getIt<TokenInterceptorHttpClient>();
 
-      var bodyBoard = jsonEncode(board);
-      final response = await tokenInterceptor.post(Uri.parse('$_apiUrl/v1/board/save'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(board)
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$_apiUrl/v1/board/save'),
       );
+
+      request.fields['board'] = jsonEncode(board.toJson());
+
+      if (board.imageFile != null) {
+        List<int> imageBytes = await board.imageFile!.readAsBytes();
+        String fileName = board.title!.replaceAll(' ', '_') + '.jpg';
+
+        var imagePart = http.MultipartFile.fromBytes(
+          'imageFile',
+          imageBytes,
+          filename: fileName,
+        );
+        request.files.add(imagePart);
+      }
+
+      var response = await tokenInterceptor.send(request);
+
       if (response.statusCode == 201) {
-        // Board item saved successfully
         print('Board item saved successfully');
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => PinBoardScreen()), // Assuming PinBoardScreen is the destination screen
+          MaterialPageRoute(builder: (context) => PinBoardScreen()),
         );
       } else {
-        // Handle error case
         throw Exception('Failed to save board item');
       }
     } catch (e) {
-      // Handle exception
       print('Exception: $e');
       throw Exception('Failed to save board item');
+    } finally {
+      // Any cleanup code can go here
     }
   }
 
   Future<List<Board>> getBoardItems() async {
     try {
       // Retrieve the TokenInterceptorHttpClient from get_it
-      final TokenInterceptorHttpClient tokenInterceptor = getIt<TokenInterceptorHttpClient>();
+      final TokenInterceptorHttpClient tokenInterceptor =
+          getIt<TokenInterceptorHttpClient>();
 
       // Use the TokenInterceptorHttpClient to make the authorized request
-      final response = await tokenInterceptor.get(Uri.parse('$_apiUrl/v1/board/items'));
+      final response =
+          await tokenInterceptor.get(Uri.parse('$_apiUrl/v1/board/items'));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as List<dynamic>;
@@ -63,10 +82,7 @@ class BoardRepository {
     }
   }
 
-
-
   Future<void> updateBoard(Board board) async {
-
     // Convert the updated board object to JSON
     final boardJson = jsonEncode(board);
     try {
