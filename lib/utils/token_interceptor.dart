@@ -54,7 +54,7 @@ class TokenInterceptorHttpClient implements http.BaseClient {
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final authorizedHeaders =
         await _addAuthorizationHeader(request.headers, baseRequest: request);
-    return _inner.send(authorizedHeaders as http.BaseRequest);
+    return _inner.send(request); // Pass the original request to _inner.send
   }
 
   @override
@@ -92,7 +92,6 @@ class TokenInterceptorHttpClient implements http.BaseClient {
     String? token = await _getToken();
 
     if (token != null && token.isNotEmpty) {
-      print(token);
       headers['Authorization'] = 'Bearer $token';
     }
 

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/models/board.dart';
@@ -56,4 +58,34 @@ class BoardCubit extends Cubit<BoardState> {
     // Update the state with the available displays
     emit(BoardDisplaysLoaded(displays));
   }
+
+  void fetchTitleAndIdData() async {
+    emit(
+        BoardItemsTitleLoading()); // You might want to create a loading state if needed
+
+    try {
+      final titleIdData = await boardRepository.getTitleAndId();
+      emit(BoardItemsTitleLoaded(boardItemsTitle: titleIdData));
+    } catch (e) {
+      emit(BoardError(message: 'Failed to fetch title and ID data.'));
+    }
+  }
+
+  void getBoardImageById(String boardId) async {
+    try {
+      final dynamic boardDetails = await boardRepository.getBoardImageById(boardId);
+
+      if (boardDetails is Uint8List) {
+        // Handle the case where boardDetails is image bytes
+        emit(BoardImageLoaded(imageBytes: boardDetails));
+      } else {
+        print('It\'s not Uint8List');
+      }
+    } catch (e) {
+      emit(BoardError(message: 'Failed to fetch board details.'));
+    }
+  }
+
+
+
 }

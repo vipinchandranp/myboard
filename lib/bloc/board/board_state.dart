@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
+import 'package:myboard/models/board-id-title.dart';
 import 'package:myboard/models/board.dart'; // Import this for BuildContext
 
 class BoardState extends Equatable {
@@ -39,3 +42,24 @@ class BoardDisplaysLoaded extends BoardState {
   @override
   List<Object> get props => [displays];
 }
+
+class BoardItemsTitleLoaded extends BoardState {
+  final List<BoardIdTitle> boardItemsTitle;
+
+  const BoardItemsTitleLoaded({required this.boardItemsTitle});
+
+  @override
+  List<Object> get props => [boardItemsTitle];
+}
+
+class BoardImageLoaded extends BoardState {
+  final Uint8List? imageBytes; // Use Uint8List for image bytes
+
+  const BoardImageLoaded({required this.imageBytes});
+
+  @override
+  List<Object> get props => [imageBytes ?? []];
+}
+
+class BoardItemsTitleLoading
+    extends BoardState {} // Added loading state for title and ID

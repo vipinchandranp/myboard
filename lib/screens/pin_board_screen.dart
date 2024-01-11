@@ -1,12 +1,13 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/board/board_cubit.dart';
 import 'package:myboard/bloc/board/board_state.dart';
-import 'package:myboard/models/board.dart';
-import 'package:myboard/screens/schedule_screen.dart';
+import 'package:myboard/models/board-id-title.dart';
+import 'package:myboard/screens/board_details_screen.dart';
 
 class PinBoardScreen extends StatefulWidget {
   @override
@@ -16,13 +17,13 @@ class PinBoardScreen extends StatefulWidget {
 class _PinBoardScreenState extends State<PinBoardScreen> {
   final TextEditingController _searchController = TextEditingController();
   late Timer _timer;
-  Board? selectedBoard;
+  BoardIdTitle? selectedBoard;
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    context.read<BoardCubit>().fetchBoardItems();
+    context.read<BoardCubit>().fetchTitleAndIdData();
     _timer = Timer.periodic(Duration(seconds: 1), (Timer timer) {
       // Update countdown logic here
     });
@@ -35,63 +36,33 @@ class _PinBoardScreenState extends State<PinBoardScreen> {
     super.dispose();
   }
 
-  void _handleKeyPress(RawKeyEvent event) {
-    if (event is RawKeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-        _selectPreviousItem();
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-        _selectNextItem();
-      }
-    }
-  }
+  void _selectItem(BoardIdTitle board) {
+    setState(() {
+      selectedBoard = board;
+    });
 
-  void _selectPreviousItem() {
-    if (selectedBoard == null) {
-      setState(() {
-        selectedBoard = context.read<BoardCubit>().boards.last;
-      });
-    } else {
-      final index = context.read<BoardCubit>().boards.indexOf(selectedBoard!);
-      if (index > 0) {
-        setState(() {
-          selectedBoard = context.read<BoardCubit>().boards[index - 1];
-        });
-      }
-    }
-  }
-
-  void _selectNextItem() {
-    if (selectedBoard == null) {
-      setState(() {
-        selectedBoard = context.read<BoardCubit>().boards.first;
-      });
-    } else {
-      final index = context.read<BoardCubit>().boards.indexOf(selectedBoard!);
-      if (index < context.read<BoardCubit>().boards.length - 1) {
-        setState(() {
-          selectedBoard = context.read<BoardCubit>().boards[index + 1];
-        });
-      }
-    }
+    final String boardId = board.id;
+    context.read<BoardCubit>().getBoardImageById(boardId);
   }
 
   @override
   Widget build(BuildContext context) {
     return RawKeyboardListener(
       focusNode: FocusNode(),
-      onKey: _handleKeyPress,
+      onKey: (RawKeyEvent event) {
+        // Handle keyboard events if needed
+      },
       child: BlocConsumer<BoardCubit, BoardState>(
         listener: (context, state) {
           // Handle state changes if needed
         },
         builder: (context, state) {
-          if (state is BoardLoaded) {
-            final List<Board> boards = state.boards;
+          if (state is BoardItemsTitleLoaded) {
+            final List<BoardIdTitle> boards = state.boardItemsTitle;
 
             return Scaffold(
               body: Row(
                 children: [
-                  // Left side - Sidebar with the list of items
                   Container(
                     width: 250.0,
                     decoration: BoxDecoration(
@@ -121,14 +92,10 @@ class _PinBoardScreenState extends State<PinBoardScreen> {
                             controller: _scrollController,
                             itemCount: boards.length,
                             itemBuilder: (context, index) {
-                              final Board board = boards[index];
-                              return Focus(
-                                onFocusChange: (hasFocus) {
-                                  if (hasFocus) {
-                                    setState(() {
-                                      selectedBoard = board;
-                                    });
-                                  }
+                              final BoardIdTitle board = boards[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  _selectItem(board);
                                 },
                                 child: AnimatedContainer(
                                   duration: Duration(milliseconds: 300),
@@ -152,12 +119,7 @@ class _PinBoardScreenState extends State<PinBoardScreen> {
                                         : [],
                                   ),
                                   child: ListTile(
-                                    title: Text(board.title ?? ''),
-                                    onTap: () {
-                                      setState(() {
-                                        selectedBoard = board;
-                                      });
-                                    },
+                                    title: Text(board.title),
                                   ),
                                 ),
                               );
@@ -167,191 +129,34 @@ class _PinBoardScreenState extends State<PinBoardScreen> {
                       ],
                     ),
                   ),
-                  // Right side - Main content area for details
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: selectedBoard != null
-                          ? Card(
-                              elevation: 4.0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      selectedBoard!.title ?? '',
-                                      style: TextStyle(
-                                        fontSize: 20.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: 10.0),
-                                    Text(
-                                      selectedBoard!.description ?? '',
-                                      style: TextStyle(fontSize: 16.0),
-                                    ),
-                                    SizedBox(height: 20.0),
-                                    if (selectedBoard!.displayDetails != null)
-                                      for (var entry
-                                          in selectedBoard!.displayDetails!)
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            IconButton(
-                                              icon: Icon(
-                                                selectedBoard!.isApproved ??
-                                                        false
-                                                    ? Icons.thumb_up
-                                                    : Icons.thumb_down,
-                                                color:
-                                                    selectedBoard!.isApproved ??
-                                                            false
-                                                        ? Colors.green
-                                                        : Colors.red,
-                                              ),
-                                              onPressed: () {
-                                                setState(() {
-                                                  selectedBoard!.isApproved =
-                                                      !(selectedBoard!
-                                                              .isApproved ??
-                                                          false);
-                                                });
-                                              },
-                                            ),
-                                            Text(
-                                              selectedBoard!.isApproved ?? false
-                                                  ? 'Approved'
-                                                  : 'Rejected',
-                                              style: TextStyle(
-                                                color:
-                                                    selectedBoard!.isApproved ??
-                                                            false
-                                                        ? Colors.green
-                                                        : Colors.red,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        PopupMenuButton<int>(
-                                          icon: Icon(Icons.settings),
-                                          itemBuilder: (context) => [
-                                            PopupMenuItem<int>(
-                                              value: 1,
-                                              child: ListTile(
-                                                leading: Icon(Icons.settings),
-                                                // Change to gear icon
-                                                title: Text('Settings'),
-                                                onTap: () {
-                                                  // Handle Settings
-                                                },
-                                              ),
-                                            ),
-                                            PopupMenuItem<int>(
-                                              value: 2,
-                                              child: ListTile(
-                                                leading: Icon(Icons.schedule),
-                                                title: Text('Schedule'),
-                                                onTap: () async {
-                                                  final selectedData =
-                                                      await Navigator.push<
-                                                          DateTimeSlot>(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          ScheduleScreen(
-                                                        onConfirm:
-                                                            (selectedData) async {
-                                                          Navigator.pop(context,
-                                                              selectedData);
-                                                        },
-                                                        context: context,
-                                                      ),
-                                                    ),
-                                                  );
-                                                  // Handle selectedData
-                                                  if (selectedData != null) {
-                                                    context
-                                                        .read<BoardCubit>()
-                                                        .updateBoard(
-                                                          selectedBoard!,
-                                                          selectedData,
-                                                          context,
-                                                        );
-                                                  }
-                                                },
-                                              ),
-                                            ),
-                                            PopupMenuItem<int>(
-                                              value: 3,
-                                              child: ListTile(
-                                                leading: Icon(Icons.delete),
-                                                title: Text('Delete'),
-                                                onTap: () {
-                                                  showDialog(
-                                                    context: context,
-                                                    builder:
-                                                        (BuildContext context) {
-                                                      return AlertDialog(
-                                                        title: Text(
-                                                            'Confirm Deletion'),
-                                                        content: Text(
-                                                            'Are you sure you want to delete this board?'),
-                                                        actions: <Widget>[
-                                                          TextButton(
-                                                            child:
-                                                                Text('Cancel'),
-                                                            onPressed: () {
-                                                              Navigator.of(
-                                                                      context)
-                                                                  .pop();
-                                                            },
-                                                          ),
-                                                          TextButton(
-                                                            child:
-                                                                Text('Delete'),
-                                                            onPressed: () {
-                                                              context
-                                                                  .read<
-                                                                      BoardCubit>()
-                                                                  .deleteBoard(
-                                                                      selectedBoard!);
-                                                              Navigator.of(
-                                                                      context)
-                                                                  .pop();
-                                                            },
-                                                          ),
-                                                        ],
-                                                      );
-                                                    },
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : Center(
-                              child: Text('Select an item from the list'),
-                            ),
-                    ),
-                  ),
                 ],
               ),
             );
           } else {
-            return Center(child: CircularProgressIndicator());
+
+            return Center(
+                child: Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: selectedBoard != null
+                    ? state is BoardImageLoaded
+                        ? (state as BoardImageLoaded).imageBytes != null
+                            ? BoardDetailsScreen(
+                                board: selectedBoard!,
+                                imageBytes:
+                                    (state as BoardImageLoaded).imageBytes!,
+                              )
+                            : Center(
+                                child: Text('No image details available'),
+                              )
+                        : Center(
+                            child: CircularProgressIndicator(),
+                          )
+                    : Center(
+                        child: Text('Select an item from the list'),
+                      ),
+              ),
+            ));
           }
         },
       ),
