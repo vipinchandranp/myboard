@@ -2,10 +2,14 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:myboard/bloc/display/display_cubit.dart';
+import 'package:myboard/bloc/display/display_state.dart';
 import 'package:myboard/models/display_details.dart';
+import 'package:myboard/screens/display_info_screen.dart';
 
 class MapScreen extends StatefulWidget {
   @override
@@ -13,40 +17,51 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  late List<DisplayDetails> displayDetailsList;
+  late DisplayCubit displayCubit;
   int currentImageIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    // Generate random display details for testing
-    displayDetailsList =
-        List.generate(5, (index) => DisplayDetails.fromDateTimeSlot());
+    displayCubit = BlocProvider.of<DisplayCubit>(context);
+    // Fetch the list of all displays when the screen is initialized
+    displayCubit.getAllDisplays();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: LatLng(0, 0), // Set the initial map center
-          zoom: 2.0, // Set the initial zoom level
-        ),
-        markers: _getMarkers(),
+      body: BlocBuilder<DisplayCubit, DisplayState>(
+        builder: (context, state) {
+          if (state is DisplayLoading) {
+            return Center(child: CircularProgressIndicator());
+          } else if (state is DisplayLoaded) {
+            return GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: LatLng(0, 0), // Set the initial map center
+                zoom: 2.0, // Set the initial zoom level
+              ),
+              markers: _getMarkers(state.displays),
+            );
+          } else if (state is DisplayError) {
+            return Center(
+              child: Text('Error: ${state.message}'),
+            );
+          }
+          return SizedBox.shrink();
+        },
       ),
     );
   }
 
-  Set<Marker> _getMarkers() {
+  Set<Marker> _getMarkers(List<DisplayDetails> displays) {
     Set<Marker> markers = Set();
 
-    for (DisplayDetails displayDetails in displayDetailsList) {
-      if (displayDetails.latitude != null &&
-          displayDetails.longitude != null) {
+    for (DisplayDetails displayDetails in displays) {
+      if (displayDetails.latitude != null && displayDetails.longitude != null) {
         markers.add(Marker(
           markerId: MarkerId(displayDetails.id),
-          position:
-          LatLng(displayDetails.latitude, displayDetails.longitude),
+          position: LatLng(displayDetails.latitude, displayDetails.longitude),
           onTap: () {
             _showInfoWindow(context, displayDetails);
           },
@@ -61,61 +76,7 @@ class _MapScreenState extends State<MapScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return Dialog(
-          child: Container(
-            padding: EdgeInsets.all(16.0),
-            height: MediaQuery.of(context).size.height * 0.75,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    displayDetails.id ?? 'ID',
-                    style:
-                    TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 8.0),
-                  Text(
-                    displayDetails.description ?? 'Description',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  SizedBox(height: 16.0),
-                  Text(
-                    'Rating: ${displayDetails.rating.toStringAsFixed(1)}/5',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  SizedBox(height: 16.0),
-                  CarouselSlider(
-                    options: CarouselOptions(
-                      height: 200.0,
-                      aspectRatio: 16 / 9,
-                      viewportFraction: 0.8,
-                      initialPage: 0,
-                      enableInfiniteScroll: false,
-                      reverse: false,
-                      autoPlay: false,
-                      enlargeCenterPage: true,
-                      scrollDirection: Axis.horizontal,
-                      onPageChanged: (index, reason) {
-                        setState(() {
-                          currentImageIndex = index;
-                        });
-                      },
-                    ),
-                    items: _buildImageList(displayDetails.images),
-                  ),
-                  SizedBox(height: 16.0),
-                  Text(
-                    'Comments:',
-                    style:
-                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  _buildCommentsList(displayDetails.comments),
-                ],
-              ),
-            ),
-          ),
-        );
+        return DisplayDetailsPopup(displayDetails: displayDetails);
       },
     );
   }
@@ -125,24 +86,23 @@ class _MapScreenState extends State<MapScreen> {
       children: comments
           .map(
             (comment) => Container(
-          margin: EdgeInsets.symmetric(vertical: 8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${comment.username} - ${comment.date.toLocal()}',
-                style:
-                TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              margin: EdgeInsets.symmetric(vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${comment.username} - ${comment.date.toLocal()}',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    comment.text,
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  _buildRepliesList(comment.replies),
+                ],
               ),
-              Text(
-                comment.text,
-                style: TextStyle(fontSize: 14),
-              ),
-              _buildRepliesList(comment.replies),
-            ],
-          ),
-        ),
-      )
+            ),
+          )
           .toList(),
     );
   }
@@ -150,29 +110,29 @@ class _MapScreenState extends State<MapScreen> {
   Widget _buildRepliesList(List<Reply> replies) {
     return replies.isNotEmpty
         ? Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: replies
-          .map(
-            (reply) => Container(
-          margin: EdgeInsets.only(left: 16.0),
-          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${reply.username} - ${reply.date.toLocal()}',
-                style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                reply.text,
-                style: TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-      )
-          .toList(),
-    )
+            children: replies
+                .map(
+                  (reply) => Container(
+                    margin: EdgeInsets.only(left: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${reply.username} - ${reply.date.toLocal()}',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          reply.text,
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
+          )
         : SizedBox.shrink();
   }
 
@@ -186,36 +146,17 @@ class _MapScreenState extends State<MapScreen> {
         imageWidgets.add(
           kIsWeb
               ? Image.network(
-            imageFile.path,
-            fit: BoxFit.cover,
-          )
+                  imageFile.path,
+                  fit: BoxFit.cover,
+                )
               : Image.file(
-            File(imageFile.path),
-            fit: BoxFit.cover,
-          ),
+                  File(imageFile.path),
+                  fit: BoxFit.cover,
+                ),
         );
       }
     }
 
     return imageWidgets;
-  }
-
-  void _handleKeyPress(RawKeyEvent event, int maxImages) {
-    if (event is RawKeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-        _navigateImage(-1, maxImages);
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-        _navigateImage(1, maxImages);
-      }
-    }
-  }
-
-  void _navigateImage(int direction, int maxImages) {
-    int newIndex = currentImageIndex + direction;
-    if (newIndex >= 0 && newIndex < maxImages) {
-      setState(() {
-        currentImageIndex = newIndex;
-      });
-    }
   }
 }

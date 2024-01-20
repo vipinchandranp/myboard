@@ -1,5 +1,12 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:myboard/models/display_details.dart';
+import 'package:myboard/utils/token_interceptor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:myboard/config/api_config.dart';
 import 'package:myboard/models/user.dart';
@@ -7,14 +14,13 @@ import 'package:myboard/models/login_response.dart';
 
 class UserRepository {
   final String _apiUrl = APIConfig.getRootURL();
+  final GetIt getIt = GetIt.instance;
 
   Future<String> signIn(String username, String password) async {
     final response = await http.get(
       Uri.parse(APIConfig.getRootURL() +
           '/v1/users/login?username=$username&password=$password'),
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: {'Content-Type': 'application/json'},
     );
 
     // Log headers for debugging
@@ -98,5 +104,107 @@ class UserRepository {
     // Connect to Azure and MongoDB to authenticate the user
     // Return the authenticated user if successful, otherwise throw an exception
     throw Exception('Authentication failed');
+  }
+
+  Future<void> saveDisplay(
+    BuildContext context,
+    DisplayDetails displayDetails,
+  ) async {
+    try {
+      final TokenInterceptorHttpClient tokenInterceptor =
+          getIt<TokenInterceptorHttpClient>();
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$_apiUrl/v1/displays/save'),
+      );
+
+      // Add display details as fields
+      request.fields['displayName'] = displayDetails.displayName;
+      request.fields['description'] = displayDetails.description!;
+      request.fields['latitude'] = displayDetails.latitude.toString();
+      request.fields['longitude'] = displayDetails.longitude.toString();
+
+      // Add image files if available
+      await addImageFilesToRequest(request, displayDetails.images);
+
+      final response = await tokenInterceptor.send(request);
+
+      if (response.statusCode == 200) {
+        // Display saved successfully
+        print('Display saved successfully');
+        // You can use 'context' for any UI-related operations here if needed
+      } else {
+        // Handle error case
+        print(
+            'Failed to save display. Server returned status code: ${response.statusCode}');
+        throw Exception('Failed to save display');
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to save display');
+    }
+  }
+
+  Future<void> addImageFilesToRequest(
+    http.MultipartRequest request,
+    List<XFile>? imageFiles,
+  ) async {
+    if (imageFiles != null && imageFiles.isNotEmpty) {
+      for (var imageFile in imageFiles) {
+        // Add each image file to the request using the helper function
+        await addImageFileToRequest(request, imageFile);
+      }
+    }
+  }
+
+  Future<void> addImageFileToRequest(
+    http.MultipartRequest request,
+    XFile? imageFile,
+  ) async {
+    if (imageFile != null) {
+      try {
+        // Check if the app is running in a web environment
+        if (kIsWeb) {
+          // Use fromBytes for web environments
+          List<int> imageBytes = await imageFile.readAsBytes();
+          var imagePart = http.MultipartFile.fromBytes(
+            'imageFile',
+            imageBytes,
+            filename: imageFile.path.replaceAll(' ', '_') + '.jpg',
+            contentType: MediaType('application', 'octet-stream'),
+          );
+
+          request.files.add(imagePart);
+        } else {
+          // Use fromPath for non-web environments
+          var imagePart = await http.MultipartFile.fromPath(
+            'imageFiles',
+            imageFile.path,
+            filename: imageFile.path.replaceAll(' ', '_') + '.jpg',
+          );
+          request.files.add(imagePart);
+        }
+      } catch (e) {
+        print('Error adding image file to request: $e');
+        // Handle the error appropriately
+        throw Exception('Failed to add image file to the request');
+      }
+    }
+  }
+
+  Future<void> deleteDisplay(BuildContext context, String displayId) async {
+    try {
+      // Implement the logic to delete the display with the given displayId
+      // This might involve sending a DELETE request to your backend server
+
+      // Assuming successful deletion, print a message
+      print('Display deleted successfully');
+      // You can use 'context' for any UI-related operations here if needed
+    } catch (e) {
+      // Handle error case
+      print('Failed to delete display');
+      throw Exception('Failed to delete display');
+    }
   }
 }

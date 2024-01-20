@@ -40,3 +40,17 @@ class UserSignupError extends UserState {
   @override
   List<Object?> get props => [errorMessage];
 }
+
+class DisplaySaved extends UserState {
+  const DisplaySaved();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class DisplayDeleted extends UserState {
+  const DisplayDeleted();
+
+  @override
+  List<Object?> get props => [];
+}

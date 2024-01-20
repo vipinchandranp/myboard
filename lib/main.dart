@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/board/board_cubit.dart';
+import 'package:myboard/bloc/display/display_cubit.dart';
+import 'package:myboard/bloc/map/map_cubit.dart';
 import 'package:myboard/bloc/user/user_cubit.dart';
 import 'package:myboard/repositories/board_repository.dart';
+import 'package:myboard/repositories/display_repository.dart';
+import 'package:myboard/repositories/map_repository.dart';
 import 'package:myboard/repositories/user_repository.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
@@ -19,12 +23,15 @@ import 'package:myboard/screens/update_profile_screen.dart';
 import 'package:myboard/utils/token_interceptor.dart';
 import 'package:provider/provider.dart';
 import 'package:get_it/get_it.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize repositories
   final userRepository = UserRepository();
   final boardRepository = BoardRepository();
+  final displayRepository = DisplayRepository();
+  final googleMapsRepository = MapRepository();
 
   // Create a global instance of GetIt for dependency injection
   final GetIt getIt = GetIt.instance;
@@ -32,19 +39,24 @@ void main() {
 // Function to set up dependencies
   void setupDependencies() {
     // Register TokenInterceptorHttpClient as a singleton
-    getIt.registerSingleton<TokenInterceptorHttpClient>(TokenInterceptorHttpClient());
+    getIt.registerSingleton<TokenInterceptorHttpClient>(
+        TokenInterceptorHttpClient());
     getIt.registerSingleton<BoardRepository>(BoardRepository());
-
+    getIt.registerSingleton<DisplayRepository>(DisplayRepository());
+    getIt.registerSingleton<MapRepository>(MapRepository());
     // You can register other dependencies if needed
     // getIt.registerSingleton<YourServiceClass>(YourServiceClass());
     // getIt.registerFactory<YourFactoryClass>(() => YourFactoryClass());
   }
+
   setupDependencies();
   runApp(
     MultiBlocProvider(
       providers: [
         Provider<UserRepository>.value(value: userRepository),
         Provider<BoardRepository>.value(value: boardRepository),
+        Provider<DisplayRepository>.value(value: displayRepository),
+        Provider<MapRepository>.value(value: googleMapsRepository),
         BlocProvider<BoardCubit>(
           create: (context) => BoardCubit(context.read<BoardRepository>()),
         ),
@@ -53,7 +65,16 @@ void main() {
             userRepository: context.read<UserRepository>(),
           ),
         ),
-        // Add more Cubits or BLoCs if needed.
+        BlocProvider<DisplayCubit>(
+          create: (context) => DisplayCubit(
+            context.read<DisplayRepository>(),
+          ),
+        ),
+        BlocProvider<MapCubit>(
+          create: (context) => MapCubit(
+            mapRepository: context.read<MapRepository>(),
+          ),
+        ), // Add more Cubits or BLoCs if needed.
       ],
       child: MyApp(),
     ),

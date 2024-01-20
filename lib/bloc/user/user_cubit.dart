@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/user/user_event.dart';
 import 'package:myboard/bloc/user/user_state.dart';
+import 'package:myboard/models/display_details.dart';
 import 'package:myboard/models/user.dart';
 import 'package:myboard/models/login_response.dart';
 import 'package:myboard/repositories/user_repository.dart';
@@ -19,9 +20,7 @@ class UserCubit extends Cubit<UserState> {
 
   UserCubit({
     required this.userRepository,
-  }) : super(UserInitial()) {
-
-  }
+  }) : super(UserInitial()) {}
 
   Future<void> signInWithGoogle() async {
     // Your Google Sign-In logic here
@@ -41,7 +40,6 @@ class UserCubit extends Cubit<UserState> {
     }
   }
 
-
   Future<void> signUp(String email, String password, String name) async {
     emit(UserLoading());
 
@@ -53,7 +51,8 @@ class UserCubit extends Cubit<UserState> {
     }
   }
 
-  Future<void> signIn(BuildContext context, String username, String password) async {
+  Future<void> signIn(
+      BuildContext context, String username, String password) async {
     LoadingHelper.showLoading(context);
     emit(UserLoading());
 
@@ -66,7 +65,30 @@ class UserCubit extends Cubit<UserState> {
       Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
       emit(UserError(message: 'Failed to login. Please try again.'));
-    }finally{
+    } finally {}
+  }
+
+  Future<void> saveDisplay(
+      BuildContext context, DisplayDetails displayDetails) async {
+    emit(UserLoading());
+
+    try {
+      await userRepository.saveDisplay(context, displayDetails);
+      emit(DisplaySaved()); // Emit DisplaySaved state upon successful saving
+    } catch (e) {
+      emit(UserError(message: 'Failed to save display: $e'));
+    }
+  }
+
+  Future<void> deleteDisplay(BuildContext context, String displayId) async {
+    emit(UserLoading());
+
+    try {
+      await userRepository.deleteDisplay(context, displayId);
+      emit(
+          DisplayDeleted()); // Emit DisplayDeleted state upon successful deletion
+    } catch (e) {
+      emit(UserError(message: 'Failed to delete display: $e'));
     }
   }
 }

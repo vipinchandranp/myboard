@@ -54,40 +54,12 @@ class BoardRepository {
         Uri.parse('$_apiUrl/v1/board/save'),
       );
 
+      // Add board details as fields
       request.fields['boardTitle'] = board.title!;
       request.fields['boardDesc'] = board.description!;
 
-      if (board.imageFile != null) {
-        try {
-          XFile imageFile = await board.imageFile!;
-
-          // Check if the app is running in a web environment
-          if (kIsWeb) {
-            // Use fromBytes for web environments
-            List<int> imageBytes = await imageFile.readAsBytes();
-            var imagePart = http.MultipartFile.fromBytes(
-              'imageFile',
-              imageBytes,
-              filename: board.title!.replaceAll(' ', '_') + '.jpg',
-              contentType: MediaType('application',
-                  'octet-stream'), // Replace with the correct MIME type
-            );
-
-            request.files.add(imagePart);
-          } else {
-            // Use fromPath for non-web environments
-            var imagePart = await http.MultipartFile.fromPath(
-              'imageFile',
-              imageFile.path,
-              filename: board.title!.replaceAll(' ', '_') + '.jpg',
-            );
-            request.files.add(imagePart);
-          }
-        } catch (e) {
-          print('Error creating MultipartFile: $e');
-          // Handle the error appropriately
-        }
-      }
+      // Add image file if available
+      await addImageFileToRequest(request, board.imageFile);
 
       var response = await tokenInterceptor.send(request);
 
@@ -98,13 +70,48 @@ class BoardRepository {
           MaterialPageRoute(builder: (context) => PinBoardScreen()),
         );
       } else {
-        throw Exception('Failed to save board item');
+        throw Exception(
+            'Failed to save board item. Server returned status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Exception: $e');
       throw Exception('Failed to save board item');
     } finally {
       // Any cleanup code can go here
+    }
+  }
+
+  Future<void> addImageFileToRequest(
+      http.MultipartRequest request, XFile? imageFile) async {
+    if (imageFile != null) {
+      try {
+        // Check if the app is running in a web environment
+        if (kIsWeb) {
+          // Use fromBytes for web environments
+          List<int> imageBytes = await imageFile.readAsBytes();
+          var imagePart = http.MultipartFile.fromBytes(
+            'imageFile',
+            imageBytes,
+            filename: imageFile.path.replaceAll(' ', '_') + '.jpg',
+            contentType: MediaType('application',
+                'octet-stream'), // Replace with the correct MIME type
+          );
+
+          request.files.add(imagePart);
+        } else {
+          // Use fromPath for non-web environments
+          var imagePart = await http.MultipartFile.fromPath(
+            'imageFile',
+            imageFile.path,
+            filename: imageFile.path.replaceAll(' ', '_') + '.jpg',
+          );
+          request.files.add(imagePart);
+        }
+      } catch (e) {
+        print('Error adding image file to request: $e');
+        // Handle the error appropriately
+        throw Exception('Failed to add image file to the request');
+      }
     }
   }
 
