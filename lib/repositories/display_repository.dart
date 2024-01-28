@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:myboard/config/api_config.dart';
 import 'dart:convert';
 import 'package:myboard/models/display_details.dart';
+import 'package:myboard/models/location_search.dart';
 import 'package:myboard/utils/token_interceptor.dart';
 
 class DisplayRepository {
@@ -39,7 +40,7 @@ class DisplayRepository {
     }
   }
 
-  Future<List<int>> getDisplayImage(String displayId) async {
+  Future<List<int>> getDisplayImage(String? displayId) async {
     final TokenInterceptorHttpClient tokenInterceptor =
         getIt<TokenInterceptorHttpClient>();
     final response = await tokenInterceptor.get(
@@ -52,4 +53,5 @@ class DisplayRepository {
       throw Exception('Failed to load display image');
     }
   }
+
 }

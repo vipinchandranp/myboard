@@ -197,11 +197,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                           child: ElevatedButton(
                             onPressed: () {
                               final dateTimeSlot = DateTimeSlot(
-                                date: selectedDate,
+                                selectedDate: selectedDate,
                                 startTime: selectedStartTime,
                                 endTime: selectedEndTime,
-                                display: _displayController.text,
-                                username: _usernameController.text,
                               );
                               widget.onConfirm(dateTimeSlot);
                             },

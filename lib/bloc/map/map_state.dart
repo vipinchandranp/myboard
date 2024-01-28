@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:myboard/models/display_details.dart';
 import 'package:myboard/models/location_search.dart';
 
 abstract class MapState extends Equatable {
@@ -49,4 +50,14 @@ class SelectedLocation extends MapState {
 
   @override
   List<Object?> get props => [selectedLocation];
+}
+
+// New state for displaying nearby displays
+class MapLoadDisplaysNearby extends MapState {
+  final Iterable<DisplayDetails> displays;
+
+  MapLoadDisplaysNearby({required this.displays});
+
+  @override
+  List<Object?> get props => [displays];
 }

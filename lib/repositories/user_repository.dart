@@ -6,11 +6,14 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:myboard/models/display_details.dart';
+import 'package:myboard/models/location_search.dart';
 import 'package:myboard/utils/token_interceptor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:myboard/config/api_config.dart';
 import 'package:myboard/models/user.dart';
 import 'package:myboard/models/login_response.dart';
+
+import '../models/location.dart';
 
 class UserRepository {
   final String _apiUrl = APIConfig.getRootURL();
@@ -205,6 +208,77 @@ class UserRepository {
       // Handle error case
       print('Failed to delete display');
       throw Exception('Failed to delete display');
+    }
+  }
+
+  Future<void> saveLocation(SelectLocationDTO location) async {
+    try {
+      final TokenInterceptorHttpClient tokenInterceptor =
+          getIt<TokenInterceptorHttpClient>();
+      final response = await tokenInterceptor.post(
+        Uri.parse('$_apiUrl/v1/users/save-location'),
+        body: jsonEncode(location.toJson()),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        // Location saved successfully
+        print('Location saved successfully');
+      } else {
+        // Handle error case
+        print(
+            'Failed to save location. Server returned status code: ${response.statusCode}');
+        throw Exception('Failed to save location');
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to save location');
+    }
+  }
+
+  Future<MyBoardUser> initUser() async {
+    try {
+      final TokenInterceptorHttpClient tokenInterceptor =
+          getIt<TokenInterceptorHttpClient>();
+      final response = await tokenInterceptor.get(
+        Uri.parse('$_apiUrl/v1/users/init-user'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response
+        final Map<String, dynamic> userData = json.decode(response.body);
+
+        // Extract the selectedLocation value as a Map
+        Map<String, dynamic>? selectedLocationData =
+            userData['selectedLocation'];
+
+        // Assuming Location has a toMap method
+        Location location = Location(
+          name: selectedLocationData?['name'] ?? '',
+          latitude: selectedLocationData?['latitude'] ?? 0.0,
+          longitude: selectedLocationData?['longitude'] ?? 0.0,
+        );
+
+// Create a MyBoardUser object with the parsed data
+        MyBoardUser user = MyBoardUser.fromMap({
+          'id': '',
+          'username': userData['username'],
+          'location': location.toMap(), // Convert Location to a map
+        });
+
+        return user;
+      } else {
+        // Handle error case
+        print(
+            'Failed to fetch user data. Server returned status code: ${response.statusCode}');
+        throw Exception('Failed to fetch user data');
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to fetch user data');
     }
   }
 }

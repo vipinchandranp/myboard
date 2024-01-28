@@ -44,6 +44,7 @@ void main() {
     getIt.registerSingleton<BoardRepository>(BoardRepository());
     getIt.registerSingleton<DisplayRepository>(DisplayRepository());
     getIt.registerSingleton<MapRepository>(MapRepository());
+    getIt.registerSingleton<UserRepository>(UserRepository());
     // You can register other dependencies if needed
     // getIt.registerSingleton<YourServiceClass>(YourServiceClass());
     // getIt.registerFactory<YourFactoryClass>(() => YourFactoryClass());

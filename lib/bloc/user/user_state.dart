@@ -7,6 +7,14 @@ abstract class UserState extends Equatable {
   @override
   List<Object?> get props => [];
 }
+class UserInitLocation extends UserState {
+  final MyBoardUser user; // Include the user data in the initial state
+
+  const UserInitLocation(this.user);
+
+  @override
+  List<Object?> get props => [user];
+}
 
 class UserLoading extends UserState {}
 
@@ -50,6 +58,12 @@ class DisplaySaved extends UserState {
 
 class DisplayDeleted extends UserState {
   const DisplayDeleted();
+
+  @override
+  List<Object?> get props => [];
+}
+class SelectedLocationSaved extends UserState {
+  const SelectedLocationSaved();
 
   @override
   List<Object?> get props => [];

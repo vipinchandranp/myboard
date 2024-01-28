@@ -4,19 +4,21 @@ import 'dart:convert';
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:myboard/bloc/map/map_cubit.dart';
 import 'package:myboard/bloc/map/map_state.dart';
 import 'package:myboard/bloc/user/user_cubit.dart';
 import 'package:myboard/bloc/user/user_state.dart';
 import 'package:myboard/models/location_search.dart';
+import 'package:myboard/models/user.dart';
 import 'package:myboard/repositories/display_repository.dart';
 import 'package:myboard/repositories/map_repository.dart';
+import 'package:myboard/repositories/user_repository.dart';
 import 'package:myboard/screens/create_board_screen.dart';
 import 'package:myboard/screens/create_display_screen.dart';
 import 'package:myboard/screens/map_screen.dart';
 import 'package:myboard/screens/pin_board_screen.dart';
-import 'package:myboard/screens/searchbar_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -46,13 +48,13 @@ class _DesktopLayoutWidgetState extends State<DesktopLayoutWidget>
   int _currentIndex = 0;
   String? _searchingWithQuery;
   late Iterable<SelectLocationDTO> _lastOptions = <SelectLocationDTO>[];
-
+  final userRepository = GetIt.instance<UserRepository>();
+  late MyBoardUser myBoardUser = MyBoardUser(id: '', username: '');
   final List<Widget> _screens = [
     CreateBoardScreen(),
     CreateDisplayScreen(),
     PinBoardScreen(),
-    MapScreen(),
-    SelectLocationBar()
+    MapScreen()
     // Add more screens here
   ];
 
@@ -66,6 +68,19 @@ class _DesktopLayoutWidgetState extends State<DesktopLayoutWidget>
       vsync: this,
       duration: Duration(milliseconds: 300),
     );
+    _initUser();
+  }
+
+  // Add this method to fetch saved location
+  void _initUser() async {
+    try {
+      myBoardUser = await userRepository.initUser();
+      // Once the user is fetched, you can setState to rebuild the UI
+      setState(() {});
+      print(myBoardUser);
+    } catch (e) {
+      print('Failed to fetch saved location: $e');
+    }
   }
 
   @override
@@ -92,6 +107,7 @@ class _DesktopLayoutWidgetState extends State<DesktopLayoutWidget>
           automaticallyImplyLeading: false,
           centerTitle: false,
           actions: [
+            _buildLocationInfo(),
             _buildNavigationLinks(),
             _buildUserMenu(),
           ],
@@ -120,46 +136,111 @@ class _DesktopLayoutWidgetState extends State<DesktopLayoutWidget>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.location_on,
-            color: Color(0xFF7986CB),
-          ),
+          // Include the search bar and make it take the remaining space
           Expanded(
-            child: Autocomplete<SelectLocationDTO>(
-              optionsBuilder: (TextEditingValue textEditingValue) async {
-                _searchingWithQuery = textEditingValue.text;
-                Completer<Iterable<SelectLocationDTO>> completer = Completer();
-                EasyDebounce.debounce(
-                  'searchDebounce',
-                  Duration(milliseconds: 500),
-                  () async {
-                    await Future.delayed(Duration.zero);
-                    final Iterable<SelectLocationDTO> options =
-                        await MapRepository()
-                            .searchPlaces(_searchingWithQuery!);
-
-                    if (_searchingWithQuery != textEditingValue.text) {
-                      completer.complete(_lastOptions);
-                    } else {
-                      _lastOptions = options;
-                      completer.complete(_lastOptions);
-                    }
-                  },
-                );
-
-                return completer.future;
-              },
-              onSelected: (SelectLocationDTO selection) {
-                debugPrint('You just selected ${selection.name}');
-                context
-                    .read<MapCubit>()
-                    .emit(SelectedLocation(selectedLocation: selection));
-              },
-              displayStringForOption: (SelectLocationDTO option) => option.name,
-            ),
+            child: _buildAutocomplete(),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLocationInfo() {
+    return BlocBuilder<MapCubit, MapState>(
+      builder: (context, state) {
+        if (state is SelectedLocation) {
+          // If the map state is SelectedLocation, use the selectedLocation directly
+          final location = state.selectedLocation;
+          return _buildLocationWidget(location);
+        } else {
+          // If the map state is not SelectedLocation, fetch the user's location from userRepository
+          return FutureBuilder<MyBoardUser>(
+            future: userRepository.initUser(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                // If the future is complete, get the user's location from the snapshot
+                final location = snapshot.data?.location;
+                final selectLocationDTO = location != null
+                    ? SelectLocationDTO(
+                        name: location.name,
+                        latitude: location.latitude,
+                        // Add this line with actual latitude
+                        longitude: location
+                            .longitude, // Add this line with actual longitude
+                      )
+                    : null;
+
+                return _buildLocationWidget(selectLocationDTO);
+              } else {
+                // While the future is still loading, show a CircularProgressIndicator
+                return CircularProgressIndicator();
+              }
+            },
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildLocationWidget(SelectLocationDTO? location) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.location_on,
+          color: Colors.green,
+        ),
+        Text(
+          location != null ? location.name : 'Select a location',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.green,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAutocomplete() {
+    return Autocomplete<SelectLocationDTO>(
+      optionsBuilder: (TextEditingValue textEditingValue) async {
+        _searchingWithQuery = textEditingValue.text;
+        Completer<Iterable<SelectLocationDTO>> completer = Completer();
+        EasyDebounce.debounce(
+          'searchDebounce',
+          Duration(milliseconds: 500),
+          () async {
+            await Future.delayed(Duration.zero);
+            final Iterable<SelectLocationDTO> options =
+                await MapRepository().searchPlaces(_searchingWithQuery!);
+
+            if (_searchingWithQuery != textEditingValue.text) {
+              completer.complete(_lastOptions);
+            } else {
+              _lastOptions = options;
+              completer.complete(_lastOptions);
+            }
+          },
+        );
+
+        return completer.future;
+      },
+      onSelected: (SelectLocationDTO selection) async {
+        print("object");
+        try {
+          await userRepository.saveLocation(selection);
+        } catch (e) {
+          print('Failed to save location: $e');
+        }
+
+        context
+            .read<MapCubit>()
+            .emit(SelectedLocation(selectedLocation: selection));
+      },
+      displayStringForOption: (SelectLocationDTO option) {
+        // Display both the icon and the location name
+        return '${option.name}';
+      },
     );
   }
 
@@ -287,8 +368,6 @@ class _DesktopLayoutWidgetState extends State<DesktopLayoutWidget>
                     _buildGoLiveButton(),
                     SizedBox(width: 16),
                     _buildMapsScreenButton(),
-                    SizedBox(width: 16),
-                    _buildSearchButton(),
                   ],
                 ),
               ),

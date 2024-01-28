@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:myboard/config/api_config.dart';
+import 'package:myboard/models/display_details.dart';
 import 'package:myboard/models/location_search.dart';
 import 'dart:convert';
 import 'package:myboard/utils/token_interceptor.dart'; // Import your Dart model
@@ -37,6 +38,24 @@ class MapRepository {
     } else {
       throw Exception(
           'Failed to search places. Status code: ${response.statusCode}');
+    }
+  }
+
+  Future<List<DisplayDetails>> getDisplaysNearby(
+      SelectLocationDTO locationDTO,
+      ) async {
+    final TokenInterceptorHttpClient tokenInterceptor =
+    getIt<TokenInterceptorHttpClient>();
+
+    final response = await tokenInterceptor.get(Uri.parse(
+      '$_apiUrl/v1/displays/nearby?latitude=${locationDTO.latitude}&longitude=${locationDTO.longitude}',
+    ));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = json.decode(response.body);
+      return jsonList.map((json) => DisplayDetails.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load nearby displays');
     }
   }
 }

@@ -31,6 +31,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  intl: "^0.17.0"
   easy_debounce: "^2.0.3"
   webview_flutter: "^4.4.4"
   google_api_headers: "^1.1.1"
@@ -57,7 +58,6 @@ dependencies:
   qr_flutter: ^4.0.0
   table_calendar: ^3.0.1
   time_slot: ^0.0.2
-  intl: ^0.17.0
   video_player: ^2.2.3
   flutter_rating_bar: ^4.0.0
   side_navigation: ^1.0.4
@@ -90,6 +90,9 @@ flutter:
     - assets/myboard_logo_round.png
     - assets/canvas.jpg
     - assets/brown-wooden-textured-flooring-background.png
+    - assets/display_marker.png
+    - assets/myboard_logo_round_marker.png
+    - assets/board_marker.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

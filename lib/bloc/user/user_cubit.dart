@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/bloc/user/user_event.dart';
 import 'package:myboard/bloc/user/user_state.dart';
 import 'package:myboard/models/display_details.dart';
+import 'package:myboard/models/location_search.dart';
 import 'package:myboard/models/user.dart';
 import 'package:myboard/models/login_response.dart';
 import 'package:myboard/repositories/user_repository.dart';
@@ -89,6 +90,38 @@ class UserCubit extends Cubit<UserState> {
           DisplayDeleted()); // Emit DisplayDeleted state upon successful deletion
     } catch (e) {
       emit(UserError(message: 'Failed to delete display: $e'));
+    }
+  }
+
+  Future<void> saveSelectedLocation(
+      BuildContext context, SelectLocationDTO selectedLocation) async {
+    emit(UserLoading());
+
+    try {
+      // Assuming userRepository is an instance of UserRepository
+      await userRepository.saveLocation(selectedLocation);
+      emit(
+          SelectedLocationSaved()); // Emit LocationSaved state upon successful saving
+    } catch (e) {
+      emit(UserError(message: 'Failed to save location: $e'));
+    }
+  }
+  Future<void> initLocation() async {
+    emit(UserLoading());
+
+    try {
+      // Fetch the user's information, including the initial location
+      MyBoardUser user = await userRepository.initUser();
+
+      // Check if the user has a selected location
+      if (user.location != null) {
+        emit(UserAuthenticated(user));
+      } else {
+        // If the user doesn't have a selected location, handle it as needed
+        emit(UserError(message: 'User has no selected location'));
+      }
+    } catch (e) {
+      emit(UserError(message: 'Failed to fetch user information: $e'));
     }
   }
 }

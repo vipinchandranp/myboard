@@ -1,11 +1,19 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:myboard/bloc/map/map_cubit.dart';
+import 'package:myboard/bloc/map/map_state.dart';
 import 'package:myboard/bloc/user/user_cubit.dart';
 import 'package:myboard/bloc/user/user_state.dart';
 import 'package:myboard/models/display_details.dart';
+import 'package:myboard/models/location_search.dart';
+import 'package:myboard/models/user.dart';
+import 'package:myboard/repositories/user_repository.dart';
 
 class CreateDisplayScreen extends StatefulWidget {
   @override
@@ -15,17 +23,35 @@ class CreateDisplayScreen extends StatefulWidget {
 class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
   late TextEditingController descriptionController;
   late TextEditingController nameController;
-  List<XFile>? selectedImages;
-  final Set<Marker> _markers = {};
-  LatLng? _selectedLocation;
-
+  Set<Marker> _markers = {};
+  SelectLocationDTO? _selectedLocation;
+  Key _mapKey = UniqueKey();
+  XFile? _pickedFile;
+  final ImagePicker _imagePicker = ImagePicker();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  bool isLoading = true;
+  late MapCubit mapCubit;
+  Completer<GoogleMapController> _controllerCompleter = Completer();
+  bool isUserLocationLoaded = false;
 
   @override
   void initState() {
     super.initState();
     descriptionController = TextEditingController();
     nameController = TextEditingController();
+    mapCubit = BlocProvider.of<MapCubit>(context);
+
+    // Load user's initial location only if it's not already loaded
+    if (!isUserLocationLoaded) {
+      _loadUserLocation();
+    }
+
+    mapCubit.stream.listen((state) {
+      if (state is SelectedLocation) {
+        _updateSelectedLocation(state);
+      }
+    });
   }
 
   @override
@@ -35,37 +61,35 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
     super.dispose();
   }
 
-// Assuming this function is part of a StatefulWidget
+  void _updateSelectedLocation(SelectedLocation state) {
+    setState(() {
+      _selectedLocation = state.selectedLocation;
+      _mapKey = UniqueKey(); // Update the key
+    });
+  }
+
   void _createDisplay() {
     if (_formKey.currentState?.validate() ?? false) {
-      // Form is valid, proceed with creating the display
       final DisplayDetails displayDetails = DisplayDetails(
         id: 'customId',
         latitude: _selectedLocation?.latitude ?? 0.0,
         longitude: _selectedLocation?.longitude ?? 0.0,
         description: descriptionController.text,
         displayName: nameController.text,
-        // Include displayName
         comments: [],
         rating: 0.0,
         userId: 'defaultUserId',
-        images: selectedImages,
+        images: _pickedFile != null ? [_pickedFile!] : null,
         userName: '',
         fileName: '',
       );
 
-      // Access UserCubit through BlocProvider
       final userCubit = BlocProvider.of<UserCubit>(context);
-
-      // Save displayDetails to the backend using the UserCubit
       userCubit.saveDisplay(context, displayDetails);
 
-      // You can optionally listen for state changes and react accordingly
-      // For example, show a loading indicator or handle success/error states
       BlocListener<UserCubit, UserState>(
         listener: (context, state) {
           if (state is DisplaySaved) {
-            // Handle display saved state (e.g., show a success message)
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Display saved successfully'),
@@ -73,7 +97,6 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
               ),
             );
           } else if (state is UserError) {
-            // Handle error state (e.g., show an error message)
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error saving display: ${state.message}'),
@@ -82,21 +105,19 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
             );
           }
         },
-        child: Container(), // Replace with your UI widgets
+        child: Container(),
       );
 
-      // Use or save displayDetails as needed
       print(displayDetails.toJson());
     }
   }
 
-  Future<void> _pickImages() async {
-    final List<XFile>? result = await ImagePicker().pickMultiImage();
-    if (result != null && result.isNotEmpty) {
-      setState(() {
-        selectedImages = result;
-      });
-    }
+  Future<void> _getImage() async {
+    final XFile? pickedFile =
+        await _imagePicker.pickImage(source: ImageSource.gallery);
+    setState(() {
+      _pickedFile = pickedFile;
+    });
   }
 
   void _onMapTap(LatLng position) {
@@ -106,7 +127,11 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
         markerId: MarkerId('selected-location'),
         position: position,
       ));
-      _selectedLocation = position;
+      _selectedLocation = SelectLocationDTO(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        name: 'Selected Location',
+      );
     });
   }
 
@@ -143,28 +168,19 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
                     ),
                     SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: _pickImages,
+                      onPressed: _getImage,
                       child: Text('Pick Images'),
                     ),
                     SizedBox(height: 16),
-                    if (selectedImages != null && selectedImages!.isNotEmpty)
+                    if (_pickedFile != null)
                       Expanded(
                         child: CarouselSlider(
                           options: CarouselOptions(
                             aspectRatio: 16 / 9,
                             viewportFraction: 0.8,
-                            initialPage: 0,
-                            enableInfiniteScroll: true,
-                            reverse: false,
-                            autoPlay: true,
-                            autoPlayInterval: Duration(seconds: 3),
-                            autoPlayAnimationDuration:
-                                Duration(milliseconds: 800),
-                            autoPlayCurve: Curves.fastOutSlowIn,
-                            enlargeCenterPage: true,
-                            scrollDirection: Axis.horizontal,
+                            // Add other options as needed
                           ),
-                          items: selectedImages!.map((image) {
+                          items: [_pickedFile!].map((image) {
                             return Builder(
                               builder: (BuildContext context) {
                                 return Container(
@@ -173,7 +189,8 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
                                     color: Colors.amber,
                                   ),
                                   child: Image.network(
-                                    image.path,
+                                    _pickedFile!.path,
+                                    height: 200,
                                     fit: BoxFit.cover,
                                   ),
                                 );
@@ -199,37 +216,7 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
           ),
           Expanded(
             flex: 3,
-            child: Stack(
-              children: [
-                GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: LatLng(20.5937, 78.9629), // Centered on India
-                    zoom: 4.0, // Adjust the zoom level as needed
-                  ),
-                  markers: _markers,
-                  onTap: _onMapTap,
-                  myLocationEnabled: true,
-                ),
-                if (_selectedLocation != null)
-                  Positioned(
-                    top: 16.0,
-                    left: 16.0,
-                    child: Container(
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: Text(
-                        'Latitude: ${_selectedLocation!.latitude}\nLongitude: ${_selectedLocation!.longitude}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+            child: _buildMap(),
           ),
         ],
       ),
@@ -241,5 +228,93 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
         child: Icon(Icons.my_location),
       ),
     );
+  }
+
+  Widget _buildMap() {
+    if (_selectedLocation == null) {
+      return Center(child: CircularProgressIndicator());
+    } else {
+      return Stack(
+        children: [
+          GoogleMap(
+            key: _mapKey,
+            initialCameraPosition: CameraPosition(
+              target: LatLng(
+                _selectedLocation!.latitude,
+                _selectedLocation!.longitude,
+              ),
+              zoom: 15.0,
+            ),
+            markers: _markers,
+            onTap: _onMapTap,
+            myLocationEnabled: true,
+            onMapCreated: (controller) {
+              _controllerCompleter.complete(controller);
+              _setInitialCameraPosition(controller);
+            },
+          ),
+          Positioned(
+            top: 16.0,
+            left: 16.0,
+            child: Container(
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Text(
+                'Latitude: ${_selectedLocation!.latitude}\nLongitude: ${_selectedLocation!.longitude}',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+  }
+
+  Future<void> _loadUserLocation() async {
+    if (!isUserLocationLoaded) {
+      MyBoardUser? user = await UserRepository().initUser();
+
+      if (user != null && user.location != null) {
+        setState(() {
+          _selectedLocation = SelectLocationDTO(
+            latitude: user.location!.latitude,
+            longitude: user.location!.longitude,
+            name: 'Current Location',
+          );
+
+          isUserLocationLoaded = true;
+        });
+      }
+    }
+  }
+
+  void _setInitialCameraPosition(GoogleMapController controller) {
+    controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(
+            _selectedLocation!.latitude,
+            _selectedLocation!.longitude,
+          ),
+          zoom: 15.0,
+        ),
+      ),
+    );
+
+    setState(() {
+      _markers.clear();
+      _markers.add(Marker(
+        markerId: MarkerId('selected-location'),
+        position: LatLng(
+          _selectedLocation!.latitude,
+          _selectedLocation!.longitude,
+        ),
+      ));
+    });
   }
 }

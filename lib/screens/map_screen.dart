@@ -1,15 +1,15 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:carousel_slider/carousel_slider.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:myboard/bloc/display/display_cubit.dart';
-import 'package:myboard/bloc/display/display_state.dart';
+import 'package:myboard/bloc/map/map_cubit.dart';
+import 'package:myboard/bloc/map/map_state.dart';
 import 'package:myboard/models/display_details.dart';
-import 'package:myboard/screens/display_info_screen.dart';
+import 'package:myboard/models/location_search.dart';
+import 'package:myboard/models/user.dart';
+import 'package:myboard/repositories/user_repository.dart';
+import 'package:myboard/repositories/map_repository.dart';
 
 class MapScreen extends StatefulWidget {
   @override
@@ -17,146 +17,149 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  late DisplayCubit displayCubit;
-  int currentImageIndex = 0;
+  late MapCubit mapCubit;
+  Set<Marker> markers = {};
+  Completer<GoogleMapController> _controllerCompleter = Completer();
+  Completer<void> _loadNearbyDisplaysCompleter = Completer<void>();
+  TextEditingController _locationController = TextEditingController();
+  final Key _mapKey = UniqueKey();
+
+  final MapRepository mapRepository = MapRepository();
+  SelectLocationDTO? _selectedLocation; // Initialize as null
 
   @override
   void initState() {
     super.initState();
-    displayCubit = BlocProvider.of<DisplayCubit>(context);
-    // Fetch the list of all displays when the screen is initialized
-    displayCubit.getAllDisplays();
+    mapCubit = BlocProvider.of<MapCubit>(context);
+
+    // Initialize _selectedLocation as null
+    _selectedLocation = null;
+
+    // Load the initial map using UserRepository
+    _loadUserLocation();
+
+    // Listen to state changes and update the map
+    mapCubit.stream.listen((state) {
+      if (state is SelectedLocation) {
+        _selectedLocation = state.selectedLocation;
+        _loadMap(_selectedLocation!); // Use non-null assertion
+        _loadNearbyDisplays(_selectedLocation!); // Use non-null assertion
+      }
+    });
+  }
+
+
+  Future<void> _loadUserLocation() async {
+    try {
+      MyBoardUser? user = await UserRepository().initUser();
+
+      if (user != null && user.location != null) {
+        _selectedLocation = SelectLocationDTO(
+          latitude: user.location!.latitude,
+          longitude: user.location!.longitude,
+          name: user.location!.name,
+        );
+        _locationController.text = _selectedLocation!.name;
+        _loadMap(_selectedLocation!);
+        _loadNearbyDisplays(_selectedLocation!);
+      } else {
+        print('User or user location is null');
+      }
+    } catch (e) {
+      print('Error loading user location: $e');
+    }
+  }
+
+  void _loadMap(SelectLocationDTO location) {
+    // Trigger a rebuild by changing the key
+    _mapKey;
+    _controllerCompleter.future.then((controller) {
+      _animateToSelectedLocation(controller, location);
+    });
+  }
+
+  void _loadNearbyDisplays(SelectLocationDTO location) async {
+    try {
+      // Fetch nearby displays using MapRepository
+      final List<DisplayDetails> nearbyDisplays =
+          await mapRepository.getDisplaysNearby(location);
+
+      // Clear existing markers
+      markers.clear();
+
+      // Add markers for each nearby display
+      for (DisplayDetails display in nearbyDisplays) {
+        if (display.latitude != null && display.longitude != null) {
+          print(
+              'Adding marker for $display at ${display.latitude}, ${display.longitude}');
+          markers.add(
+            Marker(
+              markerId: MarkerId(display.id),
+              position: LatLng(
+                display.latitude!,
+                display.longitude!,
+              ),
+              infoWindow: InfoWindow(
+                title: display.displayName,
+                snippet: display.description ?? '',
+              ),
+            ),
+          );
+        }
+      }
+
+      // Print the list of nearby displays
+      print('Nearby Displays: $nearbyDisplays');
+
+      // Update the state to rebuild the widget
+      setState(() {});
+    } catch (e) {
+      print('Error loading nearby displays: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<DisplayCubit, DisplayState>(
-        builder: (context, state) {
-          if (state is DisplayLoading) {
-            return Center(child: CircularProgressIndicator());
-          } else if (state is DisplayLoaded) {
-            return GoogleMap(
+      body: Column(
+        children: [
+          Expanded(
+            child: GoogleMap(
+              key: _mapKey,
+              onMapCreated: (controller) async {
+                _controllerCompleter.complete(controller);
+
+                // Wait for _loadNearbyDisplaysCompleter to complete before updating markers
+                await _loadNearbyDisplaysCompleter.future;
+                _loadMap(_selectedLocation!);
+              },
               initialCameraPosition: CameraPosition(
-                target: LatLng(0, 0), // Set the initial map center
-                zoom: 2.0, // Set the initial zoom level
+                target: LatLng(
+                  _selectedLocation!.latitude,
+                  _selectedLocation!.longitude,
+                ),
+                zoom: 15.0,
               ),
-              markers: _getMarkers(state.displays),
-            );
-          } else if (state is DisplayError) {
-            return Center(
-              child: Text('Error: ${state.message}'),
-            );
-          }
-          return SizedBox.shrink();
-        },
+              markers: markers, // Set the markers on the map
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Set<Marker> _getMarkers(List<DisplayDetails> displays) {
-    Set<Marker> markers = Set();
-
-    for (DisplayDetails displayDetails in displays) {
-      if (displayDetails.latitude != null && displayDetails.longitude != null) {
-        markers.add(Marker(
-          markerId: MarkerId(displayDetails.id),
-          position: LatLng(displayDetails.latitude, displayDetails.longitude),
-          onTap: () {
-            _showInfoWindow(context, displayDetails);
-          },
-        ));
-      }
-    }
-
-    return markers;
-  }
-
-  void _showInfoWindow(BuildContext context, DisplayDetails displayDetails) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return DisplayDetailsPopup(displayDetails: displayDetails);
-      },
+  // Add this method to animate the map to the selected location
+  void _animateToSelectedLocation(
+    GoogleMapController controller,
+    SelectLocationDTO selectedLocation,
+  ) {
+    controller.animateCamera(
+      CameraUpdate.newLatLng(
+        LatLng(
+          selectedLocation.latitude,
+          selectedLocation.longitude,
+        ),
+      ),
     );
-  }
-
-  Widget _buildCommentsList(List<Comment> comments) {
-    return Column(
-      children: comments
-          .map(
-            (comment) => Container(
-              margin: EdgeInsets.symmetric(vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${comment.username} - ${comment.date.toLocal()}',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    comment.text,
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  _buildRepliesList(comment.replies),
-                ],
-              ),
-            ),
-          )
-          .toList(),
-    );
-  }
-
-  Widget _buildRepliesList(List<Reply> replies) {
-    return replies.isNotEmpty
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: replies
-                .map(
-                  (reply) => Container(
-                    margin: EdgeInsets.only(left: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${reply.username} - ${reply.date.toLocal()}',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          reply.text,
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-                .toList(),
-          )
-        : SizedBox.shrink();
-  }
-
-  List<Widget> _buildImageList(List<XFile>? imageFiles) {
-    List<Widget> imageWidgets = [];
-
-    if (imageFiles != null) {
-      // You can customize the image loading logic here
-      for (XFile imageFile in imageFiles) {
-        // Use Image.network for Flutter web
-        imageWidgets.add(
-          kIsWeb
-              ? Image.network(
-                  imageFile.path,
-                  fit: BoxFit.cover,
-                )
-              : Image.file(
-                  File(imageFile.path),
-                  fit: BoxFit.cover,
-                ),
-        );
-      }
-    }
-
-    return imageWidgets;
   }
 }
