@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:myboard/models/UserProfile.dart';
 import 'package:myboard/models/display_details.dart';
 import 'package:myboard/models/location_search.dart';
 import 'package:myboard/utils/token_interceptor.dart';
@@ -279,6 +280,161 @@ class UserRepository {
       // Handle exception
       print('Exception: $e');
       throw Exception('Failed to fetch user data');
+    }
+  }
+
+  Future<void> saveUserProfile(UserProfile userProfile) async {
+    try {
+      final TokenInterceptorHttpClient tokenInterceptor =
+          getIt<TokenInterceptorHttpClient>();
+
+      // Create a multipart request
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$_apiUrl/v1/users/save-profile-details'),
+      );
+
+      // Add user profile details as fields
+      request.fields['firstName'] = userProfile.firstName!;
+      request.fields['lastName'] = userProfile.lastName!;
+      request.fields['phoneNumber'] = userProfile.phoneNumber!;
+      request.fields['address'] = userProfile.address!;
+
+      // Add profile picture file
+      await addImageFileToUserDetailsRequest(
+          request, userProfile.profileImageFile);
+
+      // Send the multipart request with token interceptor
+      final streamedResponse = await tokenInterceptor.send(request);
+
+      // Get response from streamed response
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        // User details saved successfully
+        print('User details saved successfully');
+      } else {
+        // Handle error case
+        print(
+            'Failed to save user details. Server returned status code: ${response.statusCode}');
+        throw Exception('Failed to save user details');
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to save user details');
+    }
+  }
+
+  Future<void> addImageFileToUserDetailsRequest(
+    http.MultipartRequest request,
+    XFile? imageFile,
+  ) async {
+    if (imageFile != null) {
+      try {
+        if (kIsWeb) {
+          // Use fromBytes for web environments
+          List<int> imageBytes = await imageFile.readAsBytes();
+          var imagePart = http.MultipartFile.fromBytes(
+            'profilePicture',
+            imageBytes,
+            filename: imageFile.path.replaceAll(' ', '_') + '.jpg',
+            contentType: MediaType('application', 'octet-stream'),
+          );
+
+          request.files.add(imagePart);
+        } else {
+          // Use fromPath for non-web environments
+          var imagePart = await http.MultipartFile.fromPath(
+            'profilePicture',
+            imageFile.path,
+            filename: imageFile.path.replaceAll(' ', '_') + '.jpg',
+          );
+          request.files.add(imagePart);
+        }
+      } catch (e) {
+        print('Error adding image file to request: $e');
+        // Handle the error appropriately
+        throw Exception('Failed to add image file to the request');
+      }
+    }
+  }
+
+  Future<List<int>> getProfilePic() async {
+    try {
+      // Retrieve the token from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      // Check if the token is available
+      if (token == null) {
+        throw Exception('Token not found');
+      }
+
+      // Prepare the request headers with the token
+      final headers = {
+        'Authorization': 'Bearer $token',
+      };
+
+      // Make a GET request to the server to fetch the profile picture
+      final response = await http.get(
+        Uri.parse('$_apiUrl/v1/users/profile-pic'),
+        headers: headers,
+      );
+
+      // Check if the request was successful
+      if (response.statusCode == 200) {
+        // Return the profile picture content as a list of bytes
+        return response.bodyBytes;
+      } else {
+        // Handle error case
+        print('Failed to fetch profile picture: ${response.statusCode}');
+        throw Exception('Failed to fetch profile picture');
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to fetch profile picture');
+    }
+  }
+
+  Future<UserProfile> getUserProfile() async {
+    try {
+      final TokenInterceptorHttpClient tokenInterceptor =
+          GetIt.instance<TokenInterceptorHttpClient>();
+
+      final response = await tokenInterceptor.get(
+        Uri.parse('$_apiUrl/v1/users/user-profile')
+      );
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response
+        final Map<String, dynamic> userData = json.decode(response.body);
+
+        // Extract user profile details from the JSON response
+        final String? firstName = userData['firstName'];
+        final String? lastName = userData['lastName'];
+        final String? phoneNumber = userData['phoneNumber'];
+        final String? address = userData['address'];
+
+        // Create a UserProfile object with the parsed data
+        final UserProfile userProfile = UserProfile(
+          firstName: firstName,
+          lastName: lastName,
+          phoneNumber: phoneNumber,
+          address: address,
+        );
+
+        return userProfile;
+      } else {
+        // Handle error case
+        print('Failed to fetch user profile: ${response.statusCode}');
+        throw Exception('Failed to fetch user profile');
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to fetch user profile');
     }
   }
 }

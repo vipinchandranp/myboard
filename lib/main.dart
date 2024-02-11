@@ -8,13 +8,10 @@ import 'package:myboard/repositories/board_repository.dart';
 import 'package:myboard/repositories/display_repository.dart';
 import 'package:myboard/repositories/map_repository.dart';
 import 'package:myboard/repositories/user_repository.dart';
-import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
 import 'package:myboard/screens/ad_creation_screen.dart';
 import 'package:myboard/screens/change_password_screen.dart';
-import 'package:myboard/screens/home_screen.dart';
 import 'package:myboard/screens/login_screen.dart';
-import 'package:myboard/screens/main_screen.dart';
+import 'package:myboard/screens/main.dart';
 import 'package:myboard/screens/play_screen.dart';
 import 'package:myboard/screens/profile_screen.dart';
 import 'package:myboard/screens/settings_screen.dart';
@@ -45,6 +42,7 @@ void main() {
     getIt.registerSingleton<DisplayRepository>(DisplayRepository());
     getIt.registerSingleton<MapRepository>(MapRepository());
     getIt.registerSingleton<UserRepository>(UserRepository());
+    getIt.registerSingleton<BoardCubit>(BoardCubit(boardRepository));
     // You can register other dependencies if needed
     // getIt.registerSingleton<YourServiceClass>(YourServiceClass());
     // getIt.registerFactory<YourFactoryClass>(() => YourFactoryClass());
@@ -87,11 +85,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       routes: {
-        '/home': (context) => MyBoardScreen(),
         '/settings': (context) => SettingsScreen(),
         '/change_password': (context) => ChangePasswordScreen(),
         '/update_profile': (context) => UpdateProfileScreen(),
-        '/profile': (context) => ProfileScreen(),
         '/ad_creation': (context) => AdCreationScreen(),
         '/play': (context) => PlayScreen(),
         '/signup': (context) => SignupScreen(),
@@ -100,9 +96,8 @@ class MyApp extends StatelessWidget {
       },
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        primarySwatch: createCustomSwatch(Color(0xFF7986CB)),
-      ),
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+          primarySwatch: createCustomSwatch(Color(0xFF7986CB))),
       home: ProgressOverlay(
         child: Scaffold(
           body: LoginScreen(),

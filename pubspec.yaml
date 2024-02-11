@@ -32,6 +32,7 @@ dependencies:
   flutter:
     sdk: flutter
   intl: "^0.17.0"
+  intl_phone_field: "^3.2.0"
   easy_debounce: "^2.0.3"
   webview_flutter: "^4.4.4"
   google_api_headers: "^1.1.1"
@@ -85,14 +86,7 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
-    - assets/myboard_logo2.png
-    - assets/myboard_logo1.png
-    - assets/myboard_logo_round.png
-    - assets/canvas.jpg
-    - assets/brown-wooden-textured-flooring-background.png
-    - assets/display_marker.png
-    - assets/myboard_logo_round_marker.png
-    - assets/board_marker.png
+    - assets/
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

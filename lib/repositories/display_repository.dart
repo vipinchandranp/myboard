@@ -1,9 +1,9 @@
-import 'package:get_it/get_it.dart';
-import 'package:http/http.dart' as http;
-import 'package:myboard/config/api_config.dart';
 import 'dart:convert';
+
+import 'package:get_it/get_it.dart';
+import 'package:myboard/config/api_config.dart';
 import 'package:myboard/models/display_details.dart';
-import 'package:myboard/models/location_search.dart';
+import 'package:myboard/models/tileslotavailability.dart';
 import 'package:myboard/utils/token_interceptor.dart';
 
 class DisplayRepository {
@@ -54,4 +54,22 @@ class DisplayRepository {
     }
   }
 
+  Future<TimeSlotAvailability> getDisplayTimeSlots(
+      String displayId, DateTime date) async {
+    final TokenInterceptorHttpClient tokenInterceptor =
+        getIt<TokenInterceptorHttpClient>();
+
+    // Build the URL with query parameters
+    final Uri uri = Uri.parse(
+        '$_apiUrl/v1/displays/timeslots?displayId=$displayId&date=${date.toIso8601String()}');
+
+    final response = await tokenInterceptor.get(uri);
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> timeslots = json.decode(response.body);
+      return TimeSlotAvailability.fromJson(timeslots);
+    } else {
+      throw Exception('Failed to load display timeslots');
+    }
+  }
 }

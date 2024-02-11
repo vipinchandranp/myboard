@@ -1,19 +1,11 @@
-import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:myboard/bloc/user/user_event.dart';
 import 'package:myboard/bloc/user/user_state.dart';
 import 'package:myboard/models/display_details.dart';
 import 'package:myboard/models/location_search.dart';
 import 'package:myboard/models/user.dart';
-import 'package:myboard/models/login_response.dart';
 import 'package:myboard/repositories/user_repository.dart';
-import 'package:myboard/models/board.dart';
-import 'package:myboard/bloc/board/board_cubit.dart';
-import 'package:myboard/bloc/board/board_state.dart';
-import 'package:myboard/screens/custom_dialog.dart';
 import 'package:myboard/screens/loading.dart';
 
 class UserCubit extends Cubit<UserState> {
@@ -124,4 +116,6 @@ class UserCubit extends Cubit<UserState> {
       emit(UserError(message: 'Failed to fetch user information: $e'));
     }
   }
+
+
 }

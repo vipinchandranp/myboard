@@ -14,6 +14,9 @@ class DisplayDetails {
   final List<XFile>? images;
   final String userName;
   final String? fileName;
+  final List<String>? availableTimeSlots;
+  final List<String>? notAvailableTimeSlots;
+  final String? timePeriodUnit; // "minutes" or "hours"
 
   DisplayDetails({
     required this.id,
@@ -27,6 +30,9 @@ class DisplayDetails {
     this.images,
     required this.userName,
     this.fileName,
+    this.availableTimeSlots,
+    this.notAvailableTimeSlots,
+    this.timePeriodUnit,
   });
 
   factory DisplayDetails.fromJson(Map<String, dynamic> json) {
@@ -52,6 +58,13 @@ class DisplayDetails {
           : null,
       userName: json['userName'] ?? '',
       fileName: json['fileName'] ?? '',
+      availableTimeSlots: json['availableTimeSlots'] != null
+          ? List<String>.from(json['availableTimeSlots'])
+          : null,
+      notAvailableTimeSlots: json['notAvailableTimeSlots'] != null
+          ? List<String>.from(json['notAvailableTimeSlots'])
+          : null,
+      timePeriodUnit: json['timePeriodUnit'],
     );
   }
 
@@ -66,9 +79,11 @@ class DisplayDetails {
       'userId': userId,
       'displayName': displayName,
       'images': images?.map((image) => image?.path).toList(),
-      // Handle null image paths
       'userName': userName,
       'fileName': fileName,
+      'availableTimeSlots': availableTimeSlots,
+      'notAvailableTimeSlots': notAvailableTimeSlots,
+      'timePeriodUnit': timePeriodUnit,
     }..removeWhere(
         (key, value) => value == null); // Remove null values from the map
   }

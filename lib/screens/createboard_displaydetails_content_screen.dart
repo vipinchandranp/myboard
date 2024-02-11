@@ -1,18 +1,15 @@
-import 'dart:async';
-
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:intl/intl.dart';
 import 'package:myboard/models/display_details.dart';
+import 'package:myboard/models/tileslotavailability.dart';
 import 'package:myboard/repositories/display_repository.dart';
 import 'package:myboard/screens/createboard_timeslot_selector.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class DisplayDetailsDrawerContent extends StatefulWidget {
   final DisplayDetails displayDetails;
-  List<String> selectedTimeSlots = [];
-  DateTime? _selectedDate;
   final Function(DateTime?, List<String>?) onDateTimeSelected;
 
   DisplayDetailsDrawerContent(
@@ -28,7 +25,7 @@ class _DisplayDetailsDrawerContentState
   late List<int> _displayImageBytes = [];
   late List<String> _selectedTimeSlots = [];
   DateTime? _selectedDate;
-
+  TimeSlotAvailability? _timeSlotAvailability;
   double rating = 0.0;
   String comment = "";
 
@@ -36,6 +33,16 @@ class _DisplayDetailsDrawerContentState
   void initState() {
     super.initState();
     _loadDisplayImage();
+
+    // Set the initial selected date to the current date
+    // Set the initial selected date to the current date with time set to midnight
+    _selectedDate = DateTime.now().toLocal().subtract(Duration(
+        hours: DateTime.now().hour,
+        minutes: DateTime.now().minute,
+        seconds: DateTime.now().second));
+
+    // Load time slots for the initial selected date (current date)
+    _loadTimeSlotsForDate(_selectedDate!);
   }
 
   Future<void> _loadDisplayImage() async {
@@ -51,86 +58,156 @@ class _DisplayDetailsDrawerContentState
     }
   }
 
+  Future<void> _loadTimeSlotsForDate(DateTime selectedDate) async {
+    try {
+      // Set the time part of the selected date to midnight
+      DateTime selectedDateMidnight = selectedDate.toLocal().subtract(Duration(
+            hours: selectedDate.hour,
+            minutes: selectedDate.minute,
+            seconds: selectedDate.second,
+          ));
+
+      // Call the DisplayRepository method to get time slots for the selected date
+      final TimeSlotAvailability timeSlotAvailability =
+          await DisplayRepository().getDisplayTimeSlots(
+        widget.displayDetails.id,
+        selectedDateMidnight,
+      );
+
+      setState(() {
+        _timeSlotAvailability = timeSlotAvailability;
+        _selectedTimeSlots = []; // Clear selected time slots when date changes
+      });
+    } catch (e) {
+      print('Error loading time slots: $e');
+      // Handle error loading time slots
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Display Details section
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppBar(
-                  title: Text('Display Details'),
-                  automaticallyImplyLeading: false,
-                ),
-                ListTile(
-                  title: Text(
-                    'Display Name: ${widget.displayDetails.displayName}',
-                  ),
-                ),
-              ],
+    return ClipRRect(
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(16),
+        topRight: Radius.circular(16),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: Offset(0, 3),
             ),
-            // Image section with reduced width
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 16),
-              width: MediaQuery.of(context).size.width - 32,
-              child: _displayImageBytes.isNotEmpty
-                  ? Image.memory(
-                      Uint8List.fromList(_displayImageBytes),
-                      height: 200,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(),
-            ),
-            // Ratings section
-            _buildRatingsSection(),
-            // Comments section
-            _buildCommentsSection(),
-            // Row for Calendar and additional details
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(16),
-                  width: MediaQuery.of(context).size.width / 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Calendar'),
-                      SizedBox(height: 8),
-                      _buildCalendar(), // Add this line
-                    ],
-                  ),
-                ),
-                // Time Slots on the right
-                Container(
-                  padding: EdgeInsets.all(16),
-                  width: MediaQuery.of(context).size.width / 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Time Slots'),
-                      SizedBox(height: 8),
-                      TimeSlotSelector(
-                        onTimeSelected: (degrees) {
-                          String timeSlot = degrees.toString();
-                          setState(() {
-                            _selectedTimeSlots.add(timeSlot);
-                          });
-                          print('Selected degrees: $degrees');
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            )
           ],
+        ),
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Display Details section
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.indigo,
+                      // Set the background color to indigo
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.arrow_back, color: Colors.white),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Display Details',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    title: Text(
+                      'Display Name: ${widget.displayDetails.displayName}',
+                    ),
+                  ),
+                ],
+              ),
+              // Image section with reduced width
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 16),
+                width: MediaQuery.of(context).size.width - 32,
+                child: _displayImageBytes.isNotEmpty
+                    ? Image.memory(
+                        Uint8List.fromList(_displayImageBytes),
+                        height: 200,
+                        fit: BoxFit.cover,
+                      )
+                    : Container(),
+              ),
+              // Ratings section
+              _buildRatingsSection(),
+              // Comments section
+              _buildCommentsSection(),
+              // Row for Calendar and additional details
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Calendar
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Calendar'),
+                          SizedBox(height: 8),
+                          _buildCalendar(),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Time Slots on the right
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Time Slots'),
+                          SizedBox(height: 8),
+                          _timeSlotAvailability != null
+                              ? _buildAvailableTimeSlots(_timeSlotAvailability!)
+                              : CircularProgressIndicator(),
+                          // Show loading indicator while fetching time slots
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16), // Add some space at the bottom
+            ],
+          ),
         ),
       ),
     );
@@ -140,6 +217,10 @@ class _DisplayDetailsDrawerContentState
     setState(() {
       _selectedDate = selectedDate;
     });
+
+    // Load time slots for the selected date
+    _loadTimeSlotsForDate(selectedDate);
+
     widget.onDateTimeSelected(selectedDate, _selectedTimeSlots);
   }
 
@@ -177,42 +258,30 @@ class _DisplayDetailsDrawerContentState
     );
   }
 
-  Widget _buildAvailableTimeSlots(DateTime selectedDate) {
+  Widget _buildAvailableTimeSlots(TimeSlotAvailability timeSlotAvailability) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Available Time Slots for ${DateFormat('yyyy-MM-dd').format(selectedDate)}:',
+          'Time Slots for ${DateFormat('yyyy-MM-dd').format(_selectedDate!)}:',
         ),
         SizedBox(height: 8),
-        TimeSlotSelector(
-          onTimeSelected: (degrees) {
-            print('Selected degrees: $degrees');
-            // Add your logic for handling the selected time
-          },
-        ),
-        SizedBox(height: 16),
-        Text(
-          'Unavailable Time Slots for ${DateFormat('yyyy-MM-dd').format(selectedDate)}:',
-        ),
-        SizedBox(height: 8),
-        // Add your unavailable time slots display here
-      ],
-    );
-  }
-
-  Widget _buildTimeSlotsList(List<String> timeSlots, Color color) {
-    return Column(
-      children: timeSlots
-          .map(
-            (timeSlot) => ListTile(
-              title: Text(
-                timeSlot,
-                style: TextStyle(color: color),
-              ),
+        Column(
+          children: [
+            TimeSlotSelector(
+              availableTimeSlots: timeSlotAvailability.availableTimeSlots,
+              unavailableTimeSlots: timeSlotAvailability.unavailableTimeSlots,
+              selectedTimeSlots: _selectedTimeSlots,
+              onTimeSelected: (selectedTimeSlots) {
+                setState(() {
+                  _selectedTimeSlots = selectedTimeSlots;
+                });
+                widget.onDateTimeSelected(_selectedDate, _selectedTimeSlots);
+              },
             ),
-          )
-          .toList(),
+          ],
+        ),
+      ],
     );
   }
 

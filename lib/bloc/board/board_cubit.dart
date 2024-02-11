@@ -1,67 +1,82 @@
 import 'dart:typed_data';
 
-import 'package:flutter/src/widgets/framework.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:myboard/models/board.dart';
 import 'package:myboard/bloc/board/board_state.dart';
+import 'package:myboard/models/board_with_image.dart';
 import 'package:myboard/repositories/board_repository.dart';
-import 'package:myboard/models/user.dart';
-import 'package:myboard/utils/user_utils.dart';
 
 class BoardCubit extends Cubit<BoardState> {
   final BoardRepository boardRepository;
 
   BoardCubit(this.boardRepository) : super(BoardInitial());
 
-  List<Board> get boards {
+  List<BoardWithImage> get boardsWithImages {
     if (state is BoardLoaded) {
-      return (state as BoardLoaded).boards;
+      return (state as BoardLoaded).boardsWithImages;
     } else {
-      return []; // or throw an exception, depending on your use case
+      return [];
     }
   }
 
   void createBoard(Board newBoard, BuildContext context) async {
-    await boardRepository.saveBoardItem(context, newBoard);
-
     try {
-      final boards = await boardRepository.getBoardItems();
-      emit(BoardLoaded(boards: boards));
+      await boardRepository.saveBoardItem(context, newBoard);
+      emit(BoardSaved());
     } catch (e) {
       emit(BoardError(message: 'Failed to fetch board items.'));
     }
   }
 
-  Future<void> fetchBoardItems() async {
+  void fetchBoardItems({int pageSize = 10, bool initialLoad = true}) async {
+    emit(BoardLoading());
+    if (initialLoad) {
+      // Fetch only the initial 10 items
+      final boards = await boardRepository.getBoardItems(page: 1, size: 10);
+      emit(BoardLoaded(boardsWithImages: boards));
+    } else {
+      // Fetch more items based on the current state
+      if (state is BoardLoaded) {
+        final currentBoards =
+            List<BoardWithImage>.from((state as BoardLoaded).boardsWithImages);
+        final currentPage = currentBoards.length ~/ pageSize + 1;
+        try {
+          final additionalBoardWithImages = await boardRepository
+              .getPaginatedBoardItems(currentPage, pageSize);
+
+          currentBoards.addAll(additionalBoardWithImages);
+          emit(BoardLoaded(boardsWithImages: List.from(currentBoards)));
+        } catch (e) {
+          emit(BoardError(message: 'Failed to fetch additional board items.'));
+        }
+      }
+    }
+  }
+
+  Future<void> fetchPaginatedBoardItems(int page, int pageSize) async {
     emit(BoardLoading());
 
     try {
-      final boards = await boardRepository.getBoardItems();
-      emit(BoardLoaded(boards: boards));
+      final boardsWithImages =
+          await boardRepository.getPaginatedBoardItems(page, pageSize);
+      emit(BoardWithImagesLoaded(boardsWithImages: boardsWithImages));
     } catch (e) {
-      emit(BoardError(message: 'Failed to fetch board items.'));
-    }
-  }
-
-  void deleteBoard(Board board) {
-    if (state is BoardLoaded) {
-      final currentBoards = List<Board>.from((state as BoardLoaded).boards);
-      currentBoards.remove(board);
-      emit(BoardLoaded(boards: currentBoards));
+      emit(BoardError(message: 'Failed to fetch paginated board items.'));
     }
   }
 
   void updateBoard(
-      Board board, DateTimeSlot dateTimeSlot, BuildContext context) async {}
+      Board board, DateTimeSlot dateTimeSlot, BuildContext context) async {
+    // Implement your update logic here
+  }
 
   void setAvailableDisplays(List<String> displays) {
-    // Update the state with the available displays
     emit(BoardDisplaysLoaded(displays));
   }
 
   void fetchTitleAndIdData() async {
-    emit(
-        BoardItemsTitleLoading()); // You might want to create a loading state if needed
+    emit(BoardItemsTitleLoading());
 
     try {
       final titleIdData = await boardRepository.getTitleAndId();
@@ -73,10 +88,10 @@ class BoardCubit extends Cubit<BoardState> {
 
   void getBoardImageById(String boardId) async {
     try {
-      final dynamic boardDetails = await boardRepository.getBoardImageById(boardId);
+      final dynamic boardDetails =
+          await boardRepository.getBoardImageById(boardId);
 
       if (boardDetails is Uint8List) {
-        // Handle the case where boardDetails is image bytes
         emit(BoardImageLoaded(imageBytes: boardDetails));
       } else {
         print('It\'s not Uint8List');
@@ -85,7 +100,4 @@ class BoardCubit extends Cubit<BoardState> {
       emit(BoardError(message: 'Failed to fetch board details.'));
     }
   }
-
-
-
 }

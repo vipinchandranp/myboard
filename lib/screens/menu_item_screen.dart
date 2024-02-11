@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:myboard/screens/create_board_screen.dart';
-import 'package:myboard/screens/pin_board_screen.dart';
+import 'package:myboard/screens/createboard_screen.dart';
+import 'package:myboard/screens/viewmyboards_screen.dart';
 
 class MenuItemScreen extends StatelessWidget {
   @override

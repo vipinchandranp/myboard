@@ -48,7 +48,6 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-
   Future<void> _loadUserLocation() async {
     try {
       MyBoardUser? user = await UserRepository().initUser();
@@ -121,27 +120,30 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: GoogleMap(
-              key: _mapKey,
-              onMapCreated: (controller) async {
-                _controllerCompleter.complete(controller);
+          GoogleMap(
+            key: _mapKey,
+            onMapCreated: (controller) async {
+              _controllerCompleter.complete(controller);
 
-                // Wait for _loadNearbyDisplaysCompleter to complete before updating markers
-                await _loadNearbyDisplaysCompleter.future;
-                _loadMap(_selectedLocation!);
-              },
-              initialCameraPosition: CameraPosition(
-                target: LatLng(
-                  _selectedLocation!.latitude,
-                  _selectedLocation!.longitude,
-                ),
-                zoom: 15.0,
-              ),
-              markers: markers, // Set the markers on the map
-            ),
+              // Wait for _loadNearbyDisplaysCompleter to complete before updating markers
+              await _loadNearbyDisplaysCompleter.future;
+              _loadMap(_selectedLocation!);
+            },
+            initialCameraPosition: _selectedLocation != null
+                ? CameraPosition(
+                    target: LatLng(
+                      _selectedLocation!.latitude,
+                      _selectedLocation!.longitude,
+                    ),
+                    zoom: 15.0,
+                  )
+                : CameraPosition(
+                    target: LatLng(0, 0),
+                    zoom: 15.0,
+                  ),
+            markers: markers, // Set the markers on the map
           ),
         ],
       ),

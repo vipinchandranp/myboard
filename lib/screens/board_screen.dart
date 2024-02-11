@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:myboard/models/board.dart';
-import 'package:myboard/screens/create_board_screen.dart';
+import 'package:myboard/screens/createboard_screen.dart';
 
 class BoardScreen extends StatelessWidget {
   final List<Board> boardItems;

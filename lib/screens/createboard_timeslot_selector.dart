@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 
 class TimeSlotSelector extends StatefulWidget {
-  final Function(List<TimeOfDay>) onTimeSelected;
+  final List<String> availableTimeSlots;
+  final List<String> unavailableTimeSlots;
+  final List<String> selectedTimeSlots;
+  final Function(List<String>) onTimeSelected;
 
-  TimeSlotSelector({required this.onTimeSelected});
+  TimeSlotSelector({
+    required this.availableTimeSlots,
+    required this.unavailableTimeSlots,
+    required this.selectedTimeSlots,
+    required this.onTimeSelected,
+  });
 
   @override
   _TimeSlotSelectorState createState() => _TimeSlotSelectorState();
 }
 
 class _TimeSlotSelectorState extends State<TimeSlotSelector> {
-  List<TimeOfDay> selectedTimes = [
-    TimeOfDay(hour: 10, minute: 0),
-  ]; // Adjust initial timeSlots
-  List<TimeOfDay> timeSlots = [];
+  late List<String> timeSlots;
 
   @override
   void initState() {
@@ -22,11 +27,8 @@ class _TimeSlotSelectorState extends State<TimeSlotSelector> {
   }
 
   void generateTimeSlots() {
-    final TimeOfDay startTime = TimeOfDay(hour: 10, minute: 0);
-    final TimeOfDay endTime = TimeOfDay(hour: 22, minute: 0);
-    final Duration step = Duration(hours: 1);
-
-    timeSlots = getTimes(startTime, endTime, step).toList();
+    // You can customize this logic based on your requirements
+    timeSlots = List.from(widget.availableTimeSlots);
   }
 
   @override
@@ -50,26 +52,42 @@ class _TimeSlotSelectorState extends State<TimeSlotSelector> {
           physics: NeverScrollableScrollPhysics(),
           itemCount: timeSlots.length,
           itemBuilder: (context, index) {
+            final timeSlot = timeSlots[index];
+            final isAvailable = widget.availableTimeSlots.contains(timeSlot);
+            final isSelected = widget.selectedTimeSlots.contains(timeSlot);
+            final isUnavailable =
+                widget.unavailableTimeSlots.contains(timeSlot);
+
+            Color cellColor = Colors.grey; // Default color
+
+            if (isUnavailable) {
+              cellColor = Colors.red; // Unavailable time slot color
+            } else if (isSelected) {
+              cellColor = Colors.blue; // Selected time slot color
+            } else if (isAvailable) {
+              cellColor = Colors.green; // Available time slot color
+            }
+
             return GestureDetector(
               onTap: () {
                 setState(() {
-                  if (selectedTimes.contains(timeSlots[index])) {
-                    selectedTimes.remove(timeSlots[index]);
-                  } else {
-                    selectedTimes.add(timeSlots[index]);
+                  if (isAvailable && !isUnavailable) {
+                    if (isSelected) {
+                      widget.selectedTimeSlots.remove(timeSlot);
+                    } else {
+                      widget.selectedTimeSlots.add(timeSlot);
+                    }
                   }
                 });
-                widget.onTimeSelected(selectedTimes);
+                widget.onTimeSelected(widget.selectedTimeSlots);
               },
               child: Container(
-                color: selectedTimes.contains(timeSlots[index])
-                    ? Colors.blue
-                    : Colors.grey,
+                color: cellColor,
                 child: Center(
                   child: Text(
-                    '${TimeOfDayFormatter.formatTimeOfDay(timeSlots[index])}',
+                    '$timeSlot',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: isUnavailable ? Colors.white : Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -83,29 +101,6 @@ class _TimeSlotSelectorState extends State<TimeSlotSelector> {
   }
 
   String formatSelectedTimes() {
-    return selectedTimes
-        .map((time) => TimeOfDayFormatter.formatTimeOfDay(time))
-        .join(', ');
-  }
-
-  Iterable<TimeOfDay> getTimes(
-      TimeOfDay startTime, TimeOfDay endTime, Duration step) sync* {
-    var hour = startTime.hour;
-    var minute = startTime.minute;
-    do {
-      yield TimeOfDay(hour: hour, minute: minute);
-      minute += step.inMinutes;
-      while (minute >= 60) {
-        minute -= 60;
-        hour++;
-      }
-    } while (hour < endTime.hour ||
-        (hour == endTime.hour && minute <= endTime.minute));
-  }
-}
-
-class TimeOfDayFormatter {
-  static String formatTimeOfDay(TimeOfDay timeOfDay) {
-    return '${timeOfDay.hour}:${timeOfDay.minute.toString().padLeft(2, '0')}';
+    return widget.selectedTimeSlots.join(', ');
   }
 }

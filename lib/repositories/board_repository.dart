@@ -9,8 +9,9 @@ import 'package:myboard/config/api_config.dart';
 import 'package:myboard/models/board-id-title.dart';
 import 'package:myboard/models/board.dart';
 import 'package:http/http.dart' as http;
+import 'package:myboard/models/board_with_image.dart';
 import 'package:myboard/models/user.dart';
-import 'package:myboard/screens/pin_board_screen.dart';
+import 'package:myboard/screens/viewmyboards_screen.dart';
 import 'package:myboard/utils/token_interceptor.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -61,14 +62,19 @@ class BoardRepository {
       // Add image file if available
       await addImageFileToRequest(request, board.imageFile);
 
+      // Add display details
+      if (board.displayDetails != null && board.displayDetails!.isNotEmpty) {
+        for (var displayDetails in board.displayDetails!) {
+          // Use the actual display details name here
+          request.fields['displayDetails'] =
+              jsonEncode(displayDetails.toJson());
+        }
+      }
+
       var response = await tokenInterceptor.send(request);
 
       if (response.statusCode == 201) {
         print('Board item saved successfully');
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => PinBoardScreen()),
-        );
       } else {
         throw Exception(
             'Failed to save board item. Server returned status code: ${response.statusCode}');
@@ -112,31 +118,6 @@ class BoardRepository {
         // Handle the error appropriately
         throw Exception('Failed to add image file to the request');
       }
-    }
-  }
-
-  Future<List<Board>> getBoardItems() async {
-    try {
-      // Retrieve the TokenInterceptorHttpClient from get_it
-      final TokenInterceptorHttpClient tokenInterceptor =
-          getIt<TokenInterceptorHttpClient>();
-
-      // Use the TokenInterceptorHttpClient to make the authorized request
-      final response =
-          await tokenInterceptor.get(Uri.parse('$_apiUrl/v1/board/items'));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List<dynamic>;
-        final boards = data.map((item) => Board.fromJson(item)).toList();
-        return boards;
-      } else {
-        // Handle error case
-        throw Exception('Failed to fetch board items');
-      }
-    } catch (e) {
-      // Handle exception
-      print('Exception: $e');
-      throw Exception('Failed to fetch board items');
     }
   }
 
@@ -188,6 +169,82 @@ class BoardRepository {
     } catch (e) {
       print('Exception: $e');
       throw Exception('Failed to fetch board details');
+    }
+  }
+
+  Future<List<BoardWithImage>> getBoardItems({
+    int page = 1,
+    int size = 10,
+  }) async {
+    try {
+      final TokenInterceptorHttpClient tokenInterceptor =
+          getIt<TokenInterceptorHttpClient>();
+
+      final response = await tokenInterceptor.get(
+        Uri.parse('$_apiUrl/v1/board/items?page=$page&size=$size'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as List<dynamic>;
+        final boardsWithImage = <BoardWithImage>[];
+
+        for (var item in data) {
+          final board = Board.fromJson(item['board']);
+          final imageBytesString = item['imageBytes'] as String;
+
+          // Convert base64-encoded string to Uint8List
+          final imageBytes = base64.decode(imageBytesString);
+
+          boardsWithImage
+              .add(BoardWithImage(board: board, imageBytes: imageBytes));
+        }
+
+        return boardsWithImage;
+      } else {
+        // Handle error case
+        throw Exception('Failed to fetch board items');
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to fetch board items');
+    }
+  }
+
+  Future<List<BoardWithImage>> getPaginatedBoardItems(
+      int page, int size) async {
+    try {
+      final TokenInterceptorHttpClient tokenInterceptor =
+          getIt<TokenInterceptorHttpClient>();
+
+      final response = await tokenInterceptor.get(
+        Uri.parse('$_apiUrl/v1/board/items?page=$page&size=$size'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as List<dynamic>;
+        final boardsWithImage = <BoardWithImage>[];
+
+        for (var item in data) {
+          final board = Board.fromJson(item['board']);
+          final imageBytesString = item['imageBytes'] as String;
+
+          // Convert base64-encoded string to Uint8List
+          final imageBytes = base64.decode(imageBytesString);
+
+          boardsWithImage
+              .add(BoardWithImage(board: board, imageBytes: imageBytes));
+        }
+
+        return boardsWithImage;
+      } else {
+        // Handle error case
+        throw Exception('Failed to fetch paginated board items');
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to fetch paginated board items');
     }
   }
 }
