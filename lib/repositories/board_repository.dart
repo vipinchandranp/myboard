@@ -99,8 +99,6 @@ class BoardRepository {
             'imageFile',
             imageBytes,
             filename: imageFile.path.replaceAll(' ', '_') + '.jpg',
-            contentType: MediaType('application',
-                'octet-stream'), // Replace with the correct MIME type
           );
 
           request.files.add(imagePart);

@@ -68,7 +68,7 @@ class _DisplayDetailsDrawerContentState
           ));
 
       // Call the DisplayRepository method to get time slots for the selected date
-      final TimeSlotAvailability timeSlotAvailability =
+      final TimeSlotAvailability? timeSlotAvailability =
           await DisplayRepository().getDisplayTimeSlots(
         widget.displayDetails.id,
         selectedDateMidnight,
@@ -81,6 +81,13 @@ class _DisplayDetailsDrawerContentState
     } catch (e) {
       print('Error loading time slots: $e');
       // Handle error loading time slots
+      // For example, you can show a snackbar or dialog to inform the user about the error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading time slots. Please try again later.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 

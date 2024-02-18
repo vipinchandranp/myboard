@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:ui';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:myboard/bloc/map/map_cubit.dart';
@@ -8,8 +11,8 @@ import 'package:myboard/bloc/map/map_state.dart';
 import 'package:myboard/models/display_details.dart';
 import 'package:myboard/models/location_search.dart';
 import 'package:myboard/models/user.dart';
-import 'package:myboard/repositories/user_repository.dart';
 import 'package:myboard/repositories/map_repository.dart';
+import 'package:myboard/repositories/user_repository.dart';
 
 class MapScreen extends StatefulWidget {
   @override
@@ -25,7 +28,7 @@ class _MapScreenState extends State<MapScreen> {
   final Key _mapKey = UniqueKey();
 
   final MapRepository mapRepository = MapRepository();
-  SelectLocationDTO? _selectedLocation; // Initialize as null
+  SelectLocationDTO? _selectedLocation;
 
   @override
   void initState() {
@@ -41,11 +44,31 @@ class _MapScreenState extends State<MapScreen> {
     // Listen to state changes and update the map
     mapCubit.stream.listen((state) {
       if (state is SelectedLocation) {
-        _selectedLocation = state.selectedLocation;
-        _loadMap(_selectedLocation!); // Use non-null assertion
-        _loadNearbyDisplays(_selectedLocation!); // Use non-null assertion
+        setState(() {
+          _selectedLocation = state.selectedLocation;
+          _loadMap(_selectedLocation!); // Use non-null assertion
+          _loadNearbyDisplays(_selectedLocation!); // Use non-null assertion
+        });
       }
     });
+  }
+
+  Future<Uint8List> getBytesFromAsset(
+    String path,
+    int width,
+    int height,
+  ) async {
+    ByteData data = await rootBundle.load(path);
+    Codec codec = await instantiateImageCodec(
+      // Use convert.Codec
+      data.buffer.asUint8List(),
+      targetWidth: width,
+      targetHeight: height,
+    );
+    FrameInfo fi = await codec.getNextFrame();
+    return (await fi.image.toByteData(format: ImageByteFormat.png))!
+        .buffer
+        .asUint8List();
   }
 
   Future<void> _loadUserLocation() async {
@@ -78,6 +101,8 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _loadNearbyDisplays(SelectLocationDTO location) async {
+    ByteData byteData = await rootBundle.load('assets/display-map-marker.png');
+    Uint8List imageData = byteData.buffer.asUint8List();
     try {
       // Fetch nearby displays using MapRepository
       final List<DisplayDetails> nearbyDisplays =
@@ -89,8 +114,6 @@ class _MapScreenState extends State<MapScreen> {
       // Add markers for each nearby display
       for (DisplayDetails display in nearbyDisplays) {
         if (display.latitude != null && display.longitude != null) {
-          print(
-              'Adding marker for $display at ${display.latitude}, ${display.longitude}');
           markers.add(
             Marker(
               markerId: MarkerId(display.id),
@@ -98,6 +121,7 @@ class _MapScreenState extends State<MapScreen> {
                 display.latitude!,
                 display.longitude!,
               ),
+              icon: BitmapDescriptor.fromBytes(imageData),
               infoWindow: InfoWindow(
                 title: display.displayName,
                 snippet: display.description ?? '',
@@ -106,9 +130,6 @@ class _MapScreenState extends State<MapScreen> {
           );
         }
       }
-
-      // Print the list of nearby displays
-      print('Nearby Displays: $nearbyDisplays');
 
       // Update the state to rebuild the widget
       setState(() {});
@@ -126,9 +147,8 @@ class _MapScreenState extends State<MapScreen> {
             key: _mapKey,
             onMapCreated: (controller) async {
               _controllerCompleter.complete(controller);
-
-              // Wait for _loadNearbyDisplaysCompleter to complete before updating markers
               await _loadNearbyDisplaysCompleter.future;
+              _setInitialCameraPosition(controller);
               _loadMap(_selectedLocation!);
             },
             initialCameraPosition: _selectedLocation != null
@@ -143,7 +163,7 @@ class _MapScreenState extends State<MapScreen> {
                     target: LatLng(0, 0),
                     zoom: 15.0,
                   ),
-            markers: markers, // Set the markers on the map
+            markers: markers,
           ),
         ],
       ),
@@ -160,6 +180,20 @@ class _MapScreenState extends State<MapScreen> {
         LatLng(
           selectedLocation.latitude,
           selectedLocation.longitude,
+        ),
+      ),
+    );
+  }
+
+  void _setInitialCameraPosition(GoogleMapController controller) {
+    controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(
+            _selectedLocation!.latitude,
+            _selectedLocation!.longitude,
+          ),
+          zoom: 15.0,
         ),
       ),
     );

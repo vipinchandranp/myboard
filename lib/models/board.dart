@@ -28,7 +28,8 @@ class Board {
         _description = description,
         _rating = rating,
         _comments = comments,
-        _displayDetails = displayDetails, // Updated this line
+        _displayDetails = displayDetails,
+        // Updated this line
         _isApproved = isApproved,
         _imageFile = imageFile;
 
@@ -96,7 +97,7 @@ class Board {
       'rating': _rating,
       'comments': _comments?.map((comment) => comment.toJson()).toList(),
       'displayDetails':
-      _displayDetails?.map((display) => display.toJson()).toList(),
+          _displayDetails?.map((display) => display.toJson()).toList(),
       'isApproved': _isApproved,
       'imageFile': _imageFile?.path,
     };
@@ -111,11 +112,11 @@ class Board {
       rating: json['rating'],
       comments: json['comments'] != null
           ? List<Comment>.from(
-          json['comments'].map((comment) => Comment.fromJson(comment)))
+              json['comments'].map((comment) => Comment.fromJson(comment)))
           : [],
       displayDetails: json['displayDetails'] != null
           ? List<BoardDisplayDetails>.from(json['displayDetails']
-          .map((display) => BoardDisplayDetails.fromJson(display)))
+              .map((display) => BoardDisplayDetails.fromJson(display)))
           : [],
       isApproved: json['isApproved'],
       imageFile: json['imageFile'] != null ? XFile(json['imageFile']) : null,
@@ -159,7 +160,7 @@ class BoardDisplayDetails {
       'id': _id,
       'name': _name,
       'dateTimeSlots':
-      _dateTimeSlots?.map((dateTimeSlot) => dateTimeSlot.toJson()).toList(),
+          _dateTimeSlots?.map((dateTimeSlot) => dateTimeSlot.toJson()).toList(),
     };
   }
 
@@ -169,7 +170,7 @@ class BoardDisplayDetails {
       name: json['name'],
       dateTimeSlots: json['dateTimeSlots'] != null
           ? List<DateTimeSlot>.from(json['dateTimeSlots']
-          .map((dateTimeSlot) => DateTimeSlot.fromJson(dateTimeSlot)))
+              .map((dateTimeSlot) => DateTimeSlot.fromJson(dateTimeSlot)))
           : [],
     );
   }
@@ -225,13 +226,14 @@ class DateTimeSlot {
   }
 
   factory DateTimeSlot.fromJson(Map<String, dynamic> json) {
+    // Parse the date string manually
+    String selectedDateString = json['selectedDate'].split('T')[0];
+    DateTime selectedDate = DateTime.parse(selectedDateString);
+
     return DateTimeSlot(
-      id: json['id'],
-      selectedDate: json['selectedDate'] != null
-          ? DateTime.parse(json['selectedDate'])
-          : null,
-      startTime: _parseTimeOfDay(json['startTime']),
-      endTime: _parseTimeOfDay(json['endTime']),
+      selectedDate: selectedDate,
+      startTime: json['startTime'],
+      endTime: json['endTime'],
     );
   }
 
@@ -273,7 +275,7 @@ class Comment {
       date: DateTime.parse(json['date']),
       replies: json['replies'] != null
           ? List<Reply>.from(
-          json['replies'].map((reply) => Reply.fromJson(reply)))
+              json['replies'].map((reply) => Reply.fromJson(reply)))
           : [],
     );
   }

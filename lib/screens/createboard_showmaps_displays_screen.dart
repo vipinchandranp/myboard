@@ -38,6 +38,7 @@ class _SelectDisplayMapState extends State<SelectDisplayMap> {
   BitmapDescriptor selectedMarkerIcon = BitmapDescriptor.defaultMarker;
   BoardDisplayDetails? _selectedDisplayDetails;
   bool _bottomSheetOpen = false; // Track bottom sheet state
+  bool _showMyDisplays = false;
 
   @override
   void initState() {
@@ -128,9 +129,37 @@ class _SelectDisplayMapState extends State<SelectDisplayMap> {
     }
   }
 
+  void _reloadMap() {
+    // Fetch displays based on the selected option
+    if (_showMyDisplays) {
+      // Fetch displays for the logged-in user
+      _fetchMyDisplays();
+    } else {
+      // Fetch all displays
+      _getDisplays();
+    }
+  }
+
+  void _toggleMyDisplays() {
+    setState(() {
+      _showMyDisplays = !_showMyDisplays;
+    });
+    // Reload the map with displays based on the selected option
+    _reloadMap();
+  }
+
   Future<List<DisplayDetails>> _getDisplays() async {
     try {
       return await displayRepository.getAllDisplays();
+    } catch (e) {
+      print('Error getting displays: $e');
+      return []; // Handle error accordingly
+    }
+  }
+
+  Future<List<DisplayDetails>> _fetchMyDisplays() async {
+    try {
+      return await displayRepository.getMyDisplays();
     } catch (e) {
       print('Error getting displays: $e');
       return []; // Handle error accordingly
@@ -141,41 +170,61 @@ class _SelectDisplayMapState extends State<SelectDisplayMap> {
   Widget build(BuildContext context) {
     return Builder(
       builder: (BuildContext context) {
-        return FutureBuilder<List<DisplayDetails>>(
-          future: _getDisplays(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (snapshot.hasData) {
-              return AbsorbPointer(
-                absorbing: _bottomSheetOpen,
-                // Disable interactions with the map if the bottom sheet is open
-                child: Container(
-                  child: GoogleMap(
-                    key: _mapKey,
-                    onMapCreated: (controller) {
-                      _controllerCompleter.complete(controller);
-
-                      // Animate to the selected location when the map is created
-                      _animateToSelectedLocation(controller, _selectedLocation);
-                    },
-                    initialCameraPosition: CameraPosition(
-                      target: LatLng(
-                        _selectedLocation.latitude,
-                        _selectedLocation.longitude,
-                      ),
-                      zoom: 15.0,
-                    ),
-                    markers: _getMarkers(snapshot.data!),
-                  ),
+        return Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('All Displays'),
+                Switch(
+                  value: _showMyDisplays,
+                  onChanged: (value) {
+                    _toggleMyDisplays();
+                  },
                 ),
-              );
-            } else {
-              return SizedBox.shrink();
-            }
-          },
+                Text('My Displays'),
+              ],
+            ),
+            Expanded(
+              child: FutureBuilder<List<DisplayDetails>>(
+                future: _showMyDisplays ? _fetchMyDisplays() : _getDisplays(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (snapshot.hasData) {
+                    return AbsorbPointer(
+                      absorbing: _bottomSheetOpen,
+                      // Disable interactions with the map if the bottom sheet is open
+                      child: Container(
+                        child: GoogleMap(
+                          key: _mapKey,
+                          onMapCreated: (controller) {
+                            _controllerCompleter.complete(controller);
+
+                            // Animate to the selected location when the map is created
+                            _animateToSelectedLocation(
+                                controller, _selectedLocation);
+                          },
+                          initialCameraPosition: CameraPosition(
+                            target: LatLng(
+                              _selectedLocation.latitude,
+                              _selectedLocation.longitude,
+                            ),
+                            zoom: 15.0,
+                          ),
+                          markers: _getMarkers(snapshot.data!),
+                        ),
+                      ),
+                    );
+                  } else {
+                    return SizedBox.shrink();
+                  }
+                },
+              ),
+            ),
+          ],
         );
       },
     );

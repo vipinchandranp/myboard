@@ -13,6 +13,7 @@ import 'package:myboard/repositories/map_repository.dart';
 import 'package:myboard/repositories/user_repository.dart';
 import 'package:myboard/screens/createboard_screen.dart';
 import 'package:myboard/screens/createdisplay_screen.dart';
+import 'package:myboard/screens/displayimage_player_screen.dart';
 import 'package:myboard/screens/map_screen.dart';
 import 'package:myboard/screens/menu_screen.dart';
 import 'package:myboard/screens/modal-screen.dart';
@@ -31,6 +32,7 @@ class _MainScreenState extends State<MainScreen>
   late Iterable<SelectLocationDTO> _lastOptions = <SelectLocationDTO>[];
   final userRepository = GetIt.instance<UserRepository>();
   late MyBoardUser myBoardUser = MyBoardUser(id: '', username: '');
+  final GetIt getIt = GetIt.instance;
   final List<Widget> _screens = [
     CreateBoardScreen(),
     CreateDisplayScreen(),
@@ -116,6 +118,7 @@ class _MainScreenState extends State<MainScreen>
             _buildLocationInfo(),
             _buildNavigationLinks(),
             _buildUserMenu(),
+            _buildLogoutButton(),
           ],
           bottom: _buildBottomBar(),
         ),
@@ -126,6 +129,21 @@ class _MainScreenState extends State<MainScreen>
         persistentFooterButtons: [
           _buildFooter(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return GestureDetector(
+      onTap: () {
+        _logout(context);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Icon(
+          Icons.logout,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -290,26 +308,19 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 
-  Widget _buildNavigationButton(String label, VoidCallback onPressed) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        elevation: 0,
-        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(0),
-        ),
-        textStyle: TextStyle(
-          fontSize: 16,
-          color: Color(0xFF7986CB), // Use your desired color
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      child: Container(
-        alignment: Alignment.center,
-        child: Text(label),
-      ),
-    );
+  void _logout(BuildContext context) async {
+    try {
+      // Call the logout API using the UserRepository
+      final UserRepository userRepository = getIt<UserRepository>();
+      await userRepository.logout();
+
+      // Navigate to the login screen
+      Navigator.pushReplacementNamed(context,
+          '/login'); // Replace '/login' with the route name of your login screen
+    } catch (e) {
+      // Handle logout error
+      print('Error logging out: $e');
+    }
   }
 
   Widget _buildUserMenu() {
@@ -317,15 +328,14 @@ class _MainScreenState extends State<MainScreen>
       onTap: () {
         ModalManager.showModal(
           context: context,
-          widget: MenuScreen(),
+          widget: MenuScreen(// Pass the logout callback function
+              ),
           headerText: '',
-          // Add header text
           heightFactor: 0.9,
           widthFactor: .3,
           isScrollControlled: true,
           backgroundColor: Colors.indigo,
-          // Set background color
-          textColor: Colors.white, // Set text color
+          textColor: Colors.white,
         );
       },
       child: Stack(
@@ -334,22 +344,17 @@ class _MainScreenState extends State<MainScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               CircleAvatar(
-                radius: 24,
-                backgroundImage: _profilePic.isNotEmpty
-                    ? MemoryImage(Uint8List.fromList(_profilePic))
-                        as ImageProvider<Object>
-                    : AssetImage('assets/default_profile_pic.png'),
-                // Use a default profile picture if the profile picture is not available
-              ),
+                  radius: 24,
+                  backgroundImage: MemoryImage(Uint8List.fromList(_profilePic))
+                      as ImageProvider<Object>),
               SizedBox(width: 8),
               Text(
-                myBoardUser.username, // Use user's username
+                myBoardUser.username,
                 style: TextStyle(
-                  color: Colors
-                      .brown, // Change the color of the username text to brown
+                  color: Colors.brown,
                 ),
               ),
-              SizedBox(width: 8), // Add some space to the right of the username
+              SizedBox(width: 8),
             ],
           ),
           Positioned(
@@ -357,8 +362,7 @@ class _MainScreenState extends State<MainScreen>
             bottom: 0,
             child: Icon(
               Icons.arrow_drop_down,
-              color: Colors
-                  .white, // Adjust the color of the dropdown carrot icon as needed
+              color: Colors.white,
             ),
           ),
         ],
@@ -458,16 +462,31 @@ class _MainScreenState extends State<MainScreen>
   }
 
   Widget _buildPlayButton() {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.red,
-      ),
-      child: Icon(
-        Icons.play_arrow,
-        color: Colors.white,
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return Dialog(
+              // Use Dialog widget to create a modal covering the entire screen
+              backgroundColor: Colors.transparent,
+              insetPadding: EdgeInsets.zero,
+              child: DisplayImagePlayer(),
+            );
+          },
+        );
+      },
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.red,
+        ),
+        child: Icon(
+          Icons.play_arrow,
+          color: Colors.white,
+        ),
       ),
     );
   }

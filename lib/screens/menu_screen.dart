@@ -3,6 +3,7 @@ import 'package:myboard/screens/modal-screen.dart';
 import 'package:myboard/screens/profile_screen.dart';
 
 class MenuScreen extends StatelessWidget {
+
   final List<Map<String, dynamic>> buttonData = [
     {'icon': Icons.settings, 'text': 'Settings'},
     {'icon': Icons.account_circle, 'text': 'Profile'},

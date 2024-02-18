@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:image_picker/image_picker.dart';
@@ -15,18 +18,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _lastName;
   String? _phoneNumber;
   String? _address;
-  XFile? _pickedFile; // Changed from XFile to File
+  XFile? _pickedFile; // Changed from File to XFile
   final ImagePicker _imagePicker = ImagePicker();
   final userRepository = GetIt.instance<UserRepository>();
 
+  @override
+  void initState() {
+    super.initState();
+    // Fetch user profile data when the screen is initialized
+    _loadUserDetails();
+  }
 
+  Future<void> _loadUserDetails() async {
+    try {
+      UserProfile userProfile = await userRepository.getUserProfile();
+      // Set the initial values of form fields from the fetched user profile data
+      setState(() {
+        _firstName = userProfile.firstName;
+        _lastName = userProfile.lastName;
+        _phoneNumber = userProfile.phoneNumber;
+        _address = userProfile.address;
+        // Load profile picture from API
+        _loadProfilePicture();
+      });
+    } catch (e) {
+      print('Failed to load user details: $e');
+    }
+  }
+
+  Future<void> _loadProfilePicture() async {
+    try {
+      // Call the method to get the profile picture bytes
+      List<int> imageData = await userRepository.getProfilePic();
+      // Set the profile picture file using the retrieved bytes
+      setState(() {
+        _pickedFile = XFile.fromData(Uint8List.fromList(imageData));
+      });
+    } catch (e) {
+      print('Failed to load profile picture: $e');
+    }
+  }
 
   Future<void> _getImage() async {
     final XFile? pickedFile =
         await _imagePicker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _pickedFile = XFile(pickedFile.path);
+        _pickedFile = pickedFile;
       });
     }
   }
@@ -50,7 +88,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       lastName: _lastName ?? '',
       phoneNumber: _phoneNumber ?? '',
       address: _address ?? '',
-      profileImageFile: _pickedFile, // Pass the selected profile picture file
+      profileImageFile:
+          XFile(_pickedFile!.path), // Pass the selected profile picture file
     );
 
     // Call the saveUserProfile method from the UserRepository
@@ -76,149 +115,157 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.all(16.0),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate(
-                [
-                  Center(
-                    child: GestureDetector(
-                      onTap: _getImage,
-                      child: Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          Container(
-                            width: 160,
-                            height: 160,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.grey.withOpacity(0.3),
-                            ),
-                            child: _pickedFile != null
-                                ? ClipOval(
-                                    child: Image.network(
-                                      _pickedFile!.path,
-                                      height: 200,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : CircleAvatar(
-                                    radius: 80,
-                                    backgroundImage: AssetImage(
-                                      'assets/myboard_logo.png',
-                                    ),
+      body: FutureBuilder<UserProfile>(
+        future: userRepository.getUserProfile(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            UserProfile userProfile = snapshot.data!;
+            return CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.all(16.0),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate(
+                      [
+                        Center(
+                          child: GestureDetector(
+                            onTap: _getImage,
+                            child: Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                Container(
+                                  width: 160,
+                                  height: 160,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey.withOpacity(0.3),
                                   ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white,
+                                  child: _pickedFile != null
+                                      ? ClipOval(
+                                          child: FutureBuilder<Uint8List>(
+                                            future: _pickedFile!.readAsBytes(),
+                                            builder: (context, snapshot) {
+                                              if (snapshot.hasData) {
+                                                return Image.memory(
+                                                  snapshot.data!,
+                                                  height: 200,
+                                                  fit: BoxFit.cover,
+                                                );
+                                              } else {
+                                                return CircularProgressIndicator();
+                                              }
+                                            },
+                                          ),
+                                        )
+                                      : CircleAvatar(
+                                          radius: 80,
+                                          backgroundImage: AssetImage(
+                                            'assets/myboard_logo.png',
+                                          ),
+                                        ),
+                                ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                  ),
+                                  child: Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.indigo,
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: Icon(
-                              Icons.camera_alt,
-                              color: Colors.indigo,
-                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                        SizedBox(height: 20),
+                        _buildFormField(
+                          'First Name',
+                          initialValue: userProfile.firstName,
+                        ),
+                        SizedBox(height: 20),
+                        _buildFormField(
+                          'Last Name',
+                          initialValue: userProfile.lastName,
+                        ),
+                        SizedBox(height: 20),
+                        // Use IntlPhoneField with initialCountryCode set to 'IN' to show only Indian flag
+                        IntlPhoneField(
+                          decoration: InputDecoration(
+                            labelText: 'Phone Number',
+                            labelStyle: TextStyle(color: Colors.indigo),
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Colors.indigo,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade400,
+                              ),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 16),
+                            filled: true,
+                            fillColor: Colors.white,
+                            errorStyle: TextStyle(color: Colors.red),
+                          ),
+                          initialCountryCode: 'IN',
+                          // Set initial country code to India
+                          initialValue: userProfile.phoneNumber,
+                        ),
+                        SizedBox(height: 20),
+                        TextField(
+                          maxLines: 10,
+                          decoration: InputDecoration(
+                            labelText: 'Address',
+                            labelStyle: TextStyle(color: Colors.indigo),
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Colors.indigo,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade400,
+                              ),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 16),
+                            filled: true,
+                            fillColor: Colors.white,
+                            errorStyle: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        FloatingActionButton.extended(
+                          onPressed: () {
+                            _saveUserDetails(context);
+                          },
+                          label: Text('Save'),
+                          icon: Icon(Icons.save),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 20),
-                  _buildFormField('First Name', onChanged: (value) {
-                    setState(() {
-                      _firstName = value;
-                    });
-                  }),
-                  SizedBox(height: 20),
-                  _buildFormField('Last Name', onChanged: (value) {
-                    setState(() {
-                      _lastName = value;
-                    });
-                  }),
-                  SizedBox(height: 20),
-                  // Use IntlPhoneField with initialCountryCode set to 'IN' to show only Indian flag
-                  IntlPhoneField(
-                    decoration: InputDecoration(
-                      labelText: 'Phone Number',
-                      labelStyle: TextStyle(color: Colors.indigo),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.indigo,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
-                      contentPadding:
-                          EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                      filled: true,
-                      fillColor: Colors.white,
-                      errorStyle: TextStyle(color: Colors.red),
-                    ),
-                    initialCountryCode: 'IN',
-                    // Set initial country code to India
-                    onChanged: (phone) {
-                      setState(() {
-                        _phoneNumber = phone.completeNumber;
-                      });
-                    },
-                  ),
-                  SizedBox(height: 20),
-                  TextField(
-                    onChanged: (value) {
-                      setState(() {
-                        _address = value;
-                      });
-                    },
-                    maxLines: 10,
-                    decoration: InputDecoration(
-                      labelText: 'Address',
-                      labelStyle: TextStyle(color: Colors.indigo),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.indigo,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
-                      contentPadding:
-                          EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                      filled: true,
-                      fillColor: Colors.white,
-                      errorStyle: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  FloatingActionButton.extended(
-                    onPressed: () {
-                      _saveUserDetails(context);
-                    },
-                    label: Text('Save'),
-                    icon: Icon(Icons.save),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+                ),
+              ],
+            );
+          }
+        },
       ),
     );
   }
 
-  Widget _buildFormField(String labelText,
-      {String? initialValue, required ValueChanged<String> onChanged}) {
+  Widget _buildFormField(String labelText, {String? initialValue}) {
     return TextFormField(
       initialValue: initialValue,
-      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: labelText,
         labelStyle: TextStyle(color: Colors.indigo),

@@ -1,18 +1,18 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:myboard/config/api_config.dart';
 import 'package:myboard/models/UserProfile.dart';
 import 'package:myboard/models/display_details.dart';
 import 'package:myboard/models/location_search.dart';
+import 'package:myboard/models/user.dart';
 import 'package:myboard/utils/token_interceptor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:myboard/config/api_config.dart';
-import 'package:myboard/models/user.dart';
-import 'package:myboard/models/login_response.dart';
 
 import '../models/location.dart';
 
@@ -403,9 +403,8 @@ class UserRepository {
       final TokenInterceptorHttpClient tokenInterceptor =
           GetIt.instance<TokenInterceptorHttpClient>();
 
-      final response = await tokenInterceptor.get(
-        Uri.parse('$_apiUrl/v1/users/user-profile')
-      );
+      final response = await tokenInterceptor
+          .get(Uri.parse('$_apiUrl/v1/users/user-profile'));
 
       if (response.statusCode == 200) {
         // Parse the JSON response
@@ -435,6 +434,60 @@ class UserRepository {
       // Handle exception
       print('Exception: $e');
       throw Exception('Failed to fetch user profile');
+    }
+  }
+
+  Future<void> logout() async {
+    try {
+      // Call the backend logout API
+      final response = await http.post(
+        Uri.parse('$_apiUrl/logout'),
+        headers: {'Content-Type': 'application/json'},
+        // You may need to include the token in the headers for authentication
+        // Example: {'Authorization': 'Bearer $token'}
+      );
+
+      // Check if the backend logout was successful
+      if (response.statusCode == 200) {
+        // Clear the token from SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('token');
+      } else {
+        // Handle error case
+        print('Failed to logout from backend: ${response.statusCode}');
+        throw Exception('Failed to logout');
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to logout');
+    }
+  }
+
+  Future<List<int>> getDisplayImageForCurrentTime() async {
+    try {
+      final TokenInterceptorHttpClient tokenInterceptor =
+          getIt<TokenInterceptorHttpClient>();
+      final response = await tokenInterceptor.get(
+        Uri.parse('$_apiUrl/v1/play/current-time-image'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        // Return the display image content as a list of bytes
+        return response.bodyBytes;
+      } else if (response.statusCode == 404) {
+        // No display image found for the current time
+        return [];
+      } else {
+        // Handle other error cases
+        print('Failed to fetch display image: ${response.statusCode}');
+        throw Exception('Failed to fetch display image');
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to fetch display image');
     }
   }
 }

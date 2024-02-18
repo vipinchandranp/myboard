@@ -122,22 +122,27 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
   }
 
   void _onMapTap(LatLng position) async {
-    ByteData byteData = await rootBundle.load('assets/display-map-marker.png');
-    Uint8List imageData = byteData.buffer.asUint8List();
+    try {
+      ByteData byteData =
+          await rootBundle.load('assets/display-map-marker.png');
+      Uint8List imageData = byteData.buffer.asUint8List();
 
-    setState(() {
-      _markers.clear();
-      _markers.add(Marker(
-        markerId: MarkerId('selected-location'),
-        position: position,
-        icon: BitmapDescriptor.fromBytes(imageData),
-      ));
-      _selectedLocation = SelectLocationDTO(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        name: 'Selected Location',
-      );
-    });
+      setState(() {
+        _markers.clear();
+        _markers.add(Marker(
+          markerId: MarkerId('selected-location'),
+          position: position,
+          icon: BitmapDescriptor.fromBytes(imageData),
+        ));
+        _selectedLocation = SelectLocationDTO(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          name: 'Selected Location',
+        );
+      });
+    } catch (e) {
+      print('Error loading marker image: $e');
+    }
   }
 
   @override
@@ -244,22 +249,25 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
     } else {
       return Stack(
         children: [
-          GoogleMap(
-            key: _mapKey,
-            initialCameraPosition: CameraPosition(
-              target: LatLng(
-                _selectedLocation!.latitude,
-                _selectedLocation!.longitude,
+          MouseRegion(
+            cursor: SystemMouseCursors.progress, // Set the cursor type here
+            child: GoogleMap(
+              key: _mapKey,
+              initialCameraPosition: CameraPosition(
+                target: LatLng(
+                  _selectedLocation!.latitude,
+                  _selectedLocation!.longitude,
+                ),
+                zoom: 15.0,
               ),
-              zoom: 15.0,
+              markers: _markers,
+              onTap: _onMapTap,
+              myLocationEnabled: true,
+              onMapCreated: (controller) {
+                _controllerCompleter.complete(controller);
+                _setInitialCameraPosition(controller);
+              },
             ),
-            markers: _markers,
-            onTap: _onMapTap,
-            myLocationEnabled: true,
-            onMapCreated: (controller) {
-              _controllerCompleter.complete(controller);
-              _setInitialCameraPosition(controller);
-            },
           ),
           Positioned(
             top: 16.0,
