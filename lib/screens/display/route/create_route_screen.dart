@@ -1,9 +1,4 @@
 import 'dart:async';
-import 'dart:math';
-import 'dart:ui';
-import 'dart:math' show cos, sin, sqrt, atan2, pi;
-import 'dart:ui' as ui;
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -179,6 +174,35 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
     });
   }
 
+  void _fetchRoute() async {
+    if (_locations.length >= 2) {
+      LatLng source = _locations[_locations.length - 2];
+      LatLng destination = _locations[_locations.length - 1];
+      PolylinePoints polylinePoints = PolylinePoints();
+      PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+        "${google_api_key}",
+        PointLatLng(source.latitude, source.longitude),
+        PointLatLng(destination.latitude, destination.longitude),
+      );
+
+      if (result.points.isNotEmpty) {
+        List<LatLng> polylineCoordinates = [];
+        result.points.forEach((PointLatLng point) {
+          polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+        });
+
+        setState(() {
+          _polylines.add(Polyline(
+            polylineId: PolylineId('route${_locations.length - 1}'),
+            points: polylineCoordinates,
+            color: Colors.blue,
+            width: 6,
+          ));
+        });
+      }
+    }
+  }
+
   void _saveRoute() {
     // Implement saving route functionality here
     // You can use _locations and _routeName
@@ -227,103 +251,5 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
       }
     });
   }
-
-  double _calculateBearing(LatLng start, LatLng end) {
-    double startLat = _degreesToRadians(start.latitude);
-    double startLng = _degreesToRadians(start.longitude);
-    double endLat = _degreesToRadians(end.latitude);
-    double endLng = _degreesToRadians(end.longitude);
-
-    double deltaLng = endLng - startLng;
-
-    double y = sin(deltaLng) * cos(endLat);
-    double x = cos(startLat) * sin(endLat) -
-        sin(startLat) * cos(endLat) * cos(deltaLng);
-    double bearing = atan2(y, x);
-
-    return _radiansToDegrees(bearing);
-  }
-
-  double _degreesToRadians(degrees) {
-    return degrees * pi / 180;
-  }
-
-  double _radiansToDegrees(radians) {
-    return radians * 180 / pi;
-  }
-
-  void _fetchRoute() async {
-    if (_locations.length >= 2) {
-      _polylines.clear(); // Clear previous polylines
-
-      for (int i = 0; i < _locations.length - 1; i++) {
-        LatLng start = _locations[i];
-        LatLng end = _locations[i + 1];
-
-        // Fetch route between two consecutive points
-        PolylinePoints polylinePoints = PolylinePoints();
-        PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-          google_api_key,
-          PointLatLng(start.latitude, start.longitude),
-          PointLatLng(end.latitude, end.longitude),
-        );
-
-        if (result.points.isNotEmpty) {
-          List<LatLng> polylineCoordinates = [];
-          result.points.forEach((PointLatLng point) {
-            polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-          });
-
-          // Add polyline to display the route
-          _polylines.add(Polyline(
-            polylineId: PolylineId('route$i'),
-            points: polylineCoordinates,
-            color: Colors.blue,
-            width: 6,
-          ));
-
-          // Calculate bearing between two consecutive points
-          double bearing = _calculateBearing(start, end);
-
-          // Add arrow marker at the end of the polyline
-          _markers.add(Marker(
-            markerId: MarkerId('arrow$i'),
-            position: end,
-            icon: await _createArrowIcon(
-                bearing), // Create arrow icon based on bearing
-          ));
-        }
-      }
-
-      setState(() {});
-    }
-  }
-
-// Inside _fetchRoute method
-  Future<BitmapDescriptor> _createArrowIcon(double bearing) async {
-    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
-    final Canvas canvas = Canvas(pictureRecorder);
-    final Paint paint = Paint()..color = Colors.blue;
-    final double size = 40.0;
-    final double arrowSize = 8.0;
-
-    canvas.translate(size / 2, size / 2);
-    canvas.rotate(_degreesToRadians(bearing));
-
-    final Path path = Path();
-    path.moveTo(-arrowSize / 2, -size / 2);
-    path.lineTo(arrowSize / 2, -size / 2);
-    path.lineTo(0, size / 2);
-    path.close();
-
-    canvas.drawPath(path, paint);
-
-    final ui.Picture picture = pictureRecorder.endRecording();
-    final ui.Image image = await picture.toImage(size.toInt(), size.toInt());
-    final ByteData? byteData =
-        await image.toByteData(format: ui.ImageByteFormat.png);
-    final Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-    return BitmapDescriptor.fromBytes(pngBytes);
-  }
+  
 }
