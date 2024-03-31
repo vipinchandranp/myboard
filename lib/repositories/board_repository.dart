@@ -1,20 +1,15 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:http_parser/http_parser.dart';
+import 'package:get_it/get_it.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:myboard/config/api_config.dart';
 import 'package:myboard/models/board-id-title.dart';
 import 'package:myboard/models/board.dart';
-import 'package:http/http.dart' as http;
 import 'package:myboard/models/board_with_image.dart';
-import 'package:myboard/models/user.dart';
-import 'package:myboard/screens/viewmyboards_screen.dart';
-import 'package:myboard/utils/token_interceptor.dart';
-import 'package:get_it/get_it.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:myboard/common-util/common_util_token_interceptor.dart';
 
 class BoardRepository {
   final String _apiUrl = APIConfig.getRootURL();
@@ -57,7 +52,6 @@ class BoardRepository {
 
       // Add board details as fields
       request.fields['boardTitle'] = board.title!;
-      request.fields['boardDesc'] = board.description!;
 
       // Add image file if available
       await addImageFileToRequest(request, board.imageFile);

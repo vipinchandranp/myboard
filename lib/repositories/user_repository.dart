@@ -11,7 +11,7 @@ import 'package:myboard/models/UserProfile.dart';
 import 'package:myboard/models/display_details.dart';
 import 'package:myboard/models/location_search.dart';
 import 'package:myboard/models/user.dart';
-import 'package:myboard/utils/token_interceptor.dart';
+import 'package:myboard/common-util/common_util_token_interceptor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/location.dart';
@@ -360,7 +360,7 @@ class UserRepository {
     }
   }
 
-  Future<List<int>> getProfilePic() async {
+  Future<Uint8List> getProfilePic() async {
     try {
       // Retrieve the token from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
@@ -379,6 +379,44 @@ class UserRepository {
       // Make a GET request to the server to fetch the profile picture
       final response = await http.get(
         Uri.parse('$_apiUrl/v1/users/profile-pic'),
+        headers: headers,
+      );
+
+      // Check if the request was successful
+      if (response.statusCode == 200) {
+        // Return the profile picture content as a list of bytes
+        return response.bodyBytes;
+      } else {
+        // Handle error case
+        print('Failed to fetch profile picture: ${response.statusCode}');
+        throw Exception('Failed to fetch profile picture');
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to fetch profile picture');
+    }
+  }
+
+  Future<Uint8List> getProfilePicOfUser(String userId) async {
+    try {
+      // Retrieve the token from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      // Check if the token is available
+      if (token == null) {
+        throw Exception('Token not found');
+      }
+
+      // Prepare the request headers with the token
+      final headers = {
+        'Authorization': 'Bearer $token',
+      };
+
+      // Make a GET request to the server to fetch the profile picture
+      final response = await http.get(
+        Uri.parse('$_apiUrl/v1/users/profile-pic/'+userId),
         headers: headers,
       );
 
@@ -488,6 +526,31 @@ class UserRepository {
       // Handle exception
       print('Exception: $e');
       throw Exception('Failed to fetch display image');
+    }
+  }
+
+  Future<void> playAudit(String displayId, String boardId) async {
+    try {
+      final TokenInterceptorHttpClient tokenInterceptor =
+          GetIt.instance<TokenInterceptorHttpClient>();
+      final response = await tokenInterceptor.post(
+        Uri.parse('$_apiUrl/v1/play/audit/$displayId/$boardId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        // Play audit saved successfully
+        print('Play audit saved successfully');
+      } else {
+        // Handle error case
+        print(
+            'Failed to save play audit. Server returned status code: ${response.statusCode}');
+        throw Exception('Failed to save play audit');
+      }
+    } catch (e) {
+      // Handle exception
+      print('Exception: $e');
+      throw Exception('Failed to save play audit');
     }
   }
 }

@@ -4,7 +4,7 @@ import 'package:myboard/config/api_config.dart';
 import 'package:myboard/models/display_details.dart';
 import 'package:myboard/models/location_search.dart';
 import 'dart:convert';
-import 'package:myboard/utils/token_interceptor.dart'; // Import your Dart model
+import 'package:myboard/common-util/common_util_token_interceptor.dart';
 
 class MapRepository {
   final String _apiUrl = APIConfig.getRootURL();

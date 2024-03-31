@@ -6,7 +6,7 @@ import 'package:myboard/models/display_details.dart';
 import 'package:myboard/models/location_search.dart';
 import 'package:myboard/models/user.dart';
 import 'package:myboard/repositories/user_repository.dart';
-import 'package:myboard/screens/loading.dart';
+import 'package:myboard/screens/screen-util/screen_util_loading.dart';
 
 class UserCubit extends Cubit<UserState> {
   final UserRepository userRepository;

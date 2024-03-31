@@ -1,10 +1,11 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:myboard/config/api_config.dart';
 import 'package:myboard/models/display_details.dart';
 import 'package:myboard/models/tileslotavailability.dart';
-import 'package:myboard/utils/token_interceptor.dart';
+import 'package:myboard/common-util/common_util_token_interceptor.dart';
 
 class DisplayRepository {
   final String _apiUrl = APIConfig.getRootURL();
@@ -54,7 +55,7 @@ class DisplayRepository {
     }
   }
 
-  Future<List<int>> getDisplayImage(String? displayId) async {
+  Future<Uint8List> getDisplayImage(String? displayId) async {
     final TokenInterceptorHttpClient tokenInterceptor =
         getIt<TokenInterceptorHttpClient>();
     final response = await tokenInterceptor.get(

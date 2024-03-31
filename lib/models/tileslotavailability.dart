@@ -1,12 +1,12 @@
 class TimeSlotAvailability {
   final DateTime selectedDate;
   final List<String> availableTimeSlots;
-  final List<String> unavailableTimeSlots;
+  final List<String> bookedTimeslots;
 
   TimeSlotAvailability({
     required this.selectedDate,
     required this.availableTimeSlots,
-    required this.unavailableTimeSlots,
+    required this.bookedTimeslots,
   });
 
   factory TimeSlotAvailability.fromJson(Map<String, dynamic> json) {
@@ -20,7 +20,7 @@ class TimeSlotAvailability {
     return TimeSlotAvailability(
       selectedDate: selectedDate,
       availableTimeSlots: List<String>.from(json['availableTimeSlots'] ?? []),
-      unavailableTimeSlots:
+      bookedTimeslots:
           List<String>.from(json['unavailableTimeSlots'] ?? []),
     );
   }
@@ -29,7 +29,7 @@ class TimeSlotAvailability {
     return {
       'selectedDate': selectedDate.toIso8601String(),
       'availableTimeSlots': availableTimeSlots,
-      'unavailableTimeSlots': unavailableTimeSlots,
+      'bookedTimeslots': bookedTimeslots,
     };
   }
 }
