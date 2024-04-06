@@ -1,16 +1,21 @@
 import 'dart:async';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_map_marker_animation/widgets/animarker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:myboard/bloc/map/map_cubit.dart';
 import 'package:myboard/bloc/map/map_state.dart';
+import 'package:myboard/bloc/route/route_cubit.dart';
 import 'package:myboard/models/location_search.dart';
+import 'package:myboard/models/route.dart';
 import 'package:myboard/models/user.dart';
+import 'package:myboard/repositories/route-repository.dart';
 import 'package:myboard/repositories/user_repository.dart';
 import 'package:myboard/utils/Constants.dart';
+
 
 class CreateRouteScreen extends StatefulWidget {
   @override
@@ -26,8 +31,7 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
   Map<int, LatLng> _redoLocations = {};
   Map<int, MarkerId> _markerIds = {};
   late MapCubit mapCubit;
-  LatLng?
-      _selectedUserLocation; // Add this variable to store the selected user location
+  LatLng? _selectedUserLocation;
   bool isUserLocationLoaded = false;
   SelectLocationDTO? _selectedLocation;
   Key _mapKey = UniqueKey();
@@ -66,7 +70,6 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
                   Animarker(
                     curve: Curves.ease,
                     mapId: _controller.future.then<int>((value) => value.mapId),
-                    //Grab Google Map Id
                     markers: _markers,
                     child: GoogleMap(
                       onMapCreated: (GoogleMapController controller) {
@@ -92,7 +95,7 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: Container(
-              width: 200, // Adjust the width as needed
+              width: MediaQuery.of(context).size.width * 0.2, // Adjust the width as needed
               padding: EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -110,9 +113,12 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
                   ),
                   SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: _saveRoute,
+                    onPressed: () {
+                      _saveRoute(context); // Pass the context here
+                    },
                     child: Text('Save Route'),
                   ),
+
                   SizedBox(height: 16),
                   IconButton(
                     icon: Icon(Icons.undo),
@@ -121,6 +127,18 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
                   IconButton(
                     icon: Icon(Icons.redo),
                     onPressed: _redo,
+                  ),
+                  SizedBox(height: 16),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _locations.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text('Point ${index + 1}'),
+                          subtitle: Text('Latitude: ${_locations[index].latitude}, Longitude: ${_locations[index].longitude}'),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -156,7 +174,9 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
     });
   }
 
-  void _onMapTap(LatLng latLng) {
+  Future<void> _onMapTap(LatLng latLng) async {
+    ByteData byteData = await rootBundle.load('assets/display_pin.png');
+    Uint8List imageData = byteData.buffer.asUint8List();
     setState(() {
       _locations.add(latLng);
       MarkerId markerId = MarkerId('${_locations.length}');
@@ -165,7 +185,7 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
         Marker(
           markerId: markerId,
           position: latLng,
-          icon: BitmapDescriptor.defaultMarker,
+          icon: BitmapDescriptor.fromBytes(imageData),
         ),
       );
       if (_locations.length >= 2) {
@@ -203,9 +223,12 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
     }
   }
 
-  void _saveRoute() {
-    // Implement saving route functionality here
-    // You can use _locations and _routeName
+  void _saveRoute(BuildContext context) {
+    if (_routeName.isNotEmpty && _locations.length >= 2) {
+      RouteModel route = RouteModel(name: _routeName, locations: _locations);
+      RouteRepository().saveRoute(context, route);
+      // You can also notify the UI that route is saved or perform any other necessary actions.
+    }
   }
 
   void _undo() {
@@ -218,8 +241,8 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
           _markers.removeWhere((marker) => marker.markerId == markerId);
         }
         _polylines.removeWhere(
-          (polyline) =>
-              polyline.polylineId ==
+              (polyline) =>
+          polyline.polylineId ==
               PolylineId('route${_locations.length + 1}'),
         );
       }
@@ -251,5 +274,4 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
       }
     });
   }
-  
 }

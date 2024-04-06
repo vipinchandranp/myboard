@@ -32,6 +32,7 @@ dependencies:
   flutter:
     sdk: flutter
   intl: "^0.17.0"
+  geocoding: "^2.0.0"
   flutter_polyline_points: "^2.0.0"
   google_map_marker_animation: "^0.0.1"
   location: "^4.4.0"

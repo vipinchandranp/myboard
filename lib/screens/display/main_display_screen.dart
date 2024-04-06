@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myboard/screens/display/create_display/create_display_screen.dart';
 import 'package:myboard/screens/display/route/create_route_screen.dart';
+import 'package:myboard/screens/display/route/view_route_screen.dart';
 import 'package:myboard/screens/display/view_display/view_mydisplay_my_displays_on_map.dart';
 
 class MainDisplayScreen extends StatefulWidget {
@@ -16,7 +17,7 @@ class _MainDisplayScreenState extends State<MainDisplayScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _currentIndex = 0;
     _tabController.addListener(_handleTabChange);
   }
@@ -52,7 +53,8 @@ class _MainDisplayScreenState extends State<MainDisplayScreen>
               tabs: [
                 Tab(text: 'Create Display'),
                 Tab(text: 'View Display'),
-                Tab(text: 'Create Route')
+                Tab(text: 'Create Route'),
+                Tab(text: 'View Route')
               ],
             ),
           ),
@@ -61,10 +63,9 @@ class _MainDisplayScreenState extends State<MainDisplayScreen>
               index: _currentIndex,
               children: [
                 CreateDisplayScreen(),
-                // CreateBoardScreen as the content of the first tab
                 MyDisplaysOnMapScreen(),
-                // ViewBoardScreen as the content of the second tab
-                CreateRouteScreen()
+                CreateRouteScreen(),
+                ViewRouteScreen()
               ],
             ),
           ),
