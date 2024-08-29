@@ -14,7 +14,9 @@ import 'package:myboard/repositories/map_repository.dart';
 import 'package:myboard/repositories/user_repository.dart';
 import 'package:myboard/screens/login/login_screen.dart';
 import 'package:myboard/screens/main/mainlayout_screen.dart';
+import 'package:myboard/screens/main/responsive_mainlayout_screen.dart';
 import 'package:myboard/screens/signup/signup_screen.dart';
+import 'package:myboard/utils/AppTheme.dart';
 
 import 'package:provider/provider.dart';
 
@@ -92,12 +94,13 @@ class MyApp extends StatelessWidget {
       routes: {
         '/signup': (context) => SignupScreen(),
         '/login': (context) => LoginScreen(),
-        '/main': (context) => MainScreen(), // Use MyBoardScreen here
+        //'/main': (context) => MainScreen(), // Use MyBoardScreen here
+        '/main': (context) => ResponsiveMainScreen(), // Use MyBoardScreen here
       },
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-          primarySwatch: createCustomSwatch(Color(0xFF7986CB))),
+      theme: AppTheme.lightTheme, // Use light theme by default
+      darkTheme: AppTheme.darkTheme, // Use dark theme when system is in dark mode
+
       home: ProgressOverlay(
         child: Scaffold(
           body: LoginScreen(),

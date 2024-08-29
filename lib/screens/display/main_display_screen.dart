@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:myboard/screens/display/create_display/create_display_screen.dart';
 import 'package:myboard/screens/display/route/create_route_screen.dart';
 import 'package:myboard/screens/display/route/view_route_screen.dart';
 import 'package:myboard/screens/display/view_display/view_mydisplay_my_displays_on_map.dart';
+import 'package:myboard/screens/location/AutocompleteLocationSearchBar.dart';
 
 class MainDisplayScreen extends StatefulWidget {
   @override
@@ -30,46 +33,55 @@ class _MainDisplayScreenState extends State<MainDisplayScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: null,
-      body: Column(
-        children: [
-          SizedBox(
-            height: MediaQuery.of(context).padding.top + 16.0,
+    return DefaultTabController(
+      length: 4,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Display'),
+          bottom: TabBar(
+            tabs: [
+              Tab(icon: Icon(Icons.create), text: 'Create Display'),
+              Tab(icon: Icon(Icons.remove_red_eye), text: 'View Display'),
+              Tab(icon: Icon(Icons.map), text: 'Create Route'),
+              Tab(icon: Icon(Icons.directions), text: 'View Route'),
+            ],
           ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20.0),
-                topRight: Radius.circular(20.0),
+        ),
+        body: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.blue, Colors.red],
+                ),
               ),
-              color: Colors.grey[200],
             ),
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              indicatorColor: Colors.indigo,
-              tabs: [
-                Tab(text: 'Create Display'),
-                Tab(text: 'View Display'),
-                Tab(text: 'Create Route'),
-                Tab(text: 'View Route')
-              ],
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: Container(
+                color: Colors.black.withOpacity(0),
+              ),
             ),
-          ),
-          Expanded(
-            child: IndexedStack(
-              index: _currentIndex,
+            Column(
               children: [
-                CreateDisplayScreen(),
-                MyDisplaysOnMapScreen(),
-                CreateRouteScreen(),
-                ViewRouteScreen()
+                AutocompleteLocationSearchBar(),
+                Expanded(
+                  child: TabBarView(
+                    physics: NeverScrollableScrollPhysics(),
+                    children: [
+                      CreateDisplayScreen(),
+                      MyDisplaysOnMapScreen(),
+                      CreateRouteScreen(),
+                      ViewRouteScreen(),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -78,5 +90,43 @@ class _MainDisplayScreenState extends State<MainDisplayScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _showLocationSearch(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Location Search',
+                style: TextStyle(
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16.0),
+              // Your autocomplete location search bar widget goes here
+              // Replace the placeholder below with your actual location search bar widget
+              Placeholder(
+                color: Colors.grey,
+                fallbackWidth: double.infinity,
+                fallbackHeight: 200.0,
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

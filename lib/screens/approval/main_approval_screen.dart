@@ -29,39 +29,34 @@ class _ApprovalsScreenState extends State<ApprovalsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: null,
-      body: Column(
+      appBar: AppBar(
+        title: Text('Approvals'),
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          indicatorColor: Colors.indigo,
+          tabs: [
+            Tab(
+              icon: Icon(Icons.inbox), // Icon for Incoming Approvals
+              text: 'Incoming Approvals',
+            ),
+            Tab(
+              icon: Icon(Icons.outbox), // Icon for Outgoing Approvals
+              text: 'Outgoing Approvals',
+            ),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          SizedBox(
-            height: MediaQuery.of(context).padding.top + 16.0,
+          Card(
+            margin: EdgeInsets.all(8.0),
+            child: IncomingRequestsScreen(),
           ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20.0),
-                topRight: Radius.circular(20.0),
-              ),
-              color: Colors.grey[200],
-            ),
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              indicatorColor: Colors.indigo,
-              tabs: [
-                Tab(text: 'Incoming Approvals'),
-                Tab(text: 'Outgoing Approvals'),
-              ],
-            ),
-          ),
-          Expanded(
-            child: IndexedStack(
-              index: _currentIndex,
-              children: [
-                IncomingRequestsScreen(),
-                OutgoingRequestsScreen(),
-              ],
-            ),
+          Card(
+            margin: EdgeInsets.all(8.0),
+            child: OutgoingRequestsScreen(),
           ),
         ],
       ),

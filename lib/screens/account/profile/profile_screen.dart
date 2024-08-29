@@ -140,8 +140,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       [
                         Center(
                           child: Container(
-                            width: MediaQuery.of(context).size.width / 3,
-                            // Set width to one-third of screen width
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10),
                               color: Colors.white,

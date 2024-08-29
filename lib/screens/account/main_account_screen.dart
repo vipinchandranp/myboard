@@ -14,7 +14,7 @@ class _AccountScreenState extends State<AccountScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _currentIndex = 0;
     _tabController.addListener(_handleTabChange);
   }
@@ -28,12 +28,11 @@ class _AccountScreenState extends State<AccountScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: null,
+      appBar: AppBar(
+        title: Text('Account'),
+      ),
       body: Column(
         children: [
-          SizedBox(
-            height: MediaQuery.of(context).padding.top + 16.0,
-          ),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.0),
             decoration: BoxDecoration(

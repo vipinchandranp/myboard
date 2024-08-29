@@ -7,31 +7,6 @@ import 'package:myboard/models/board.dart';
 import 'package:myboard/models/board_with_image.dart';
 import 'package:myboard/screens/Insights/main_insight_screen.dart';
 
-class BoardDetailScreen extends StatelessWidget {
-  final Board board;
-
-  BoardDetailScreen({required this.board});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Board Details'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Board Title: ${board.title}'),
-            Text('Board Description: ${board.description}'),
-            // Add more details as needed
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class ViewMyboardScreen extends StatefulWidget {
   @override
   _ViewMyboardScreenState createState() => _ViewMyboardScreenState();
@@ -63,50 +38,6 @@ class _ViewMyboardScreenState extends State<ViewMyboardScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: EdgeInsets.all(10.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Search by Date Range',
-                    ),
-                  ),
-                ),
-                SizedBox(width: 10.0),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      labelText: 'Search by Specific Date',
-                    ),
-                  ),
-                ),
-                SizedBox(width: 10.0),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Text('Toggle Approved/Unapproved Boards'),
-                      Switch(
-                        value: false,
-                        // Example value, you need to handle its state
-                        onChanged: (value) {
-                          // Handle toggle state change
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(width: 10.0),
-                ElevatedButton(
-                  onPressed: () {
-                    // Handle apply button press
-                  },
-                  child: Text('Apply'),
-                ),
-              ],
-            ),
-          ),
           Expanded(
             child: BlocBuilder<BoardCubit, BoardState>(
               bloc: _boardCubit,
@@ -141,12 +72,7 @@ class _ViewMyboardScreenState extends State<ViewMyboardScreen> {
   }
 
   Widget _buildBoardList(List<BoardWithImage> boards) {
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 5,
-        crossAxisSpacing: 8.0,
-        mainAxisSpacing: 8.0,
-      ),
+    return ListView.builder(
       controller: _scrollController,
       itemCount: boards.length,
       itemBuilder: (context, index) {
@@ -160,7 +86,6 @@ class _ViewMyboardScreenState extends State<ViewMyboardScreen> {
     return Card(
       margin: EdgeInsets.all(8.0),
       elevation: 2.0,
-      shape: RoundedRectangleBorder(),
       child: InkWell(
         onTap: () {
           _onMaximizeIconClick(board.board);
@@ -168,89 +93,48 @@ class _ViewMyboardScreenState extends State<ViewMyboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header with Title and Buttons
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white24,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      board.board.title ?? 'No Title',
-                      style: TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.more_vert, color: Colors.black),
-                      onPressed: () {
-                        // Handle options menu tap
-                      },
-                    ),
-                  ],
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                board.board.title ?? 'No Title',
+                style: TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            // Main Content and Footer
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Description: ${board.board.description ?? 'No Description'}',
+                style: TextStyle(
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+            SizedBox(height: 8.0),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.memory(
+                board.imageBytes,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: 200.0,
+              ),
+            ),
+            SizedBox(height: 8.0),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // Main Content
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Description: ${board.board.description ?? 'No Description'}',
-                          style: TextStyle(
-                            color: Colors.grey,
-                          ),
-                        ),
-                        SizedBox(height: 8.0),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8.0),
-                          child: Image.memory(
-                            board.imageBytes,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: 200.0,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Footer with Actions
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(12.0),
-                        bottomRight: Radius.circular(12.0),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.open_in_full_rounded,
-                                color: Colors.indigo),
-                            onPressed: () {
-                              // Handle comment tap
-                              _onMaximizeIconClick(board.board);
-                            },
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
+                  IconButton(
+                    icon: Icon(Icons.open_in_full_rounded),
+                    onPressed: () {
+                      // Handle comment tap
+                      _onMaximizeIconClick(board.board);
+                    },
+                  )
                 ],
               ),
             ),
@@ -279,5 +163,46 @@ class _ViewMyboardScreenState extends State<ViewMyboardScreen> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+}
+
+class BoardDetailScreen extends StatelessWidget {
+  final Board board;
+
+  BoardDetailScreen({required this.board});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Board Details'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.more_vert),
+            onPressed: () {
+              // Handle more options
+            },
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Board Title: ${board.title}',
+              style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 10.0),
+            Text(
+              'Board Description: ${board.description}',
+              style: TextStyle(fontSize: 16.0),
+            ),
+            // Add more details as needed
+          ],
+        ),
+      ),
+    );
   }
 }

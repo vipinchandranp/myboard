@@ -36,7 +36,7 @@ class _MainScreenState extends State<MainScreen>
   final List<Widget> _screens = [
     MainBoardScreen(),
     MainDisplayScreen(),
-    ExploreMapScreen(),
+    MapScreen(),
     InsightScreen(),
     ApprovalsScreen(),
     AccountScreen()

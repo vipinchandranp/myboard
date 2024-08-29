@@ -69,7 +69,7 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
 
   Future<void> _getImage() async {
     final XFile? pickedFile =
-    await _imagePicker.pickImage(source: ImageSource.gallery);
+        await _imagePicker.pickImage(source: ImageSource.gallery);
     setState(() {
       _pickedFile = pickedFile;
     });
@@ -122,98 +122,103 @@ class _CreateBoardScreenState extends State<CreateBoardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
+      body: Stack(
         children: [
-          Expanded(
-            flex: 4,
-            child: SelectDisplayMap(
-              user: widget.user,
-              onDisplaySelected: onDisplaySelected,
-            ),
+          SelectDisplayMap(
+            user: widget.user,
+            onDisplaySelected: onDisplaySelected,
           ),
-          Container(
-            width: MediaQuery.of(context).size.width * 0.2,
-            height: double.infinity,
-            child: SingleChildScrollView(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Form(
-                  key: _formKey, // Assign the form key to the Form widget
-                  child: Container(
-                    padding: EdgeInsets.fromLTRB(16.0, 32.0, 16.0, 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Select a display and upload your board',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
-                        SizedBox(height: 16),
-                        TextFormField(
-                          controller: _titleController,
-                          decoration: InputDecoration(
-                            labelText: 'Board Name',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return 'Please enter board name'; // Return error message if value is empty
-                            }
-                            return null; // Return null if validation passes
-                          },
-                        ),
-                        if (_titleError != null)
-                          Text(
-                            _titleError!,
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _getImage,
-                          child: Text('Upload image for your Board'),
-                        ),
-                        if (_pickedFile != null)
-                          Column(
+          Positioned(
+            bottom: 0,
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              child: ElevatedButton(
+                child: Text('Enter board details'),
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (context) {
+                      return Form(
+                        key: _formKey,
+                        // Assign the form key to the Form widget
+                        child: Container(
+                          padding: EdgeInsets.fromLTRB(16.0, 32.0, 16.0, 16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              SizedBox(height: 16),
-                              Image.network(
-                                _pickedFile!.path,
-                                height: 200,
-                                fit: BoxFit.cover,
+                              Text(
+                                'Select a display and upload your board',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.normal,
+                                ),
                               ),
                               SizedBox(height: 16),
-                              Text('Uploaded File Content:'),
+                              TextFormField(
+                                controller: _titleController,
+                                decoration: InputDecoration(
+                                  labelText: 'Board Name',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (value) {
+                                  if (value!.isEmpty) {
+                                    return 'Please enter board name'; // Return error message if value is empty
+                                  }
+                                  return null; // Return null if validation passes
+                                },
+                              ),
+                              if (_titleError != null)
+                                Text(
+                                  _titleError!,
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _getImage,
+                                child: Text('Upload image for your Board'),
+                              ),
+                              if (_pickedFile != null)
+                                Column(
+                                  children: [
+                                    SizedBox(height: 16),
+                                    Image.network(
+                                      _pickedFile!.path,
+                                      height: 200,
+                                      fit: BoxFit.cover,
+                                    ),
+                                    SizedBox(height: 16),
+                                    Text('Uploaded File Content:'),
+                                  ],
+                                ),
+                              SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: _pickedFile == null
+                                    ? null
+                                    : () {
+                                        if (_formKey.currentState!.validate()) {
+                                          // Validate the form
+                                          _submitForm(context);
+                                        }
+                                      },
+                                icon: Icon(Icons.save),
+                                label: Text('Save Board'),
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.all(16.0),
+                                  textStyle: TextStyle(fontSize: 18),
+                                ),
+                              ),
+                              if (_pickedFile == null)
+                                Text(
+                                  'Please upload an image for the board before saving.',
+                                  style: TextStyle(color: Colors.red),
+                                ),
                             ],
                           ),
-                        SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: _pickedFile == null
-                              ? null
-                              : () {
-                            if (_formKey.currentState!.validate()) {
-                              // Validate the form
-                              _submitForm(context);
-                            }
-                          },
-                          icon: Icon(Icons.save),
-                          label: Text('Save Board'),
-                          style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.all(16.0),
-                            textStyle: TextStyle(fontSize: 18),
-                          ),
                         ),
-                        if (_pickedFile == null)
-                          Text(
-                            'Please upload an image for the board before saving.',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ),

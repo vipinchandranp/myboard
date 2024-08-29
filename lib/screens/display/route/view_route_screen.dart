@@ -101,71 +101,67 @@ class _ViewRouteScreenState extends State<ViewRouteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
+      body: Column(
         children: [
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onPanUpdate: (details) {
-                // Handle dragging logic here
-                // Check if the polyline is being dragged
-                // You can use details.localPosition to get the position of the drag event
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: DropdownButtonFormField<RouteModel>(
+              value: _selectedDropdownRoute,
+              items: _routes.map((route) {
+                return DropdownMenuItem<RouteModel>(
+                  value: route,
+                  child: Text(route.name, style: TextStyle(fontSize: 18)),
+                );
+              }).toList(),
+              onChanged: (RouteModel? value) {
+                if (value == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please select a route')),
+                  );
+                } else {
+                  setState(() {
+                    _selectedDropdownRoute = value;
+                    // Update the selected route on the map
+                    _updateSelectedRouteOnMap(value);
+                  });
+                }
               },
-              child: Stack(
-                children: [
-                  Builder(
-                    builder: (BuildContext context) {
-                      return GoogleMap(
-                        onMapCreated: (GoogleMapController controller) {
-                          _controller.complete(controller);
-                        },
-                        key: _mapKey,
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(
-                            _selectedLocation!.latitude,
-                            _selectedLocation!.longitude,
-                          ),
-                          zoom: 15.0,
-                        ),
-                        markers: _markers,
-                        polylines: _polylines,
-                      );
-                    },
-                  ),
-                ],
+              decoration: InputDecoration(
+                labelText: 'Select Route',
+                labelStyle: TextStyle(fontSize: 20),
+                border: OutlineInputBorder(),
+                errorStyle: TextStyle(color: Colors.redAccent, fontSize: 15),
               ),
+              validator: (value) {
+                if (value == null) {
+                  return 'Please select a route';
+                }
+                return null;
+              },
             ),
           ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.2,
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  DropdownButtonFormField<RouteModel>(
-                    value: _selectedDropdownRoute,
-                    items: _routes.map((route) {
-                      return DropdownMenuItem<RouteModel>(
-                        value: route,
-                        child: Text(route.name),
-                      );
-                    }).toList(),
-                    onChanged: (RouteModel? value) {
-                      setState(() {
-                        _selectedDropdownRoute = value;
-                        // Update the selected route on the map
-                        _updateSelectedRouteOnMap(value);
-                      });
-                    },
-                    decoration: InputDecoration(
-                      labelText: 'Select Route',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ],
-              ),
+          Expanded(
+            child: Stack(
+              children: [
+                Builder(
+                  builder: (BuildContext context) {
+                    return GoogleMap(
+                      onMapCreated: (GoogleMapController controller) {
+                        _controller.complete(controller);
+                      },
+                      initialCameraPosition: CameraPosition(
+                        target: LatLng(
+                          _selectedLocation!.latitude,
+                          _selectedLocation!.longitude,
+                        ),
+                        zoom: 15.0,
+                      ),
+                      markers: _markers,
+                      polylines: _polylines,
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         ],

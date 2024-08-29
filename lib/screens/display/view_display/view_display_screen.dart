@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:myboard/screens/board/create_board/createboard_screen.dart';
-import 'package:myboard/screens/board/view_board/view_board_screen.dart';
 
 class ViewDisplayScreen extends StatefulWidget {
   @override
@@ -30,14 +28,21 @@ class _ViewDisplayScreenState extends State<ViewDisplayScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: null,
-      body: Column(
-        children: [
-          SizedBox(
-            height: MediaQuery.of(context).padding.top + 16.0,
-          ),
-          Container(
-          ),
-        ],
+      body: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return Column(
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).padding.top + 16.0,
+              ),
+              Container(
+                width: constraints.maxWidth * 0.8, // 80% of screen width
+                height: constraints.maxHeight * 0.6, // 60% of screen height
+                // Add your content here
+              ),
+            ],
+          );
+        },
       ),
     );
   }

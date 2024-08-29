@@ -55,7 +55,7 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
+      body: Column(
         children: [
           Expanded(
             child: GestureDetector(
@@ -68,39 +68,43 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
               child: Stack(
                 children: [
                   Animarker(
-                    curve: Curves.ease,
-                    mapId: _controller.future.then<int>((value) => value.mapId),
-                    markers: _markers,
-                    child: GoogleMap(
-                      onMapCreated: (GoogleMapController controller) {
-                        _controller.complete(controller);
-                      },
-                      onTap: _onMapTap,
+                      curve: Curves.ease,
+                      mapId: _controller.future.then<int>((value) =>
+                      value.mapId),
                       markers: _markers,
-                      polylines: _polylines,
-                      key: _mapKey,
-                      initialCameraPosition: CameraPosition(
-                        target: LatLng(
-                          _selectedLocation!.latitude,
-                          _selectedLocation!.longitude,
+                      child: GoogleMap(
+                        onMapCreated: (GoogleMapController controller) {
+                          _controller.complete(controller);
+                        },
+                        onTap: _onMapTap,
+                        markers: _markers,
+                        polylines: _polylines,
+                        key: _mapKey,
+                        initialCameraPosition: CameraPosition(
+                          target: LatLng(
+                            _selectedLocation!.latitude,
+                            _selectedLocation!.longitude,
+                          ),
+                          zoom: 15.0,
                         ),
-                        zoom: 15.0,
+                        myLocationButtonEnabled: true,
+                        // Add this
+                        myLocationEnabled: true,
+                        // Add this
+                        zoomControlsEnabled: true, // Add this
                       ),
-                    ),
                   ),
                 ],
               ),
             ),
           ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.2, // Adjust the width as needed
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
+          Container(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                Expanded(
+                  child: TextField(
                     onChanged: (value) {
                       setState(() {
                         _routeName = value;
@@ -108,40 +112,22 @@ class _CreateRouteScreenState extends State<CreateRouteScreen> {
                     },
                     decoration: InputDecoration(
                       labelText: 'Route Name',
-                      border: OutlineInputBorder(),
                     ),
                   ),
-                  SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      _saveRoute(context); // Pass the context here
-                    },
-                    child: Text('Save Route'),
-                  ),
-
-                  SizedBox(height: 16),
-                  IconButton(
-                    icon: Icon(Icons.undo),
-                    onPressed: _undo,
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.redo),
-                    onPressed: _redo,
-                  ),
-                  SizedBox(height: 16),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _locations.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text('Point ${index + 1}'),
-                          subtitle: Text('Latitude: ${_locations[index].latitude}, Longitude: ${_locations[index].longitude}'),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                ElevatedButton(
+                  onPressed: () { _saveRoute(context); },
+                  child: Text('Save Route'),
+                ),
+                IconButton(
+                  icon: Icon(Icons.undo),
+                  onPressed: _undo,
+                ),
+                IconButton(
+                  icon: Icon(Icons.redo),
+                  onPressed: _redo,
+                ),
+              ],
             ),
           ),
         ],

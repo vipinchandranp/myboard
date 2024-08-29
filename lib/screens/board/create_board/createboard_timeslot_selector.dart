@@ -83,8 +83,15 @@ class _TimeSlotSelectorState extends State<TimeSlotSelector> {
                 });
                 widget.onTimeSelected(widget.selectedTimeSlots);
               },
-              child: Container(
-                color: cellColor,
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                decoration: BoxDecoration(
+                  color: cellColor,
+                  borderRadius: isSelected
+                      ? BorderRadius.circular(15)
+                      : BorderRadius.circular(0),
+                ),
                 child: Center(
                   child: Text(
                     '$timeSlot',

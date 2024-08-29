@@ -101,4 +101,21 @@ class DisplayRepository {
       throw Exception('Failed to load display timeslots');
     }
   }
+
+Future<List<DisplayDetails>> getNearbyDisplays() async {
+  final TokenInterceptorHttpClient tokenInterceptor =
+      getIt<TokenInterceptorHttpClient>();
+
+  // Build the URL with query parameters
+  final Uri uri = Uri.parse('$_apiUrl/v1/displays/nearby');
+
+  final response = await tokenInterceptor.get(uri);
+
+  if (response.statusCode == 200) {
+    final List<dynamic> displays = json.decode(response.body);
+    return displays.map((display) => DisplayDetails.fromJson(display)).toList();
+  } else {
+    throw Exception('Failed to load nearby displays');
+  }
+}
 }

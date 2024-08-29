@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,8 +14,10 @@ import 'package:myboard/models/location_search.dart';
 import 'package:myboard/models/user.dart';
 import 'package:myboard/repositories/user_repository.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:myboard/screens/location/AutocompleteLocationSearchBar.dart';
 import 'package:myboard/utils/Constants.dart';
 
+// allow user to select
 class CreateDisplayScreen extends StatefulWidget {
   @override
   _CreateDisplayScreenState createState() => _CreateDisplayScreenState();
@@ -137,6 +139,10 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
           markerId: MarkerId('selected-location'),
           position: position,
           icon: BitmapDescriptor.fromBytes(imageData),
+          infoWindow: InfoWindow(
+            title: 'Selected Location',
+            snippet: 'Your snippet text here', // Add your snippet text here
+          ),
         ));
         _selectedLocation = SelectLocationDTO(
           latitude: position.latitude,
@@ -149,6 +155,10 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
           _drawMovingPath();
         }
       });
+
+      // Animate the camera to the new position
+      final GoogleMapController controller = await _controllerCompleter.future;
+      controller.animateCamera(CameraUpdate.newLatLng(position));
     } catch (e) {
       print('Error loading marker image: $e');
     }
@@ -157,107 +167,132 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
+      body: Stack(
         children: [
-          Expanded(
-            child: _buildMap(),
-          ),
-          Container(
-            width: MediaQuery.of(context).size.width * 0.2,
-            height: double.infinity,
-            child: SingleChildScrollView(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Container(
-                  padding: EdgeInsets.fromLTRB(16.0, 32.0, 16.0, 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Pin a location and upload photo of your display',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.normal,
+          _buildMap(),
+        ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(left: 16.0),
+        child: FloatingActionButton(
+          onPressed: () {
+            _buildUserInput(context);
+          },
+          child: Icon(Icons.add),
+        ),
+      ),
+    );
+  }
+
+  void _buildUserInput(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Set to true to allow full screen height
+      builder: (BuildContext context) {
+        return Container(
+          height: MediaQuery.of(context)
+              .size
+              .height, // Set height to full screen height
+          child: SingleChildScrollView(
+            // Wrap SingleChildScrollView around your content
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Container(
+                padding: EdgeInsets.fromLTRB(16.0, 32.0, 16.0, 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Column(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.arrow_back),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
                         ),
-                      ),
-                      SizedBox(height: 16),
-                      Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            TextFormField(
-                              controller: nameController,
-                              decoration: InputDecoration(
-                                labelText: 'Display Name',
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) {
-                                if (value?.isEmpty ?? true) {
-                                  return 'Display Name is mandatory.';
-                                }
-                                return null;
-                              },
+                        Text(
+                          'Pin a location and upload photo of your display',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          TextFormField(
+                            controller: nameController,
+                            decoration: InputDecoration(
+                              labelText: 'Display Name',
+                              border: OutlineInputBorder(),
                             ),
-                            SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _getImage,
-                              child: Text('Upload photo of your Display'),
-                            ),
-                            if (_pickedFile != null)
-                              Column(
-                                children: [
-                                  Image.network(
-                                    _pickedFile!.path,
-                                    height: 200,
-                                    fit: BoxFit.cover,
-                                  ),
-                                  SizedBox(height: 16),
-                                  Text('Uploaded Photo of your Display:'),
-                                ],
-                              ),
-                            SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed:
-                                  _markers.isEmpty ? null : _createDisplay,
-                              icon: Icon(Icons.save),
-                              label: Text('Save Display'),
-                              style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.all(16.0),
-                                textStyle: TextStyle(fontSize: 18),
-                              ),
-                            ),
-                            SizedBox(height: 16),
-                            Row(
+                            validator: (value) {
+                              if (value?.isEmpty ?? true) {
+                                return 'Display Name is mandatory.';
+                              }
+                              return null;
+                            },
+                          ),
+                          SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _getImage,
+                            child: Text('Upload photo of your Display'),
+                          ),
+                          if (_pickedFile != null)
+                            Column(
                               children: [
-                                Text('Moving Display'),
-                                SizedBox(width: 16),
-                                Switch(
-                                  value: _isMovingDisplay,
-                                  onChanged: _toggleMovingDisplay,
+                                Image.file(
+                                  File(_pickedFile!.path),
+                                  // Use FileImage instead of NetworkImage
+                                  height: 200,
+                                  fit: BoxFit.cover,
                                 ),
+                                SizedBox(height: 16),
+                                Text('Uploaded Photo of your Display:'),
                               ],
                             ),
-                            if (_markers.isEmpty)
-                              Text(
-                                'Please pin your display location on the map.',
-                                style: TextStyle(color: Colors.red),
+                          SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: _markers.isEmpty ? null : _createDisplay,
+                            icon: Icon(Icons.save),
+                            label: Text('Save Display'),
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.all(16.0),
+                              textStyle: TextStyle(fontSize: 18),
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Text('Moving Display'),
+                              SizedBox(width: 16),
+                              Switch(
+                                value: _isMovingDisplay,
+                                onChanged: _toggleMovingDisplay,
                               ),
-                          ],
-                        ),
+                            ],
+                          ),
+                          if (_markers.isEmpty)
+                            Text(
+                              'Please pin your display location on the map.',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: Icon(Icons.my_location),
-      ),
+        );
+      },
     );
   }
 
@@ -277,42 +312,11 @@ class _CreateDisplayScreenState extends State<CreateDisplayScreen> {
         markers: _markers,
         onTap: _onMapTap,
         myLocationEnabled: true,
-        onMapCreated: (controller) {
+        onMapCreated: (GoogleMapController controller) {
           _controllerCompleter.complete(controller);
-          _setInitialCameraPosition(controller);
         },
-        polylines: _isMovingDisplay ? _createPolylines() : {},
-      );
+      );;
     }
-  }
-
-  void _setInitialCameraPosition(GoogleMapController controller) {
-    controller.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(
-            _selectedLocation!.latitude,
-            _selectedLocation!.longitude,
-          ),
-          zoom: 15.0,
-        ),
-      ),
-    );
-  }
-
-  Set<Polyline> _createPolylines() {
-    if (_movingPath.isEmpty || _movingPath.length < 2) {
-      return {};
-    }
-
-    return {
-      Polyline(
-        polylineId: PolylineId('moving-path'),
-        points: _movingPath,
-        color: Colors.blue,
-        width: 4,
-      ),
-    };
   }
 
   void _drawMovingPath() async {

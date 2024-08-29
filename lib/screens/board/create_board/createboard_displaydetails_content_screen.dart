@@ -91,136 +91,121 @@ class _DisplayDetailsDrawerContentState
       );
     }
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(16),
-        topRight: Radius.circular(16),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Text('Display Details'),
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back),
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Display Details section
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.indigo,
-                      // Set the background color to indigo
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.arrow_back, color: Colors.white),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Display Details',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  ListTile(
-                    title: Text(
-                      'Display Name: ${widget.displayDetails.displayName}',
-                    ),
-                  ),
-                ],
-              ),
-              // Image section with reduced width
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 16),
-                width: MediaQuery.of(context).size.width - 32,
-                child: _displayImageBytes.isNotEmpty
-                    ? Image.memory(
-                        Uint8List.fromList(_displayImageBytes),
-                        height: 200,
-                        fit: BoxFit.cover,
-                      )
-                    : Container(),
-              ),
-              // Ratings section
-              _buildRatingsSection(),
-              // Comments section
-              _buildCommentsSection(),
-              // Row for Calendar and additional details
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Calendar
-                  Expanded(
-                    child: Container(
-                      padding: EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Calendar'),
-                          SizedBox(height: 8),
-                          _buildCalendar(),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Time Slots on the right
-                  Expanded(
-                    child: Container(
-                      padding: EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Time Slots'),
-                          SizedBox(height: 8),
-                          _timeSlotAvailability != null
-                              ? _buildAvailableTimeSlots(_timeSlotAvailability!)
-                              : CircularProgressIndicator(),
-                          // Show loading indicator while fetching time slots
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 16), // Add some space at the bottom
-            ],
+    ),
+    body: ListView(
+      children: [
+        _buildDisplayDetailsSection(),
+        _buildImageSection(),
+        _buildRatingsSection(),
+        _buildCommentsSection(),
+        _buildCalendarSection(),
+        _buildTimeSlotsSection(),
+      ],
+    ),
+  );
+}
+Widget _buildTimeSlotsSection() {
+  return Card(
+    margin: EdgeInsets.all(8.0),
+    child: Padding(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Time Slots',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0),
           ),
-        ),
+          Divider(),
+          _timeSlotAvailability != null
+              ? _buildAvailableTimeSlots(_timeSlotAvailability!)
+              : CircularProgressIndicator(),
+        ],
       ),
-    );
-  }
-
+    ),
+  );
+}
+Widget _buildCalendarSection() {
+  return Card(
+    margin: EdgeInsets.all(8.0),
+    child: Padding(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Calendar',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0),
+          ),
+          Divider(),
+          _buildCalendar(),
+        ],
+      ),
+    ),
+  );
+}
+Widget _buildImageSection() {
+  return Card(
+    margin: EdgeInsets.all(8.0),
+    child: Padding(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Display Image',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0),
+          ),
+          Divider(),
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 16),
+            width: MediaQuery.of(context).size.width - 32,
+            child: _displayImageBytes.isNotEmpty
+                ? Image.memory(
+                    Uint8List.fromList(_displayImageBytes),
+                    height: 200,
+                    fit: BoxFit.cover,
+                  )
+                : Container(),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+Widget _buildDisplayDetailsSection() {
+  return Card(
+    margin: EdgeInsets.all(8.0),
+    child: Padding(
+      padding: EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Display Name',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0),
+          ),
+          Divider(),
+          Text(
+            '${widget.displayDetails.displayName}',
+            style: TextStyle(fontSize: 16.0),
+          ),
+        ],
+      ),
+    ),
+  );
+}
   void _onDateSelected(DateTime selectedDate) {
     setState(() {
       _selectedDate = selectedDate;
@@ -356,4 +341,5 @@ class _DisplayDetailsDrawerContentState
       ),
     );
   }
+
 }
