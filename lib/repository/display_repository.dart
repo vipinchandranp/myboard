@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/display/bdisplay.dart';
+import '../models/display/display_geotag_request.dart';
 import 'base_repository.dart';
 
 class DisplayService extends BaseRepository {
@@ -118,7 +119,8 @@ class DisplayService extends BaseRepository {
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode == 200) {
-        print('Response body: ${response.body}'); // Debugging: print raw response
+        print(
+            'Response body: ${response.body}'); // Debugging: print raw response
         final Map<String, dynamic> responseBody = json.decode(response.body);
 
         final List<dynamic> responseBodyList = responseBody['data'];
@@ -128,8 +130,7 @@ class DisplayService extends BaseRepository {
             .toList();
 
         return displays;
-      }
-      else {
+      } else {
         handleError(response);
         return null;
       }
@@ -138,7 +139,6 @@ class DisplayService extends BaseRepository {
       return null;
     }
   }
-
 
   // Fetches details of a specific display
   Future<BDisplay?> getDisplayById(String displayId) async {
@@ -161,4 +161,27 @@ class DisplayService extends BaseRepository {
     }
   }
 
+  Future<bool> geoTagDisplay(DisplayGeoTagRequest geoTagRequest) async {
+    try {
+      final response = await client.put(
+        Uri.parse('$apiUrl/display/geo-tag'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'displayId': geoTagRequest.displayId,
+          'latitude': geoTagRequest.latitude,
+          'longitude': geoTagRequest.longitude,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true; // Successful geo-tagging
+      } else {
+        handleError(response);
+        return false;
+      }
+    } catch (e) {
+      print('Error geo-tagging display: $e');
+      return false;
+    }
+  }
 }

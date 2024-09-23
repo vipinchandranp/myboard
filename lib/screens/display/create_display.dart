@@ -1,12 +1,15 @@
 import 'dart:io';
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../models/common/media_type.dart';
+import '../../models/display/display_geotag_request.dart';
 import '../../models/display/display_media_file.dart';
-import 'package:animate_do/animate_do.dart';
-
 import '../../repository/display_repository.dart';
+import 'map_explore_displays.dart';
 
 class CreateDisplayWidget extends StatefulWidget {
   final BuildContext context;
@@ -20,12 +23,14 @@ class CreateDisplayWidget extends StatefulWidget {
 class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
   final ImagePicker _picker = ImagePicker();
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _boardNameController = TextEditingController();
+  final TextEditingController _displayNameController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   List<DisplayMediaFile> _mediaFiles = [];
   List<VideoPlayerController> _videoControllers = [];
   bool _isUploading = false;
   String _displayName = "";
+  LatLng? _selectedLocation;
+  String? _selectedAddress;
 
   late DisplayService _displayService;
 
@@ -40,9 +45,7 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
   }
 
   Future<void> _pickMedia() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -51,7 +54,7 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
       final pickedVideo = await _picker.pickVideo(source: ImageSource.gallery);
       if (pickedVideo != null) {
         final videoController =
-        VideoPlayerController.file(File(pickedVideo.path));
+            VideoPlayerController.file(File(pickedVideo.path));
         await videoController.initialize();
         await _uploadMedia(File(pickedVideo.path), MediaType.video);
         setState(() {
@@ -80,21 +83,82 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
             ),
           );
         });
-
         _scrollToBottom();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload media. Please try again.')),
-        );
+        _showSnackBar('Failed to upload media. Please try again.');
       }
     } catch (e) {
       print('Error uploading media: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error uploading media. Please try again.')),
-      );
+      _showSnackBar('Error uploading media. Please try again.');
     } finally {
       setState(() {
         _isUploading = false;
+      });
+    }
+  }
+
+  Future<void> _geoTagDisplay() async {
+    if (_selectedLocation == null || _mediaFiles.isEmpty) {
+      _showSnackBar('Please select a location and upload media first.');
+      return;
+    }
+
+    try {
+      final lastUploadedMedia = _mediaFiles
+          .last; // Assuming the last uploaded media is to be geo-tagged
+      final geoTagRequest = DisplayGeoTagRequest(
+        displayId: lastUploadedMedia.displayId,
+        latitude: _selectedLocation!.latitude,
+        longitude: _selectedLocation!.longitude,
+      );
+
+      final success = await _displayService.geoTagDisplay(
+          geoTagRequest);
+      if (success) {
+        _showSnackBar('Display geo-tagged successfully!');
+      } else {
+        _showSnackBar('Failed to geo-tag display. Please try again.');
+      }
+    } catch (e) {
+      print('Error geo-tagging display: $e');
+      _showSnackBar('Error geo-tagging display. Please try again.');
+    }
+  }
+
+  Future<void> _selectLocation() async {
+    final selectedLocation = await Navigator.of(context).push<LatLng>(
+      MaterialPageRoute(
+        builder: (ctx) => MapSelectionScreen(
+          initialLocation: _selectedLocation,
+        ),
+      ),
+    );
+
+    if (selectedLocation != null) {
+      setState(() {
+        _selectedLocation = selectedLocation;
+        _fetchAddress(selectedLocation);
+      });
+    }
+  }
+
+  Future<void> _fetchAddress(LatLng location) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        location.latitude,
+        location.longitude,
+      );
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        setState(() {
+          _selectedAddress =
+              "${place.street}, ${place.locality}, ${place.postalCode}, ${place.country}";
+        });
+      }
+    } catch (e) {
+      print('Error fetching address: $e');
+      setState(() {
+        _selectedAddress = 'Address not found';
       });
     }
   }
@@ -115,15 +179,11 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
           _mediaFiles.removeAt(index);
         });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to remove media.')),
-        );
+        _showSnackBar('Failed to remove media.');
       }
     } catch (e) {
       print('Error removing media: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error removing media. Please try again.')),
-      );
+      _showSnackBar('Error removing media. Please try again.');
     }
   }
 
@@ -137,9 +197,15 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
     });
   }
 
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   @override
   void dispose() {
-    _boardNameController.dispose();
+    _displayNameController.dispose();
     for (var controller in _videoControllers) {
       controller.dispose();
     }
@@ -153,7 +219,12 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
       appBar: AppBar(
         title: Text('Create Display'),
         backgroundColor: Theme.of(context).primaryColor,
-        elevation: 4.0,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.location_on),
+            onPressed: _selectLocation,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -163,10 +234,12 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextFormField(
-                controller: _boardNameController,
+                controller: _displayNameController,
                 decoration: InputDecoration(
                   labelText: 'Display Name',
                   border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white,
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -181,6 +254,48 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
                 },
               ),
               SizedBox(height: 16),
+
+              // Show location card if a location is selected
+              if (_selectedLocation != null)
+                Card(
+                  margin: EdgeInsets.only(bottom: 16.0),
+                  elevation: 6,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      height: 150,
+                      child: GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: _selectedLocation!,
+                          zoom: 14,
+                        ),
+                        markers: {
+                          Marker(
+                            markerId: MarkerId('selected-location'),
+                            position: _selectedLocation!,
+                          ),
+                        },
+                        myLocationEnabled: false,
+                        zoomControlsEnabled: false,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Display the address of the selected location
+              if (_selectedAddress != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    _selectedAddress!,
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                  ),
+                ),
+
+              // Media files display
               if (_mediaFiles.isNotEmpty)
                 Expanded(
                   child: ListView.builder(
@@ -200,8 +315,8 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black26,
-                                      blurRadius: 6.0,
-                                      offset: Offset(0, 2),
+                                      blurRadius: 8.0,
+                                      offset: Offset(0, 4),
                                     ),
                                   ],
                                 ),
@@ -215,13 +330,12 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
                                 right: 8,
                                 child: Tooltip(
                                   message: 'Delete',
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.black54,
-                                      shape: BoxShape.circle,
-                                    ),
+                                  child: CircleAvatar(
+                                    backgroundColor: Colors.black54,
+                                    radius: 14,
                                     child: IconButton(
-                                      icon: Icon(Icons.delete, color: Colors.white),
+                                      icon: Icon(Icons.delete,
+                                          color: Colors.white, size: 16),
                                       onPressed: () => _removeMedia(index),
                                     ),
                                   ),
@@ -241,17 +355,24 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
-              SizedBox(height: 10),
+
+              SizedBox(height: 16),
               Center(
                 child: _isUploading
                     ? CircularProgressIndicator()
                     : FloatingActionButton(
-                  onPressed: _pickMedia,
-                  backgroundColor: Theme.of(context).primaryColor,
-                  child: Icon(Icons.add, size: 30),
-                ),
+                        onPressed: _pickMedia,
+                        backgroundColor: Theme.of(context).primaryColor,
+                        child: Icon(Icons.add, size: 30),
+                      ),
               ),
               SizedBox(height: 20),
+
+              // Button for geo-tagging
+              ElevatedButton(
+                onPressed: _geoTagDisplay,
+                child: Text('Geo-tag Display'),
+              ),
             ],
           ),
         ),

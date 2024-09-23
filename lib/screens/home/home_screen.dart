@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../widgets/bottom_tools_widget.dart';
+import '../../widgets/round_button.dart';
 import '../drawer/drawer_screen.dart';
+import '../board/create_board.dart';
+import '../display/create_display.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -25,8 +28,7 @@ class HomeScreen extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         child: Column(
-          children: <Widget>[
-          ],
+          children: <Widget>[],
         ),
       ),
       bottomNavigationBar: BottomAppBar(
@@ -49,7 +51,40 @@ class HomeScreen extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
       ),
       builder: (context) {
-        return BottomToolsWidget(context);
+        // Pass the list of buttons to BottomToolsWidget
+        return BottomToolsWidget(
+          buttons: [
+            RoundedButton(
+              icon: Icons.add_circle,
+              label: 'Create Display',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => CreateDisplayWidget(context)),
+                );
+              },
+            ),
+            RoundedButton(
+              icon: Icons.add_box,
+              label: 'Create Board',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => CreateBoardWidget(context)),
+                );
+              },
+            ),
+            RoundedButton(
+              icon: Icons.qr_code_scanner,
+              label: 'Scan To Upload',
+              onPressed: () {
+                // Handle scan upload functionality
+              },
+            ),
+          ],
+        );
       },
     );
   }
