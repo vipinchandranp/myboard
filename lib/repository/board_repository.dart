@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/board/board.dart';
+import '../models/board/board_filter.dart';
 import 'base_repository.dart';
 
 class BoardService extends BaseRepository {
@@ -110,15 +111,39 @@ class BoardService extends BaseRepository {
     }
   }
 
-  // Fetches a list of boards with pagination
-  Future<List<Board>?> getBoards({int page = 0, int size = 4}) async {
+  Future<List<Board>?> getBoards(BoardFilter filter) async {
     try {
+      // Build query parameters dynamically based on available filters
+      final Map<String, dynamic> queryParams = {
+        'page': filter.page.toString(),
+        'size': filter.size.toString(),
+        if (filter.searchText != null && filter.searchText!.isNotEmpty)
+          'search': filter.searchText,
+        if (filter.dateRange != null)
+          'startDate': filter.dateRange!.start.toIso8601String(),
+        if (filter.dateRange != null)
+          'endDate': filter.dateRange!.end.toIso8601String(),
+        if (filter.status != null) 'status': filter.status,
+        if (filter.isRecent != null) 'recent': filter.isRecent.toString(),
+        if (filter.isFavorite != null) 'favorite': filter.isFavorite.toString(),
+        if (filter.boardIds != null && filter.boardIds!.isNotEmpty)
+          'boardIds': filter.boardIds!.join(','), // Add boardIds to query
+      };
+
+      // Create query string
+      final queryString = Uri(queryParameters: queryParams).query;
+
+      // Construct the URL with the query string
+      final url = Uri.parse('$apiUrl/board/list?$queryString');
+
       final response = await client.get(
-        Uri.parse('$apiUrl/board/list?page=$page&size=$size'),
+        url,
         headers: {'Content-Type': 'application/json'},
       );
+
       if (response.statusCode == 200) {
-        print('Response body: ${response.body}'); // Debugging: print raw response
+        print(
+            'Response body: ${response.body}'); // Debugging: print raw response
         final Map<String, dynamic> responseBody = json.decode(response.body);
 
         final List<dynamic> responseBodyList = responseBody['data'];
@@ -128,8 +153,7 @@ class BoardService extends BaseRepository {
             .toList();
 
         return boards;
-      }
-      else {
+      } else {
         handleError(response);
         return null;
       }
@@ -138,7 +162,6 @@ class BoardService extends BaseRepository {
       return null;
     }
   }
-
 
   // Fetches details of a specific board
   Future<Board?> getBoardById(String boardId) async {
@@ -160,5 +183,4 @@ class BoardService extends BaseRepository {
       return null;
     }
   }
-
 }

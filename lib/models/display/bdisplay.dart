@@ -1,3 +1,4 @@
+import '../board/board.dart';
 import '../common/media_file.dart';
 import 'display_media_file.dart';
 
@@ -7,8 +8,7 @@ class BDisplay {
   final DateTime createdDateAndTime;
   List<MediaFile> mediaFiles;
   final String status;
-
-  // New properties for geo-location
+  List<String> boardIds; // Changed to List<String>
   final double? latitude;
   final double? longitude;
 
@@ -18,8 +18,9 @@ class BDisplay {
     required this.createdDateAndTime,
     this.mediaFiles = const [], // Provide a default empty list
     required this.status,
-    this.latitude,  // Optional latitude
+    this.latitude, // Optional latitude
     this.longitude, // Optional longitude
+    this.boardIds = const [], // Provide a default empty list for boardIds
   });
 
   // Factory method to create a BDisplay instance from JSON data
@@ -28,7 +29,7 @@ class BDisplay {
     try {
       parsedDate = DateTime.parse(json['createdDateAndTime']?.toString() ?? '');
     } catch (e) {
-      parsedDate = DateTime.now();
+      parsedDate = DateTime.now(); // Fallback to current date if parsing fails
     }
 
     return BDisplay(
@@ -36,11 +37,21 @@ class BDisplay {
       displayName: json['displayName'] ?? 'Unnamed Display',
       createdDateAndTime: parsedDate,
       mediaFiles: (json['mediaFiles'] as List?)
-          ?.map((mediaJson) => MediaFile.fromJson(mediaJson))
-          .toList() ?? [],
+              ?.map((mediaJson) => MediaFile.fromJson(mediaJson))
+              .toList() ??
+          [],
       status: json['status'] ?? 'unknown',
-      latitude: json['latitude'],  // Parse latitude
-      longitude: json['longitude'], // Parse longitude
+      latitude: json['latitude'] != null
+          ? (json['latitude'] as num).toDouble()
+          : null,
+      // Ensure correct type
+      longitude: json['longitude'] != null
+          ? (json['longitude'] as num).toDouble()
+          : null,
+      // Ensure correct type
+      boardIds:
+          (json['boardIds'] as List?)?.map((id) => id.toString()).toList() ??
+              [], // Handle boardIds
     );
   }
 
@@ -52,8 +63,11 @@ class BDisplay {
       'createdDateAndTime': createdDateAndTime.toIso8601String(),
       'mediaFiles': mediaFiles.map((media) => media.toJson()).toList(),
       'status': status,
-      'latitude': latitude,   // Include latitude
-      'longitude': longitude, // Include longitude
+      'latitude': latitude,
+      // Include latitude
+      'longitude': longitude,
+      // Include longitude
+      'boardIds': boardIds, // Include boardIds as a list of strings
     };
   }
 }

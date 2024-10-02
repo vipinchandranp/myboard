@@ -42,9 +42,6 @@ class MediaFileWidget extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Placeholder for video, replace with actual video player widget later
-            Image.asset('assets/video_placeholder.jpg',
-                fit: BoxFit.cover, width: double.infinity),
             const Icon(
               Icons.play_circle_fill,
               color: Colors.white,

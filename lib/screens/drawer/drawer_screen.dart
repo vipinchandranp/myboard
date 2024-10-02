@@ -20,16 +20,11 @@ class DrawerWidget extends StatefulWidget {
 
 class _DrawerWidgetState extends State<DrawerWidget> {
 
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
   @override
   void initState() {
     super.initState();
     // Optionally, you could call _loadProfilePic() here as well
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +46,7 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                     icon: Icons.home,
                     text: 'Home',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => HomeScreen()),
                       );
@@ -63,7 +58,7 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                     icon: Icons.display_settings,
                     text: 'My Displays',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => ViewDisplayWidget()),
                       );
@@ -75,7 +70,7 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                     icon: Icons.note,
                     text: 'My Boards',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => ViewBoardsWidget()),
                       );
@@ -96,10 +91,9 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                     icon: Icons.settings,
                     text: 'Settings',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => SettingsScreen()),
+                        MaterialPageRoute(builder: (context) => SettingsScreen()),
                       );
                     },
                   ),
@@ -110,7 +104,7 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                     text: 'Logout',
                     onTap: () {
                       // Handle logout logic and navigate to LoginScreen
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => LoginScreen()),
                       );

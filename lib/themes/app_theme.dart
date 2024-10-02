@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
-      // Set primary color to black
-      primaryColor: Colors.black,
+      // Set primary color to dark grey
+      primaryColor: Colors.grey[800], // Dark grey
 
       // Set hint color to a shade of grey
       hintColor: Colors.grey.shade600,
@@ -14,7 +14,7 @@ class AppTheme {
 
       // AppBar theme customization
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.black, // Black AppBar background
+        backgroundColor: Colors.grey[800], // Dark grey AppBar background
         elevation: 0,
         iconTheme: IconThemeData(color: Colors.white), // White icons for contrast
         titleTextStyle: TextStyle(
@@ -48,7 +48,7 @@ class AppTheme {
       // Elevated button theme customization
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black, // Black for button background
+          backgroundColor: Colors.grey[800], // Dark grey for button background
           foregroundColor: Colors.white, // White text for contrast
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8.0),
@@ -59,8 +59,8 @@ class AppTheme {
       // Outlined button theme customization
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.black, // Black for text
-          side: BorderSide(color: Colors.black), // Black for border
+          foregroundColor: Colors.grey[800], // Dark grey for text
+          side: BorderSide(color: Colors.blueGrey), // Dark grey for border
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8.0),
           ),
@@ -70,7 +70,7 @@ class AppTheme {
       // Text button theme customization
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: Colors.black, // Black for text
+          foregroundColor: Colors.grey[800], // Dark grey for text
         ),
       ),
 
@@ -86,7 +86,7 @@ class AppTheme {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide(
-              color: Colors.black), // Black for focused border
+              color: Colors.blueGrey), // Dark grey for focused border
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
@@ -118,7 +118,7 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: Colors.grey.shade300, // Light grey chip background
         disabledColor: Colors.grey.shade400,
-        selectedColor: Colors.black, // Black for selected chips
+        selectedColor: Colors.grey[800], // Dark grey for selected chips
         secondarySelectedColor: Colors.grey.shade500, // Dark grey for secondary selection
         padding: EdgeInsets.all(8),
         labelStyle: TextStyle(
@@ -134,22 +134,22 @@ class AppTheme {
 
       // Slider theme customization
       sliderTheme: SliderThemeData(
-        activeTrackColor: Colors.black, // Black for active track
+        activeTrackColor: Colors.grey[800], // Dark grey for active track
         inactiveTrackColor: Colors.grey.shade400, // Light grey for inactive track
-        thumbColor: Colors.black, // Black for thumb
-        overlayColor: Colors.grey.shade300.withOpacity(0.2), // Light grey for overlay
-        valueIndicatorColor: Colors.black, // Black for value indicator
+        thumbColor: Colors.grey[800], // Dark grey for thumb
+        overlayColor: Colors.blueGrey.withOpacity(0.2), // Light grey for overlay
+        valueIndicatorColor: Colors.grey[800], // Dark grey for value indicator
       ),
 
       // Switch theme customization
       switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.all(Colors.black), // Black for thumb
+        thumbColor: MaterialStateProperty.all(Colors.grey[800]), // Dark grey for thumb
         trackColor: MaterialStateProperty.all(Colors.grey.shade400), // Light grey for track
       ),
 
       // Checkbox theme customization
       checkboxTheme: CheckboxThemeData(
-        fillColor: MaterialStateProperty.all(Colors.black), // Black for checkbox fill
+        fillColor: MaterialStateProperty.all(Colors.grey[800]), // Dark grey for checkbox fill
         checkColor: MaterialStateProperty.all(Colors.white), // White for checkmark
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(4),
@@ -158,7 +158,7 @@ class AppTheme {
 
       // Radio theme customization
       radioTheme: RadioThemeData(
-        fillColor: MaterialStateProperty.all(Colors.black), // Black for radio button fill
+        fillColor: MaterialStateProperty.all(Colors.grey[800]), // Dark grey for radio button fill
       ),
 
       // Bottom navigation bar theme customization

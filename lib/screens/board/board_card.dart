@@ -8,14 +8,20 @@ import '../../utils/utility.dart'; // Import your utility file
 
 class BoardCardWidget extends StatelessWidget {
   final Board board;
+  final bool isSelected;
+  final ValueChanged<bool?>? onChanged; // Callback for checkbox state change
 
-  const BoardCardWidget({Key? key, required this.board}) : super(key: key);
+  const BoardCardWidget({
+    Key? key,
+    required this.board,
+    this.isSelected = false,
+    this.onChanged, // Optional callback for checkbox
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       child: Card(
-        color: Theme.of(context).primaryColor,
         margin: const EdgeInsets.symmetric(vertical: 8),
         elevation: 5,
         shape: RoundedRectangleBorder(
@@ -38,9 +44,9 @@ class BoardCardWidget extends StatelessWidget {
                             .textTheme
                             .headlineMedium
                             ?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[800],
-                        ),
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                            ),
                       ),
                       const SizedBox(height: 5),
                       _buildStatusIndicator(board.status, context),
@@ -59,11 +65,23 @@ class BoardCardWidget extends StatelessWidget {
               ],
             ),
             Positioned(
+                top: 10,
+                right: 10,
+                child: FloatingActionButton(
+                  mini: true,
+                  backgroundColor: Colors.white,
+                  child: const Icon(Icons.settings, color: Colors.black),
+                  onPressed: () => _showBottomSheet(context),
+                )),
+            Positioned(
               top: 10,
-              right: 10,
-              child: IconButton(
-                icon: const Icon(Icons.settings, color: Colors.white),
-                onPressed: () => _showBottomSheet(context),
+              left: 10,
+              child: Checkbox(
+                checkColor: Colors.white,
+                value: isSelected,
+                onChanged: onChanged,
+                // Trigger callback when checkbox is toggled
+                activeColor: Colors.blueAccent,
               ),
             ),
           ],

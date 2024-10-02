@@ -1,23 +1,37 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:myboard/screens/board/view_boards.dart';
+import 'package:myboard/screens/display/timeslots.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import '../../models/board/board.dart'; // This import can be removed if you're no longer using the Board model directly
 import '../../models/display/bdisplay.dart';
 import '../../widgets/bottom_tools_widget.dart';
 import '../../widgets/round_button.dart';
-import '../widgets/media_file_widget.dart';
 import '../../utils/utility.dart';
+import 'board_listview.dart';
 
-class DisplayCardWidget extends StatelessWidget {
+class DisplayCardWidget extends StatefulWidget {
   final BDisplay display;
 
   const DisplayCardWidget({Key? key, required this.display}) : super(key: key);
 
   @override
+  _DisplayCardWidgetState createState() => _DisplayCardWidgetState();
+}
+
+class _DisplayCardWidgetState extends State<DisplayCardWidget> {
+  bool _isMapExpanded = false; // Track if the map is expanded
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      onTap: () {
+        // Handle any general tap gestures if needed
+      },
       child: Card(
-        color: Theme.of(context).cardColor,
         margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         elevation: 5,
         shape: RoundedRectangleBorder(
@@ -28,30 +42,35 @@ class DisplayCardWidget extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildMediaCarousel(display),
+                _buildMap(widget.display),
                 const SizedBox(height: 12),
-                _buildMap(display),
+                _buildMediaCarousel(widget.display),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        display.displayName,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                        widget.display.displayName,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
                       ),
                       const SizedBox(height: 6),
-                      _buildStatusIndicator(display.status, context),
+                      _buildStatusIndicator(widget.display.status, context),
                       const SizedBox(height: 6),
                       Text(
-                        'Created on: ${Utility.formatDate(display.createdDateAndTime)}',
+                        'Created on: ${Utility.formatDate(widget.display.createdDateAndTime)}',
                         style: TextStyle(color: Colors.grey[700]),
                       ),
                       const SizedBox(height: 12),
                       _buildActionIcons(),
+                      const SizedBox(height: 12),
+                      _buildBoardList(widget.display.boardIds), // Pass boardIds
                     ],
                   ),
                 ),
@@ -60,14 +79,56 @@ class DisplayCardWidget extends StatelessWidget {
             Positioned(
               top: 10,
               right: 10,
-              child: IconButton(
-                icon: const Icon(Icons.settings, color: Colors.grey),
+              child: FloatingActionButton(
+                mini: true,
+                heroTag: "settings",
+                backgroundColor: Colors.white,
+                child: const Icon(Icons.settings, color: Colors.black),
                 onPressed: () => _showBottomSheet(context),
               ),
             ),
+            if (_isMapExpanded)
+              Positioned.fill(
+                child: _buildFullScreenMap(widget.display),
+              ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBoardList(List<String> boardIds) {
+    if (boardIds.isEmpty) {
+      return const Text(
+        'No boards associated with this display.',
+        style: TextStyle(color: Colors.grey),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () {
+            // Navigate to a detailed board view or perform another action here
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ViewBoardsWidget(boardIds: boardIds),
+              ),
+            );
+          },
+          child: Text(
+            '${boardIds.length} boards associated',
+            style: TextStyle(
+              color: Colors.blue, // Change color for better visibility
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -79,14 +140,21 @@ class DisplayCardWidget extends StatelessWidget {
         Container(
           height: 200,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(12))
+            borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
           ),
           child: PageView.builder(
             controller: _pageController,
             itemCount: display.mediaFiles.length,
             itemBuilder: (context, index) {
               final mediaFile = display.mediaFiles[index];
-              return MediaFileWidget(mediaFile: mediaFile);
+              return CachedNetworkImage(
+                imageUrl: mediaFile.filename,
+                placeholder: (context, url) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                errorWidget: (context, url, error) => const Icon(Icons.error),
+                fit: BoxFit.cover,
+              );
             },
           ),
         ),
@@ -123,25 +191,44 @@ class DisplayCardWidget extends StatelessWidget {
 
   Widget _buildMap(BDisplay display) {
     if (display.latitude != null && display.longitude != null) {
-      return Container(
-        height: 150,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12)
-        ),
-        child: GoogleMap(
-          initialCameraPosition: CameraPosition(
-            target: LatLng(display.latitude!, display.longitude!),
-            zoom: 14,
-          ),
-          markers: {
-            Marker(
-              markerId: MarkerId('display-location'),
-              position: LatLng(display.latitude!, display.longitude!),
+      return Stack(
+        children: [
+          Container(
+            height: 150,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
             ),
-          },
-          myLocationEnabled: false,
-          zoomControlsEnabled: false,
-        ),
+            child: GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: LatLng(display.latitude!, display.longitude!),
+                zoom: 14,
+              ),
+              markers: {
+                Marker(
+                  markerId: const MarkerId('display-location'),
+                  position: LatLng(display.latitude!, display.longitude!),
+                ),
+              },
+              myLocationEnabled: false,
+              zoomControlsEnabled: false,
+            ),
+          ),
+          Positioned(
+            top: 10,
+            left: 10,
+            child: FloatingActionButton(
+              mini: true,
+              heroTag: "map_back",
+              backgroundColor: Colors.white,
+              child: const Icon(Icons.map, color: Colors.black),
+              onPressed: () {
+                setState(() {
+                  _isMapExpanded = true; // Expand the map on button press
+                });
+              },
+            ),
+          ),
+        ],
       );
     } else {
       return const Padding(
@@ -154,10 +241,49 @@ class DisplayCardWidget extends StatelessWidget {
     }
   }
 
+  Widget _buildFullScreenMap(BDisplay display) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: LatLng(display.latitude!, display.longitude!),
+              zoom: 14,
+            ),
+            markers: {
+              Marker(
+                markerId: const MarkerId('display-location'),
+                position: LatLng(display.latitude!, display.longitude!),
+              ),
+            },
+            myLocationEnabled: false,
+            zoomControlsEnabled: true,
+          ),
+          Positioned(
+            top: 40,
+            left: 16,
+            child: FloatingActionButton(
+              mini: true,
+              heroTag: "map_expand",
+              backgroundColor: Colors.white,
+              child: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () {
+                setState(() {
+                  _isMapExpanded =
+                      false; // Collapse the map on back button press
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildActionIcons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: const [
+      children: [
         Icon(Icons.thumb_up_alt_outlined, color: Colors.grey),
         Icon(Icons.comment_outlined, color: Colors.grey),
         Icon(Icons.share_outlined, color: Colors.grey),
@@ -175,14 +301,6 @@ class DisplayCardWidget extends StatelessWidget {
         return BottomToolsWidget(
           buttons: [
             RoundedButton(
-              icon: Icons.book,
-              label: "Book to Display",
-              onPressed: () {
-                Navigator.pop(context);
-                print("Book to Display pressed");
-              },
-            ),
-            RoundedButton(
               icon: Icons.bar_chart,
               label: "Performance",
               onPressed: () {
@@ -196,6 +314,26 @@ class DisplayCardWidget extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(context);
                 print("Delete Display pressed");
+              },
+            ),
+            RoundedButton(
+              icon: Icons.access_time,
+              label: "Book Display",
+              onPressed: () async {
+                Navigator.pop(context);
+
+                // Show TimeSlotWidget as a bottom sheet
+                final selectedTimeSlots = await showModalBottomSheet(
+                  context: context,
+                  builder: (context) {
+                    return TimeSlotWidget(
+                        displayId: widget.display.displayId,
+                        parentContext: context);
+                  },
+                );
+                setState(() {
+                  
+                });
               },
             ),
           ],
