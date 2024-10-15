@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import '../api_models/user_cities_response.dart';
+import '../api_models/user_details_request.dart';
 import '../repository/base_repository.dart';
 import '../api_models/user_signup_request.dart';
 import '../api_models/user_login_request.dart';
@@ -47,9 +49,9 @@ class UserService extends BaseRepository {
 
   Future<void> saveProfilePic(XFile image) async {
     final request =
-    http.MultipartRequest('POST', Uri.parse('$apiUrl/user/profile-pic'))
-      ..files.add(await http.MultipartFile.fromPath(
-          'file', image.path)); // Ensure the part name is 'file'
+        http.MultipartRequest('POST', Uri.parse('$apiUrl/user/profile-pic'))
+          ..files.add(await http.MultipartFile.fromPath(
+              'file', image.path)); // Ensure the part name is 'file'
     client.send(request);
   }
 
@@ -64,6 +66,32 @@ class UserService extends BaseRepository {
       }
     } else {
       throw Exception('Failed to load image: ${response.statusCode}');
+    }
+  }
+
+  Future<void> updateUserDetails(UserDetailsRequest userDetailsRequest) async {
+    final response = await client.put(
+      Uri.parse('$apiUrl/user/update'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8'
+      },
+      body: jsonEncode(userDetailsRequest.toJson()),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update user details: ${response.statusCode}');
+    }
+  }
+
+// Update UserService
+  Future<String> getUserCity() async {
+    final response = await client.get(Uri.parse('$apiUrl/user/location'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['data']; // Assuming 'data' key in response
+    } else {
+      throw Exception('Failed to fetch user city: ${response.statusCode}');
     }
   }
 }

@@ -1,62 +1,54 @@
 import 'package:flutter/material.dart';
-import '../../widgets/bottom_tools_widget.dart';
-import '../../widgets/round_button.dart';
+import '../../api_models/user_cities_response.dart';
+import '../../repository/user_repository.dart';
 import '../drawer/drawer_screen.dart';
 import '../board/create_board.dart';
 import '../display/create_display.dart';
+import '../qrscanner/qr_scanner.dart';
+import '../user/user_location.dart'; // Import UserLocationWidget
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  final BuildContext context;
+
+  HomeScreen(BuildContext context) : context = context;
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              // Handle search functionality
-            },
-          ),
-        ],
+        title: UserLocationWidget(), // Show user location widget in AppBar
       ),
       drawer: DrawerWidget(
         onDrawerOpened: () {
-          // Trigger a refresh or any action when the drawer is opened
           (context as Element)
-              .markNeedsBuild(); // This forces a rebuild of the screen
+              .markNeedsBuild(); // Forces a rebuild of the screen
         },
       ),
       body: SingleChildScrollView(
         child: Column(
-          children: <Widget>[],
+          children: <Widget>[
+            // Additional content can be added here if needed
+          ],
         ),
       ),
       bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        child: IconButton(
-          icon: Icon(Icons.add_circle_outline,
-              color: Theme.of(context).primaryColor),
-          onPressed: () {
-            _showBottomSheet(context);
-          },
-        ),
-      ),
-    );
-  }
-
-  void _showBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
-      ),
-      builder: (context) {
-        // Pass the list of buttons to BottomToolsWidget
-        return BottomToolsWidget(
-          buttons: [
-            RoundedButton(
-              icon: Icons.add_circle,
-              label: 'Create Display',
+        shape: CircularNotchedRectangle(),
+        notchMargin: 6.0,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: <Widget>[
+            IconButton(
+              icon: Icon(Icons.add_circle),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -65,9 +57,9 @@ class HomeScreen extends StatelessWidget {
                 );
               },
             ),
-            RoundedButton(
-              icon: Icons.add_box,
-              label: 'Create Board',
+            SizedBox(width: 40),
+            IconButton(
+              icon: Icon(Icons.add_box),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -76,16 +68,26 @@ class HomeScreen extends StatelessWidget {
                 );
               },
             ),
-            RoundedButton(
-              icon: Icons.qr_code_scanner,
-              label: 'Scan To Upload',
-              onPressed: () {
-                // Handle scan upload functionality
-              },
-            ),
           ],
-        );
-      },
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.qr_code_scanner),
+        onPressed: () async {
+          final scannedData = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QRScannerWidget(),
+            ),
+          );
+
+          if (scannedData != null) {
+            print('Scanned QR Code: $scannedData');
+            // You can do further actions with the scanned data here
+          }
+        },
+      ),
     );
   }
 }

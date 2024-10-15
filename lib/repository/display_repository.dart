@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/board/board.dart';
 import '../models/display/bdisplay.dart';
+import '../models/display/display_filter.dart';
 import '../models/display/display_geotag_request.dart';
 import 'base_repository.dart';
 
@@ -112,16 +113,23 @@ class DisplayService extends BaseRepository {
     }
   }
 
-  // Fetches a list of displays with pagination
-  Future<List<BDisplay>?> getDisplays({int page = 0, int size = 20}) async {
+  Future<List<BDisplay>?> getDisplays(DisplayFilter filter) async {
     try {
+      // Build query parameters from the filter
+      final Map<String, dynamic> queryParams = filter.toQueryParameters();
+
+      // Create query string
+      final queryString = Uri(queryParameters: queryParams).query;
+
+      // Construct the URL with the query string
+      final url = Uri.parse('$apiUrl/display/list?$queryString');
+
       final response = await client.get(
-        Uri.parse('$apiUrl/display/list?page=$page&size=$size'),
+        url,
         headers: {'Content-Type': 'application/json'},
       );
+
       if (response.statusCode == 200) {
-        print(
-            'Response body: ${response.body}'); // Debugging: print raw response
         final Map<String, dynamic> responseBody = json.decode(response.body);
 
         final List<dynamic> responseBodyList = responseBody['data'];
@@ -250,45 +258,43 @@ class DisplayService extends BaseRepository {
     return '${formattedEndTime[0]}-${formattedEndTime[1].toString().padLeft(2, '0')}-${formattedEndTime[2].toString().padLeft(2, '0')} ${formattedEndTime[3].toString().padLeft(2, '0')}:${formattedEndTime[4].toString().padLeft(2, '0')}';
   }
 
-  Future<bool> saveBoardsWithTimeSlots(
-    String displayId,
-    List<Board> selectedBoardIds, // List of Board objects
-    DateTime dateTime, // Use DateTime instead of String
-    List<Map<String, String>> timeSlots,
-  ) async {
+  Future<bool> saveBoardsWithTimeSlots({
+    required String displayId, // The display ID
+    required List<String> boardIds, // List of selected board IDs
+    required DateTime date, // Selected date
+    required List<Map<String, String>> timeSlots, // List of selected time slots
+  }) async {
     try {
-      // Extract board IDs from the list of Board objects
-      List<String> boardIds =
-          selectedBoardIds.map((board) => board.boardId).toList();
-
       // Format the DateTime to ISO 8601 format for LocalDateTime in Java
-      String formattedDateTime =
-          dateTime.toIso8601String(); // '2024-10-02T14:30:00'
+      String formattedDate =
+          date.toIso8601String(); // e.g., '2024-10-02T00:00:00'
 
       // Prepare the request body
       Map<String, dynamic> requestBody = {
         'displayId': displayId,
-        'boardIds': boardIds, // Use board IDs instead of Board objects
-        'date': formattedDateTime, // Send the ISO 8601 formatted DateTime
+        'boardIds': boardIds, // Use board IDs directly
+        'date': formattedDate, // ISO 8601 formatted date
         'timeslots': timeSlots,
       };
 
+      // Send PUT request to save boards with time slots
       final response = await client.put(
         Uri.parse('$apiUrl/display/update/time-slots'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestBody),
       );
 
-      print('${requestBody}');
+      print('Request body: ${jsonEncode(requestBody)}');
 
       if (response.statusCode == 200) {
+        print('Successfully saved boards with time slots.');
         return true; // Successfully saved
       } else {
-        handleError(response); // Handle the error
+        handleError(response); // Handle error response
         return false; // Failed to save
       }
     } catch (e) {
-      print('Error saving boards with time slots in repository: $e');
+      print('Error saving boards with time slots: $e');
       return false;
     }
   }
@@ -302,7 +308,8 @@ class DisplayService extends BaseRepository {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = json.decode(response.body);
-        final List<String> boardIds = List<String>.from(responseBody['data']['boardIds']);
+        final List<String> boardIds =
+            List<String>.from(responseBody['data']['boardIds']);
         return boardIds;
       } else {
         handleError(response);

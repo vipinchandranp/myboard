@@ -1,91 +1,92 @@
 import 'package:flutter/material.dart';
-import 'package:myboard/widgets/round_button.dart';
-import 'package:myboard/widgets/bottom_tools_widget.dart';
 import '../../models/board/board.dart';
 import '../widgets/media_file_widget.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../utils/utility.dart'; // Import your utility file
 
-class BoardCardWidget extends StatelessWidget {
+class BoardCardWidget extends StatefulWidget {
   final Board board;
-  final bool isSelected;
-  final ValueChanged<bool?>? onChanged; // Callback for checkbox state change
+  final bool isSelected; // Keep initial selection passed from parent
 
   const BoardCardWidget({
     Key? key,
     required this.board,
-    this.isSelected = false,
-    this.onChanged, // Optional callback for checkbox
+    this.isSelected = false, // Default to false if not provided
   }) : super(key: key);
 
   @override
+  _BoardCardWidgetState createState() => _BoardCardWidgetState();
+}
+
+class _BoardCardWidgetState extends State<BoardCardWidget> {
+  late bool isSelected;
+
+  @override
+  void initState() {
+    super.initState();
+    isSelected = widget.isSelected; // Initialize state from parent
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        elevation: 5,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildMediaCarousel(board),
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        board.boardName,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
-                            ),
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 5,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildMediaCarousel(widget.board),
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.board.boardName,
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[800],
+                              ),
+                    ),
+                    const SizedBox(height: 5),
+                    _buildStatusIndicator(widget.board.status, context),
+                    const SizedBox(height: 5),
+                    Text(
+                      'Created on: ${Utility.formatDate(widget.board.createdDateAndTime)}',
+                      style: TextStyle(
+                        color: Colors.grey[600],
                       ),
-                      const SizedBox(height: 5),
-                      _buildStatusIndicator(board.status, context),
-                      const SizedBox(height: 5),
-                      Text(
-                        'Created on: ${Utility.formatDate(board.createdDateAndTime)}',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildActionIcons(),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildActionIcons(),
+                    const SizedBox(height: 10),
+                    _buildBottomButtons(), // Add the buttons here
+                  ],
                 ),
-              ],
-            ),
-            Positioned(
-                top: 10,
-                right: 10,
-                child: FloatingActionButton(
-                  mini: true,
-                  backgroundColor: Colors.white,
-                  child: const Icon(Icons.settings, color: Colors.black),
-                  onPressed: () => _showBottomSheet(context),
-                )),
-            Positioned(
-              top: 10,
-              left: 10,
-              child: Checkbox(
-                checkColor: Colors.white,
-                value: isSelected,
-                onChanged: onChanged,
-                // Trigger callback when checkbox is toggled
-                activeColor: Colors.blueAccent,
               ),
+            ],
+          ),
+          Positioned(
+            top: 10,
+            left: 10,
+            child: Checkbox(
+              checkColor: Colors.white,
+              value: isSelected,
+              activeColor: Colors.blueAccent,
+              onChanged: (bool? value) {
+                setState(() {
+                  isSelected = value ?? false; // Toggle selection
+                });
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -148,42 +149,56 @@ class BoardCardWidget extends StatelessWidget {
     );
   }
 
-  void _showBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return BottomToolsWidget(
-          buttons: [
-            RoundedButton(
-              icon: Icons.upload,
-              label: "Upload to Display",
-              onPressed: () {
-                Navigator.pop(context);
-                print("Upload to Display pressed");
-              },
-            ),
-            RoundedButton(
-              icon: Icons.bar_chart,
-              label: "Reports",
-              onPressed: () {
-                Navigator.pop(context);
-                print("Reports pressed");
-              },
-            ),
-            RoundedButton(
-              icon: Icons.delete,
-              label: "Delete Board",
-              onPressed: () {
-                Navigator.pop(context);
-                print("Delete Board pressed");
-              },
-            ),
-          ],
-        );
-      },
+  Widget _buildBottomButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildSmallRoundedButton(
+          icon: Icons.upload,
+          label: "Upload",
+          onPressed: () {
+            print("Upload to Display pressed");
+          },
+        ),
+        _buildSmallRoundedButton(
+          icon: Icons.bar_chart,
+          label: "Reports",
+          onPressed: () {
+            print("Reports pressed");
+          },
+        ),
+        _buildSmallRoundedButton(
+          icon: Icons.delete,
+          label: "Delete",
+          onPressed: () {
+            print("Delete Board pressed");
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSmallRoundedButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Column(
+      children: [
+        IconButton(
+          icon: Icon(icon),
+          color: Colors.black,
+          iconSize: 20, // Smaller icon size
+          onPressed: onPressed,
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12, // Smaller text size
+            color: Colors.black,
+          ),
+        ),
+      ],
     );
   }
 }

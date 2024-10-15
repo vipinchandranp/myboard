@@ -51,7 +51,6 @@ class _ProfilePictureWidgetState extends State<ProfilePictureWidget> {
   }
 
   void _editProfilePic() {
-    // For now, call the change profile pic method
     _changeProfilePic();
   }
 
@@ -61,25 +60,32 @@ class _ProfilePictureWidgetState extends State<ProfilePictureWidget> {
       return Center(child: CircularProgressIndicator());
     }
 
-    if (_error != null) {
-      return Center(child: Text(_error!));
-    }
-
     return Stack(
       children: [
+        // Profile picture or default image
         CircleAvatar(
           radius: 50,
-          backgroundImage: _profilePic?.image ?? AssetImage('assets/default_profile.png'),
+          backgroundImage:
+              _profilePic?.image ?? AssetImage('assets/default_profile.png'),
+          backgroundColor:
+              Colors.grey[200], // Optional background color for empty avatar
         ),
+        // Edit icon button, always visible
         Positioned(
           bottom: 0,
           right: 0,
-          child: IconButton(
-            icon: Icon(Icons.edit, color: Colors.white),
-            onPressed: _editProfilePic,
-            tooltip: 'Edit profile picture',
-            color: Colors.blueAccent,
-            iconSize: 24,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white, // White background for better visibility
+            ),
+            child: IconButton(
+              icon: Icon(Icons.edit, color: Colors.blueAccent),
+              // White background, blue accent icon
+              onPressed: _editProfilePic,
+              tooltip: 'Edit profile picture',
+              iconSize: 24,
+            ),
           ),
         ),
       ],

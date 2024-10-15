@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For date formatting
-import 'package:table_calendar/table_calendar.dart'; // Import the table_calendar package
+import 'package:intl/intl.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../../repository/display_repository.dart';
-import '../board/view_boards.dart'; // Ensure this is your DisplayService
+import '../board/view_boards.dart'; // Ensure this is your BoardService
 
 class TimeSlotWidget extends StatefulWidget {
   final String displayId;
-  final BuildContext parentContext;
 
   const TimeSlotWidget({
     Key? key,
     required this.displayId,
-    required this.parentContext,
   }) : super(key: key);
 
   @override
@@ -20,16 +18,14 @@ class TimeSlotWidget extends StatefulWidget {
 
 class _TimeSlotWidgetState extends State<TimeSlotWidget> {
   DateTime selectedDate = DateTime.now();
-  DateTime focusedDate =
-      DateTime.now(); // Track the focused date for the calendar
-  Set<String> selectedSlots = {}; // Set to store selected time slots
-  Future<List<Map<String, dynamic>>?>? timeSlotsFuture; // Adjusted future type
+  DateTime focusedDate = DateTime.now();
+  Set<String> selectedSlots = {};
+  Future<List<Map<String, dynamic>>?>? timeSlotsFuture;
 
   @override
   void initState() {
     super.initState();
-    timeSlotsFuture =
-        _fetchTimeSlots(); // Fetch time slots for the initial date
+    timeSlotsFuture = _fetchTimeSlots();
   }
 
   @override
@@ -51,7 +47,6 @@ class _TimeSlotWidgetState extends State<TimeSlotWidget> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Calendar widget
               TableCalendar<DateTime>(
                 focusedDay: focusedDate,
                 firstDay: DateTime.now(),
@@ -60,11 +55,9 @@ class _TimeSlotWidgetState extends State<TimeSlotWidget> {
                 onDaySelected: (selectedDay, focusedDay) {
                   setState(() {
                     selectedDate = selectedDay;
-                    focusedDate = focusedDay; // Update focused date
-                    selectedSlots
-                        .clear(); // Reset selected slots when date changes
-                    timeSlotsFuture =
-                        _fetchTimeSlots(); // Fetch time slots for the new date
+                    focusedDate = focusedDay;
+                    selectedSlots.clear();
+                    timeSlotsFuture = _fetchTimeSlots();
                   });
                 },
                 calendarStyle: CalendarStyle(
@@ -89,7 +82,6 @@ class _TimeSlotWidgetState extends State<TimeSlotWidget> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Display time slots
               FutureBuilder<List<Map<String, dynamic>>?>(
                 future: timeSlotsFuture,
                 builder: (context, snapshot) {
@@ -113,25 +105,20 @@ class _TimeSlotWidgetState extends State<TimeSlotWidget> {
                       itemCount: timeSlots.length,
                       itemBuilder: (context, index) {
                         final timeSlot = timeSlots[index];
-                        // Format startTime and endTime into readable time
                         final startTime = DateFormat.Hm()
                             .format(DateTime.parse(timeSlot['startTime']));
                         final endTime = DateFormat.Hm()
                             .format(DateTime.parse(timeSlot['endTime']));
                         final slotKey = '$startTime - $endTime';
-                        final isSelected = selectedSlots
-                            .contains(slotKey); // Check if slot is selected
+                        final isSelected = selectedSlots.contains(slotKey);
 
                         Color tileColor;
                         if (isSelected) {
-                          tileColor = Colors
-                              .lightBlue[100]!; // Sky blue for selected slots
+                          tileColor = Colors.lightBlue[100]!;
                         } else if (timeSlot['status'] == 'AVAILABLE') {
-                          tileColor = Colors
-                              .green[100]!; // Light green for available slots
+                          tileColor = Colors.green[100]!;
                         } else {
-                          tileColor = Colors
-                              .red[100]!; // Light red for unavailable slots
+                          tileColor = Colors.red[100]!;
                         }
 
                         return Card(
@@ -143,10 +130,9 @@ class _TimeSlotWidgetState extends State<TimeSlotWidget> {
                             onTap: () {
                               setState(() {
                                 if (isSelected) {
-                                  selectedSlots.remove(
-                                      slotKey); // Deselect if already selected
+                                  selectedSlots.remove(slotKey);
                                 } else {
-                                  selectedSlots.add(slotKey); // Select the slot
+                                  selectedSlots.add(slotKey);
                                 }
                               });
                             },
@@ -164,100 +150,33 @@ class _TimeSlotWidgetState extends State<TimeSlotWidget> {
       ),
       floatingActionButton: selectedSlots.isNotEmpty
           ? FloatingActionButton.extended(
-        onPressed: () async {
-          // Gather the selected data to return to the parent widget
-          final selectedData = {
-            'displayId': widget.displayId,
-            'selectedDate': selectedDate,
-            'selectedSlots': selectedSlots.toList(),
-          };
+              onPressed: () async {
+                // Pass the selected date and slots back to the previous screen
+                final selectedData = {
+                  'displayId': widget.displayId,
+                  'selectedDate': selectedDate,
+                  'selectedSlots': selectedSlots.toList(),
+                };
 
-          // Navigate to ViewBoardsWidget to select boards
-          final selectedBoards = await Navigator.push(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  ViewBoardsWidget(),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                const begin = Offset(1.0, 0.0); // Start from the right
-                const end = Offset.zero;
-                const curve = Curves.easeInOut;
-
-                var tween = Tween(begin: begin, end: end)
-                    .chain(CurveTween(curve: curve));
-
-                return SlideTransition(
-                  position: animation.drive(tween),
-                  child: child,
-                );
+                // Return selected data and go back
+                Navigator.of(context).pop(selectedData);
               },
-            ),
-          );
-
-          // If selectedBoards is not null, save boards with time slots
-          if (selectedBoards != null) {
-            final displayService = DisplayService(widget.parentContext);
-
-            // Prepare formattedBoardIds assuming selectedBoards is a list of board IDs
-            final formattedBoardIds = selectedBoards;
-
-            print('selected boards = ${selectedBoards}');
-
-            // Prepare formattedTimeSlots directly from selectedSlots
-            final formattedTimeSlots = selectedSlots.map((slotKey) {
-              // Parse start and end times from slotKey
-              final timeParts = slotKey.split(' - ');
-              return {
-                'startTime': timeParts[0], // Keep as String
-                'endTime': timeParts[1]
-              };
-            }).toList();
-
-            final success = await displayService.saveBoardsWithTimeSlots(
-              widget.displayId,
-              formattedBoardIds, // Pass the formatted board IDs
-              selectedDate,
-              formattedTimeSlots, // Use selected time slots
-            );
-
-            if (success) {
-              // Notify the user and pop the context if saving was successful
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Time slots saved successfully!')),
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Failed to save time slots.')),
-              );
-            }
-          }
-
-          // Return the selected data and board IDs
-          Navigator.of(context).pop({
-            ...selectedData,
-            'selectedBoardIds': selectedBoards,
-          });
-        },
-        label: const Text("Select boards"),
-        icon: const Icon(Icons.check),
-        backgroundColor: Colors.white,
-      )
+              label: const Text("Confirm timeslot"), // Updated label
+              icon: const Icon(Icons.check),
+              backgroundColor: Colors.white,
+            )
           : null,
-
     );
   }
 
   Future<List<Map<String, dynamic>>?> _fetchTimeSlots() async {
-    final displayService = DisplayService(widget.parentContext);
+    final displayService = DisplayService(context);
     try {
       final timeSlots =
           await displayService.getTimeSlots(widget.displayId, selectedDate);
-      return timeSlots; // Return timeSlots directly, as it might be null
+      return timeSlots;
     } catch (e) {
-      // Handle error gracefully
-      return null; // Return null instead of an empty list
+      return null;
     }
   }
 

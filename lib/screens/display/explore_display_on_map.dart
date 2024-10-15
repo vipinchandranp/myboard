@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-class MapSelectionScreen extends StatefulWidget {
+class ExploreDisplayOnMap extends StatefulWidget {
   final LatLng initialLocation;
 
   // Default Bangalore location
   static const LatLng bangaloreLocation = LatLng(12.9716, 77.5946);
 
   // Updated constructor to accept nullable initialLocation
-  MapSelectionScreen({LatLng? initialLocation})
+  ExploreDisplayOnMap({LatLng? initialLocation})
       : this.initialLocation = initialLocation ?? bangaloreLocation;
 
   @override
-  _MapSelectionScreenState createState() => _MapSelectionScreenState();
+  _ExploreDisplayOnMapState createState() => _ExploreDisplayOnMapState();
 }
 
-class _MapSelectionScreenState extends State<MapSelectionScreen> {
+class _ExploreDisplayOnMapState extends State<ExploreDisplayOnMap> {
   late GoogleMapController _mapController;
   LatLng? _pickedLocation;
 

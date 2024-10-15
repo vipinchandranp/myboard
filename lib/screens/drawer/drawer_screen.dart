@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; // Add this package for image picking
+import 'package:myboard/screens/approval/timeslot_status_for_approval.dart';
 import 'package:myboard/screens/board/view_boards.dart';
 import 'package:myboard/screens/display/view_displays.dart';
 import 'package:myboard/screens/home/home_screen.dart';
@@ -19,7 +20,6 @@ class DrawerWidget extends StatefulWidget {
 }
 
 class _DrawerWidgetState extends State<DrawerWidget> {
-
   @override
   void initState() {
     super.initState();
@@ -48,7 +48,7 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => HomeScreen()),
+                        MaterialPageRoute(builder: (context) => HomeScreen(context)),
                       );
                     },
                   ),
@@ -60,7 +60,8 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => ViewDisplayWidget()),
+                        MaterialPageRoute(
+                            builder: (context) => ViewDisplayWidget()),
                       );
                     },
                   ),
@@ -72,17 +73,22 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => ViewBoardsWidget()),
+                        MaterialPageRoute(
+                            builder: (context) => ViewBoardsWidget()),
                       );
                     },
                   ),
                   _buildDivider(context),
                   _createDrawerItem(
                     context,
-                    icon: Icons.calendar_today,
-                    text: 'My Schedule',
+                    icon: Icons.approval,
+                    text: 'Approvals',
                     onTap: () {
-                      // Handle navigation to My Schedule
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => TimeslotStatusWidget()),
+                      );
                     },
                   ),
                   _buildDivider(context),
@@ -93,7 +99,8 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => SettingsScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => SettingsScreen()),
                       );
                     },
                   ),
@@ -137,11 +144,18 @@ class _DrawerWidgetState extends State<DrawerWidget> {
         ),
         child: Row(
           children: [
-            ProfilePictureWidget(),
+            // Wrapping ProfilePictureWidget in Flexible to avoid overflow
+            Flexible(
+              child: ProfilePictureWidget(),
+              flex: 2, // Adjust the flex value as needed
+            ),
             SizedBox(width: 16),
+            // Expanded to ensure the text doesn't overflow
             Expanded(
+              flex: 3,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     'User Name',
@@ -169,11 +183,11 @@ class _DrawerWidgetState extends State<DrawerWidget> {
   }
 
   Widget _createDrawerItem(
-      BuildContext context, {
-        required IconData icon,
-        required String text,
-        required VoidCallback onTap,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+    required VoidCallback onTap,
+  }) {
     final theme = Theme.of(context);
 
     return Container(

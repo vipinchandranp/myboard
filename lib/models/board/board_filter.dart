@@ -20,4 +20,19 @@ class BoardFilter {
     this.isRecent,
     this.isFavorite,
   });
+
+  Map<String, dynamic> toQueryParams() {
+    return {
+      'page': page.toString(),
+      'size': size.toString(),
+      if (searchText != null && searchText!.isNotEmpty) 'search': searchText,
+      if (dateRange != null) 'startDate': dateRange!.start.toIso8601String(),
+      if (dateRange != null) 'endDate': dateRange!.end.toIso8601String(),
+      if (status != null) 'status': status,
+      if (isRecent != null) 'recent': isRecent.toString(),
+      if (isFavorite != null) 'favorite': isFavorite.toString(),
+      if (boardIds != null && boardIds!.isNotEmpty)
+        'boardIds': boardIds!.join(','), // Join boardIds into a comma-separated string
+    };
+  }
 }

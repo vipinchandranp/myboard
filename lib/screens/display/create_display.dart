@@ -9,7 +9,7 @@ import '../../models/common/media_type.dart';
 import '../../models/display/display_geotag_request.dart';
 import '../../models/display/display_media_file.dart';
 import '../../repository/display_repository.dart';
-import 'map_explore_displays.dart';
+import 'explore_display_on_map.dart';
 
 class CreateDisplayWidget extends StatefulWidget {
   final BuildContext context;
@@ -128,7 +128,7 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
   Future<void> _selectLocation() async {
     final selectedLocation = await Navigator.of(context).push<LatLng>(
       MaterialPageRoute(
-        builder: (ctx) => MapSelectionScreen(
+        builder: (ctx) => ExploreDisplayOnMap(
           initialLocation: _selectedLocation,
         ),
       ),
