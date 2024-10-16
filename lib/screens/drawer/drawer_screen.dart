@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; // Add this package for image picking
-import 'package:myboard/screens/approval/timeslot_status_for_approval.dart';
+import 'package:myboard/screens/approval/my_approval.dart';
 import 'package:myboard/screens/board/view_boards.dart';
 import 'package:myboard/screens/display/view_displays.dart';
 import 'package:myboard/screens/home/home_screen.dart';
@@ -87,7 +87,7 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => TimeslotStatusWidget()),
+                            builder: (context) => MyApprovalWidget()),
                       );
                     },
                   ),
