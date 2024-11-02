@@ -5,6 +5,8 @@ import 'package:myboard/screens/user/signup_screen.dart';
 import '../../api_models/user_login_request.dart';
 import '../../repository/user_repository.dart';
 import '../home/home_screen.dart';
+import '../../themes/app_theme.dart';
+import '../notification/mywebsocket.dart'; // Import your AppTheme
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -47,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await _userService.login(userLoginRequest);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen(context)),
+        MaterialPageRoute(builder: (context) => MyWebSocketApp()),
       );
     } catch (e) {
       print(e);
@@ -57,6 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor, // Check if this is set correctly
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -89,10 +92,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Email or Phone field
                 Text(
                   'Email or Phone',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[700],
+                  style: AppTheme.lightTheme.textTheme.headlineMedium?.copyWith(
+                    color: AppTheme.lightTheme.textTheme.bodyLarge?.color, // Use theme color
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -113,10 +114,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Password field
                 Text(
                   'Password',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[700],
+                  style: AppTheme.lightTheme.textTheme.headlineMedium?.copyWith(
+                    color: AppTheme.lightTheme.textTheme.bodyLarge?.color, // Use theme color
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -163,6 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      backgroundColor: AppTheme.lightTheme.primaryColor, // Use primary color from AppTheme
                     ),
                     child: const Text(
                       'Login',

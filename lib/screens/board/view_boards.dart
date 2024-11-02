@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart'; // Import shimmer package
 import '../../models/board/board.dart';
 import '../../models/board/board_filter.dart';
 import '../../repository/board_repository.dart';
@@ -21,10 +22,8 @@ class ViewBoardsWidget extends StatefulWidget {
 class _ViewBoardsWidgetState extends State<ViewBoardsWidget> {
   late final BoardService _boardService;
   List<Board> _boards = [];
-  List<String>? _boardIds; // Store board IDs that you might want to filter by
   bool _isLoading = true;
   bool _isFilterVisible = false; // Control filter visibility
-  Set<Board> _selectedBoards = {}; // Track selected boards (can be multiple)
   Board? _singleSelectedBoard; // For ViewMode.timeslotBoardSelection, single selection
 
   // Filter state variables
@@ -54,8 +53,7 @@ class _ViewBoardsWidgetState extends State<ViewBoardsWidget> {
 
     final filter = BoardFilter(
       page: 0,
-      size: 4,
-      boardIds: _boardIds,
+      size: 10, // Increased size to fetch more boards
       searchText: _searchText,
       dateRange: _dateRange,
       status: _selectedStatus,
@@ -87,12 +85,7 @@ class _ViewBoardsWidgetState extends State<ViewBoardsWidget> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            // Return selected board IDs (if in timeslotBoardSelection, return only one)
-            if (widget.viewMode == ViewMode.timeslotBoardSelection) {
-              Navigator.pop(context, _singleSelectedBoard?.boardId);
-            } else {
-              Navigator.pop(context, _selectedBoards.map((board) => board.boardId).toList());
-            }
+            Navigator.pop(context, _singleSelectedBoard?.boardId);
           },
         ),
         actions: [
@@ -155,10 +148,10 @@ class _ViewBoardsWidgetState extends State<ViewBoardsWidget> {
             ),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? _buildShimmerLoading() // Replace CircularProgressIndicator with shimmer
                 : _errorMessage != null
                 ? Center(child: Text(_errorMessage!))
-                : _buildBoardList(),
+                : _buildBoardPageView(),
           ),
           if (widget.viewMode == ViewMode.timeslotBoardSelection && _singleSelectedBoard != null)
             Padding(
@@ -175,40 +168,52 @@ class _ViewBoardsWidgetState extends State<ViewBoardsWidget> {
     );
   }
 
-  Widget _buildBoardList() {
+  // Shimmer Loading Indicator Widget
+  Widget _buildShimmerLoading() {
+    return ListView.builder(
+      itemCount: 4, // Show 4 loading placeholders
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Container(
+              width: double.infinity,
+              height: 100.0, // Fixed height for shimmer placeholder
+              color: Colors.grey[300],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBoardPageView() {
     if (_boards.isEmpty) {
       return const Center(child: Text('No boards found.'));
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(8.0),
+    return PageView.builder(
+      scrollDirection: Axis.vertical, // Set the scroll direction to vertical
       itemCount: _boards.length,
       itemBuilder: (context, index) {
         final board = _boards[index];
-        final isSelected = _selectedBoards.contains(board);
-        final isSingleSelected = _singleSelectedBoard == board;
 
         return GestureDetector(
           onTap: () {
             setState(() {
               if (widget.viewMode == ViewMode.timeslotBoardSelection) {
-                // Allow only one selection in timeslotBoardSelection mode
                 _singleSelectedBoard = board;
-              } else {
-                // Allow multiple selections in other modes
-                if (isSelected) {
-                  _selectedBoards.remove(board);
-                } else {
-                  _selectedBoards.add(board);
-                }
               }
             });
           },
-          child: BoardCardWidget(
-            board: board,
-            isSelected: widget.viewMode == ViewMode.timeslotBoardSelection
-                ? isSingleSelected
-                : isSelected,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: BoardCardWidget(
+              board: board,
+              isSelected: _singleSelectedBoard == board,
+            ),
           ),
         );
       },

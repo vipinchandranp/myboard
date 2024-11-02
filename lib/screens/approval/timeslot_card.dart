@@ -84,11 +84,10 @@ class _TimeslotCardState extends State<TimeslotCard> {
             SizedBox(width: 10),
             _isLoading
                 ? CircularProgressIndicator() // Show loading indicator
-                : Switch(
-                    value: approvalStatus,
-                    activeColor: _getSwitchColor(widget.timeslot.status),
-                    onChanged: (value) {
-                      _confirmApprovalChange(value);
+                : IconButton(
+                    icon: Icon(Icons.more_vert),
+                    onPressed: () {
+                      _showApprovalOptions(); // Show bottom sheet
                     },
                   ),
           ],
@@ -125,32 +124,36 @@ class _TimeslotCardState extends State<TimeslotCard> {
     }
   }
 
-  // Method to confirm the approval change
-  void _confirmApprovalChange(bool newValue) {
-    String newStatus = newValue ? 'APPROVED' : 'REJECTED';
-
-    showDialog(
+  // Method to show the approval options in a bottom sheet
+  void _showApprovalOptions() {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Confirm Approval Change'),
-        content:
-            Text('Are you sure you want to mark this timeslot as $newStatus?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Dismiss the dialog
-            },
-            child: Text('Cancel'),
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.check),
+                title: Text('Approve'),
+                onTap: () {
+                  _updateApprovalStatus('APPROVED');
+                  Navigator.of(context).pop(); // Close bottom sheet
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.cancel),
+                title: Text('Reject'),
+                onTap: () {
+                  _updateApprovalStatus('REJECTED');
+                  Navigator.of(context).pop(); // Close bottom sheet
+                },
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Dismiss the dialog
-              _updateApprovalStatus(newStatus); // Update status
-            },
-            child: Text('Confirm'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:myboard/screens/home/home_screen.dart';
+import 'package:shimmer/shimmer.dart'; // Import Shimmer package
 import '../../models/display/bdisplay.dart';
 import '../../models/display/display_filter.dart';
 import '../../repository/display_repository.dart';
 import '../widgets/filter_widget.dart'; // Import the FilterWidget
 import 'display_card.dart';
+import '../../themes/app_theme.dart'; // Import your AppTheme
 
 class ViewDisplayWidget extends StatefulWidget {
   @override
@@ -36,6 +38,7 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
     _displayService = DisplayService(context);
     await _fetchDisplays();
   }
+
   Future<void> _fetchDisplays() async {
     setState(() {
       _isLoading = true;
@@ -43,7 +46,6 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
     });
 
     try {
-      // Create an instance of DisplayFilter with the required parameters
       final displayFilter = DisplayFilter(
         searchText: _searchText,
         dateRange: _dateRange,
@@ -52,7 +54,6 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
         isFavorite: _isFavorite,
       );
 
-      // Fetch displays using the display filter
       final displays = await _displayService.getDisplays(displayFilter);
 
       setState(() {
@@ -82,93 +83,168 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
             );
           },
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isFilterVisible ? Icons.expand_less : Icons.expand_more,
-            ),
-            onPressed: () {
-              setState(() {
-                _isFilterVisible = !_isFilterVisible;
-              });
-            },
-          ),
-        ],
       ),
-      body: Column(
-        children: [
-          // Filter section
-          if (_isFilterVisible)
-            SingleChildScrollView(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 500),
-                curve: Curves.easeInOut,
-                height: _isFilterVisible ? 400 : 0, // Fixed height for filter
-                child: FilterWidget(
-                  suggestions: ['Display 1', 'Display 2', 'Display 3'],
-                  onSearchChanged: (value) {
-                    setState(() {
-                      _searchText = value;
-                      _fetchDisplays();
-                    });
-                  },
-                  dateRange: _dateRange,
-                  onDateRangeChanged: (value) {
-                    setState(() {
-                      _dateRange = value;
-                      _fetchDisplays();
-                    });
-                  },
-                  selectedStatus: _selectedStatus,
-                  onStatusChanged: (value) {
-                    setState(() {
-                      _selectedStatus = value;
-                      _fetchDisplays();
-                    });
-                  },
-                  isRecent: _isRecent,
-                  onRecentToggle: (value) {
-                    setState(() {
-                      _isRecent = value;
-                      _fetchDisplays();
-                    });
-                  },
-                  isFavorite: _isFavorite,
-                  onFavoriteToggle: (value) {
-                    setState(() {
-                      _isFavorite = value;
-                      _fetchDisplays();
-                    });
-                  },
+      body: SingleChildScrollView(
+        // Wrap the entire body with SingleChildScrollView
+        child: Container(
+          color: AppTheme.lightTheme.scaffoldBackgroundColor,
+          // Set the background color
+          child: Column(
+            children: [
+              _buildFilterToolbar(), // Custom filter toolbar
+              if (_isFilterVisible)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                  height: _isFilterVisible ? 400 : 0,
+                  child: FilterWidget(
+                    suggestions: ['Display 1', 'Display 2', 'Display 3'],
+                    onSearchChanged: (value) {
+                      setState(() {
+                        _searchText = value;
+                        _fetchDisplays();
+                      });
+                    },
+                    dateRange: _dateRange,
+                    onDateRangeChanged: (value) {
+                      setState(() {
+                        _dateRange = value;
+                        _fetchDisplays();
+                      });
+                    },
+                    selectedStatus: _selectedStatus,
+                    onStatusChanged: (value) {
+                      setState(() {
+                        _selectedStatus = value;
+                        _fetchDisplays();
+                      });
+                    },
+                    isRecent: _isRecent,
+                    onRecentToggle: (value) {
+                      setState(() {
+                        _isRecent = value;
+                        _fetchDisplays();
+                      });
+                    },
+                    isFavorite: _isFavorite,
+                    onFavoriteToggle: (value) {
+                      setState(() {
+                        _isFavorite = value;
+                        _fetchDisplays();
+                      });
+                    },
+                  ),
                 ),
-              ),
-            ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage != null
-                    ? Center(child: Text(_errorMessage!))
-                    : _buildDisplayList(),
+              _isLoading
+                  ? _buildShimmerEffect() // Use Shimmer effect here
+                  : _errorMessage != null
+                      ? Center(child: Text(_errorMessage!))
+                      : _buildDisplayPageView(),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildDisplayList() {
+  Widget _buildFilterToolbar() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal, // Enable horizontal scrolling
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        child: Row(
+          children: [
+            TextButton.icon(
+              onPressed: () {
+                // Handle Sort functionality
+              },
+              icon: Icon(Icons.sort, color: Colors.black),
+              // Changed to black for visibility
+              label: Text(
+                'Sort By (Rating)',
+                style: TextStyle(color: Colors.black), // Changed to black
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _isFilterVisible = !_isFilterVisible;
+                });
+              },
+              icon: Icon(Icons.filter_alt, color: Colors.black),
+              // Changed to black for visibility
+              label: Text(
+                'All Filters',
+                style: TextStyle(color: Colors.black), // Changed to black
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                // Handle additional filter functionality
+              },
+              icon: Icon(Icons.star, color: Colors.black),
+              // Changed to black for visibility
+              label: Text(
+                'Star Rating',
+                style: TextStyle(color: Colors.black), // Changed to black
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerEffect() {
+    return ListView.builder(
+      shrinkWrap: true, // Adjust height to prevent overflow
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 5, // You can adjust the number of shimmer placeholders
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Container(
+              height: 100.0,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDisplayPageView() {
     if (_displays.isEmpty) {
       return const Center(child: Text('No displays found.'));
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(8.0),
+    return ListView.separated(
+      shrinkWrap: true,
+      // Adjust height to prevent overflow
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: _displays.length,
       itemBuilder: (context, index) {
         final display = _displays[index];
         return GestureDetector(
-          child: DisplayCardWidget(display: display),
+          onTap: () {
+            // Optionally handle tap events on the display card
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: DisplayCardWidget(display: display),
+          ),
         );
       },
+      separatorBuilder: (context, index) => Divider(
+        color: Colors.grey, // You can adjust the color of the divider
+        thickness: 1, // Adjust the thickness of the divider
+      ),
     );
   }
 }

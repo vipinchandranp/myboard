@@ -29,7 +29,7 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
   bool _isSelected = false;
   DateTime? _selectedDate;
   List<String>? _selectedTimeSlots;
-  Board? _selectedBoard; // Stores selected board object
+  Board? _selectedBoard;
   bool _showSelectBoardButton = false;
 
   @override
@@ -42,11 +42,12 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      elevation: 5,
+      elevation: 8,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(15),
       ),
-      color: _isSelected ? Colors.blue[100] : Colors.white,
+      shadowColor: Colors.black.withOpacity(0.1),
+      color: _isSelected ? Colors.blue[50] : Colors.white,
       child: Stack(
         children: [
           Column(
@@ -75,47 +76,15 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
                         ),
                         // Map icon positioned next to the display name
                         IconButton(
-                          icon: const Icon(Icons.map),
-                          tooltip: 'Show on Map',
+                          icon: Icon(
+                            Icons.more_vert,
+                            color: Colors
+                                .black87, // Set the color to a visible one
+                          ),
                           onPressed: () {
-                            _showDisplayOnMap(widget.display);
+                            _showBottomSheetMenu(context);
                           },
-                          color: Colors.blue,
-                          iconSize: 30,
-                        ),
-                        PopupMenuButton<String>(
-                          icon: const Icon(Icons.more_vert),
-                          onSelected: (value) {
-                            switch (value) {
-                              case 'book':
-                                _showBookingDialog(context);
-                                break;
-                              case 'edit':
-                                _showEditDialog(context);
-                                break;
-                              case 'delete':
-                                _showDeleteConfirmation(context);
-                                break;
-                              default:
-                                break;
-                            }
-                          },
-                          itemBuilder: (BuildContext context) {
-                            return [
-                              const PopupMenuItem<String>(
-                                value: 'book',
-                                child: Text('Book'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'edit',
-                                child: Text('Edit'),
-                              ),
-                              const PopupMenuItem<String>(
-                                value: 'delete',
-                                child: Text('Delete'),
-                              ),
-                            ];
-                          },
+                          iconSize: 28,
                         ),
                       ],
                     ),
@@ -137,8 +106,6 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
                     if (_selectedBoard != null)
                       SelectedBoardWidget(selectedBoard: _selectedBoard),
                     // Pass Board instance
-
-                    // Save Button
                     if (_selectedBoard != null) _buildSaveButton(),
                     // Show save button when a board is selected
                   ],
@@ -294,28 +261,22 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
     );
   }
 
-// Method to handle save action
-// Method to handle save action
   void _saveSelectedBoard() async {
     if (_selectedBoard != null &&
         _selectedTimeSlots != null &&
         _selectedDate != null) {
-      // Create a list of time slots with necessary data structure
       List<Map<String, String>> timeSlots = _selectedTimeSlots!.map((slot) {
-        // Split the slot into start and end times based on your format
         var times = slot.split(' - ');
         return {
-          'startTime': times[0].trim(), // Use the first time as startTime
-          'endTime': times[1].trim(), // Use the second time as endTime
-          'status': 'active' // Example status
+          'startTime': times[0].trim(),
+          'endTime': times[1].trim(),
+          'status': 'active'
         };
       }).toList();
 
-      // Call saveBoardsWithTimeSlots
       bool success = await DisplayService(context).saveBoardsWithTimeSlots(
         displayId: widget.display.displayId,
         boardIds: [_selectedBoard!.boardId],
-        // Assuming _selectedBoard has an id property
         date: _selectedDate!,
         timeSlots: timeSlots,
       );
@@ -339,5 +300,49 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
                 Text('Please select a board and time slots before saving.')),
       );
     }
+  }
+
+  void _showBottomSheetMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.book),
+                title: const Text('Book'),
+                onTap: () {
+                  Navigator.pop(context); // Close the BottomSheet
+                  _showBookingDialog(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit),
+                title: const Text('Edit'),
+                onTap: () {
+                  Navigator.pop(context); // Close the BottomSheet
+                  _showEditDialog(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete),
+                title: const Text('Delete'),
+                onTap: () {
+                  Navigator.pop(context); // Close the BottomSheet
+                  _showDeleteConfirmation(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

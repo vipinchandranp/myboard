@@ -27,11 +27,9 @@ class _ExploreDisplayOnMapState extends State<ExploreDisplayOnMap> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Select Location'),
-      ),
-      body: GoogleMap(
+    return Container(
+      height: 300, // Set a fixed height for the map
+      child: GoogleMap(
         initialCameraPosition: CameraPosition(
           target: widget.initialLocation,
           zoom: 14,
@@ -46,18 +44,12 @@ class _ExploreDisplayOnMapState extends State<ExploreDisplayOnMap> {
         },
         markers: _pickedLocation != null
             ? {
-                Marker(
-                  markerId: MarkerId('selected-location'),
-                  position: _pickedLocation!,
-                ),
-              }
+          Marker(
+            markerId: MarkerId('selected-location'),
+            position: _pickedLocation!,
+          ),
+        }
             : {},
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.check),
-        onPressed: () {
-          Navigator.of(context).pop(_pickedLocation);
-        },
       ),
     );
   }

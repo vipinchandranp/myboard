@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../models/board/board.dart';
 import '../models/display/bdisplay.dart';
 import '../models/display/display_filter.dart';
 import '../models/display/display_geotag_request.dart';
@@ -317,6 +316,61 @@ class DisplayService extends BaseRepository {
       }
     } catch (e) {
       print('Error fetching board IDs for display: $e');
+      return null;
+    }
+  }
+
+  // Method to fetch nearby displays
+  Future<List<BDisplay>?> getNearbyDisplays() async {
+    try {
+      final response = await client.get(
+        Uri.parse('$apiUrl/display/nearby'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+
+        final List<dynamic> responseBodyList = responseBody['data'];
+
+        // Map the response to a list of BDisplay objects
+        final List<BDisplay> nearbyDisplays = responseBodyList
+            .map((displayJson) => BDisplay.fromJson(displayJson))
+            .toList();
+
+        return nearbyDisplays;
+      } else {
+        handleError(response);
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching nearby displays: $e');
+      return null;
+    }
+  }
+
+  Future<List<BDisplay>?> getAllDisplays() async {
+    try {
+      final response = await client.get(
+        Uri.parse('$apiUrl/display/all'), // Assuming this endpoint returns all displays
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+        final List<dynamic> responseBodyList = responseBody['data'];
+
+        final List<BDisplay> displays = responseBodyList
+            .map((displayJson) => BDisplay.fromJson(displayJson))
+            .toList();
+
+        return displays;
+      } else {
+        handleError(response);
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching all displays: $e');
       return null;
     }
   }

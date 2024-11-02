@@ -1,92 +1,64 @@
 import 'package:flutter/material.dart';
-import '../../api_models/user_cities_response.dart';
-import '../../repository/user_repository.dart';
-import '../drawer/drawer_screen.dart';
-import '../board/create_board.dart';
-import '../display/create_display.dart';
-import '../qrscanner/qr_scanner.dart';
-import '../user/user_location.dart'; // Import UserLocationWidget
+import 'package:rive/rive.dart'; // Import Rive package
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../support/chat_support.dart';
+import '../tools/main_tools.dart';
+import 'main_header.dart';
+import 'main_footer.dart'; // Import MainFooterWidget
 
 class HomeScreen extends StatefulWidget {
   final BuildContext context;
 
-  HomeScreen(BuildContext context) : context = context;
+  HomeScreen(this.context); // Keep context as is
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool isLoading = true; // Simulating loading state
+
   @override
   void initState() {
     super.initState();
+    // Simulating a delay to show shimmer effect
+    Future.delayed(Duration(seconds: 3), () {
+      setState(() {
+        isLoading = false;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: UserLocationWidget(), // Show user location widget in AppBar
+      body: Stack(
+        children: [
+          CustomScrollView(
+            slivers: <Widget>[
+              MainHeaderWidget(), // Main header
+              MainToolsWidget(context), // Directly add MainToolsWidget
+              SliverToBoxAdapter(
+                child: Center(
+                  child: isLoading
+                      ? CircularProgressIndicator() // Show a loading spinner while loading
+                      : RiveAnimation.asset(
+                    'assets/animation.riv', // Path to your Rive animation file
+                  ),
+                ),
+              ),
+            ],
+          ),
+          ChatSupportWidget(), // Add the floating chat button and chatbox
+        ],
       ),
-      drawer: DrawerWidget(
-        onDrawerOpened: () {
-          (context as Element)
-              .markNeedsBuild(); // Forces a rebuild of the screen
-        },
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            // Additional content can be added here if needed
-          ],
-        ),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        shape: CircularNotchedRectangle(),
-        notchMargin: 6.0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            IconButton(
-              icon: Icon(Icons.add_circle),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => CreateDisplayWidget(context)),
-                );
-              },
-            ),
-            SizedBox(width: 40),
-            IconButton(
-              icon: Icon(Icons.add_box),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => CreateBoardWidget(context)),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: MainFooterWidget(), // Use MainFooterWidget here
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.qr_code_scanner),
-        onPressed: () async {
-          final scannedData = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => QRScannerWidget(),
-            ),
-          );
-
-          if (scannedData != null) {
-            print('Scanned QR Code: $scannedData');
-            // You can do further actions with the scanned data here
-          }
+        onPressed: () {
+          // Add your action for the FAB button
         },
+        child: FaIcon(FontAwesomeIcons.comment), // Font Awesome icon
+        backgroundColor: Theme.of(context).primaryColor,
       ),
     );
   }

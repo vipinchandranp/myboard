@@ -4,6 +4,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:myboard/repository/user_repository.dart';
 
 class ProfilePictureWidget extends StatefulWidget {
+  final bool isEditable; // New parameter
+
+  // Constructor with optional isEditable parameter
+  ProfilePictureWidget({this.isEditable = false});
+
   @override
   _ProfilePictureWidgetState createState() => _ProfilePictureWidgetState();
 }
@@ -66,28 +71,29 @@ class _ProfilePictureWidgetState extends State<ProfilePictureWidget> {
         CircleAvatar(
           radius: 50,
           backgroundImage:
-              _profilePic?.image ?? AssetImage('assets/default_profile.png'),
+          _profilePic?.image ?? AssetImage('assets/default_profile.png'),
           backgroundColor:
-              Colors.grey[200], // Optional background color for empty avatar
+          Colors.grey[200], // Optional background color for empty avatar
         ),
-        // Edit icon button, always visible
-        Positioned(
-          bottom: 0,
-          right: 0,
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white, // White background for better visibility
-            ),
-            child: IconButton(
-              icon: Icon(Icons.edit, color: Colors.blueAccent),
-              // White background, blue accent icon
-              onPressed: _editProfilePic,
-              tooltip: 'Edit profile picture',
-              iconSize: 24,
+        // Edit icon button, only visible if isEditable is true
+        if (widget.isEditable) // Conditional rendering
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white, // White background for better visibility
+              ),
+              child: IconButton(
+                icon: Icon(Icons.edit, color: Colors.blueAccent),
+                // White background, blue accent icon
+                onPressed: _editProfilePic,
+                tooltip: 'Edit profile picture',
+                iconSize: 24,
+              ),
             ),
           ),
-        ),
       ],
     );
   }

@@ -49,10 +49,10 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
                     Text(
                       widget.board.boardName,
                       style:
-                          Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey[800],
-                              ),
+                      Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
                     ),
                     const SizedBox(height: 5),
                     _buildStatusIndicator(widget.board.status, context),
@@ -66,7 +66,6 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
                     const SizedBox(height: 10),
                     _buildActionIcons(),
                     const SizedBox(height: 10),
-                    _buildBottomButtons(), // Add the buttons here
                   ],
                 ),
               ),
@@ -84,6 +83,14 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
                   isSelected = value ?? false; // Toggle selection
                 });
               },
+            ),
+          ),
+          Positioned(
+            top: 10,
+            right: 10,
+            child: IconButton(
+              icon: Icon(Icons.more_vert, color: Colors.black), // Set color to white
+              onPressed: () => _showBottomSheet(context),
             ),
           ),
         ],
@@ -149,56 +156,46 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
     );
   }
 
-  Widget _buildBottomButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildSmallRoundedButton(
-          icon: Icons.upload,
-          label: "Upload",
-          onPressed: () {
-            print("Upload to Display pressed");
-          },
-        ),
-        _buildSmallRoundedButton(
-          icon: Icons.bar_chart,
-          label: "Reports",
-          onPressed: () {
-            print("Reports pressed");
-          },
-        ),
-        _buildSmallRoundedButton(
-          icon: Icons.delete,
-          label: "Delete",
-          onPressed: () {
-            print("Delete Board pressed");
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSmallRoundedButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Column(
-      children: [
-        IconButton(
-          icon: Icon(icon),
-          color: Colors.black,
-          iconSize: 20, // Smaller icon size
-          onPressed: onPressed,
-        ),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12, // Smaller text size
-            color: Colors.black,
+  void _showBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.edit),
+                title: Text('Edit'),
+                onTap: () {
+                  // Handle edit action here
+                  print("Edit pressed");
+                  Navigator.pop(context); // Close the bottom sheet
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.delete),
+                title: Text('Delete'),
+                onTap: () {
+                  // Handle delete action here
+                  print("Delete pressed");
+                  Navigator.pop(context); // Close the bottom sheet
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.display_settings),
+                title: Text('Select Display'),
+                onTap: () {
+                  // Handle select display action here
+                  print("Select Display pressed");
+                  Navigator.pop(context); // Close the bottom sheet
+                },
+              ),
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }

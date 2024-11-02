@@ -31,6 +31,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  stomp_dart_client: "^2.1.0"
+  font_awesome_flutter: "^10.7.0"
+  badges: "^3.1.2"
+  animated_bottom_navigation_bar: "^1.0.0"
+  rive: "^0.11.1"
+  shimmer: "^3.0.0"
+  sliding_up_panel2: "3.3.0+1"
   smooth_page_indicator: "^1.0.0+2"
   animate_do: "^2.0.0"
   json_annotation: "^4.8.0"

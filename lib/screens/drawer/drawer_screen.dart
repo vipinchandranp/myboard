@@ -1,6 +1,6 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // Add this package for image picking
+import 'package:myboard/repository/display_repository.dart';
+import 'package:myboard/screens/approval/available_dates.dart';
 import 'package:myboard/screens/approval/my_approval.dart';
 import 'package:myboard/screens/board/view_boards.dart';
 import 'package:myboard/screens/display/view_displays.dart';
@@ -8,7 +8,9 @@ import 'package:myboard/screens/home/home_screen.dart';
 import 'package:myboard/screens/settings/settings_screen.dart';
 import 'package:myboard/screens/user/login_screen.dart';
 import 'package:myboard/widgets/profile_pic_widget.dart';
-import '../../repository/user_repository.dart'; // Import UserService
+
+import '../../models/display/bdisplay.dart';
+import '../display/nearby_display_map.dart';
 
 class DrawerWidget extends StatefulWidget {
   final VoidCallback onDrawerOpened;
@@ -23,7 +25,6 @@ class _DrawerWidgetState extends State<DrawerWidget> {
   @override
   void initState() {
     super.initState();
-    // Optionally, you could call _loadProfilePic() here as well
   }
 
   @override
@@ -48,7 +49,8 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => HomeScreen(context)),
+                        MaterialPageRoute(
+                            builder: (context) => HomeScreen(context)),
                       );
                     },
                   ),
@@ -87,8 +89,21 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => MyApprovalWidget()),
+                            builder: (context) => AvailableDatesWidget()),
                       );
+                    },
+                  ),
+                  _buildDivider(context),
+                  _createDrawerItem(
+                    context,
+                    icon: Icons.map, // Change icon to a map icon
+                    text: 'Explore Displays',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => NearbyDisplaysMap()),
+                      ); // Fetch nearby displays when tapped
                     },
                   ),
                   _buildDivider(context),
@@ -144,13 +159,11 @@ class _DrawerWidgetState extends State<DrawerWidget> {
         ),
         child: Row(
           children: [
-            // Wrapping ProfilePictureWidget in Flexible to avoid overflow
             Flexible(
               child: ProfilePictureWidget(),
-              flex: 2, // Adjust the flex value as needed
+              flex: 2,
             ),
             SizedBox(width: 16),
-            // Expanded to ensure the text doesn't overflow
             Expanded(
               flex: 3,
               child: Column(
