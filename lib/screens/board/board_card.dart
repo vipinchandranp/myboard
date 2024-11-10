@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../models/board/board.dart';
+import '../../types/notification_type.dart';
+import '../notification/notification_card.dart';
 import '../widgets/media_file_widget.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import '../../utils/utility.dart'; // Import your utility file
+import '../../utils/utility.dart';
 
 class BoardCardWidget extends StatefulWidget {
   final Board board;
-  final bool isSelected; // Keep initial selection passed from parent
+  final bool isSelected;
+  final VoidCallback? onSelect; // A callback to handle board selection
 
   const BoardCardWidget({
     Key? key,
     required this.board,
-    this.isSelected = false, // Default to false if not provided
+    this.isSelected = false,
+    this.onSelect, // Include the onSelect callback
   }) : super(key: key);
 
   @override
@@ -24,7 +28,7 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
   @override
   void initState() {
     super.initState();
-    isSelected = widget.isSelected; // Initialize state from parent
+    isSelected = widget.isSelected;
   }
 
   @override
@@ -35,63 +39,74 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildMediaCarousel(widget.board),
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.board.boardName,
-                      style:
-                      Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    _buildStatusIndicator(widget.board.status, context),
-                    const SizedBox(height: 5),
-                    Text(
-                      'Created on: ${Utility.formatDate(widget.board.createdDateAndTime)}',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildActionIcons(),
-                    const SizedBox(height: 10),
-                  ],
+          _buildHeader(),
+          _buildMediaCarousel(widget.board),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.board.boardName,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
                 ),
+                const SizedBox(height: 5),
+                _buildStatusIndicator(widget.board.status, context),
+                const SizedBox(height: 5),
+                Text(
+                  'Created on: ${Utility.formatDate(widget.board.createdDateAndTime)}',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildActionIcons(),
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      decoration: const BoxDecoration(
+        color: Colors.blueAccent,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Add a checkbox for selection (only when callback is provided)
+          if (widget.onSelect != null)
+            Transform.scale(
+              scale: 1.2,
+              child: Checkbox(
+                shape: const CircleBorder(),
+                checkColor: Colors.white,
+                activeColor: Colors.blueAccent,
+                value: isSelected,
+                onChanged: (bool? value) {
+                  setState(() {
+                    isSelected = value ?? false;
+                  });
+                  widget.onSelect?.call(); // Trigger the selection callback
+                },
               ),
-            ],
-          ),
-          Positioned(
-            top: 10,
-            left: 10,
-            child: Checkbox(
-              checkColor: Colors.white,
-              value: isSelected,
-              activeColor: Colors.blueAccent,
-              onChanged: (bool? value) {
-                setState(() {
-                  isSelected = value ?? false; // Toggle selection
-                });
-              },
             ),
-          ),
-          Positioned(
-            top: 10,
-            right: 10,
-            child: IconButton(
-              icon: Icon(Icons.more_vert, color: Colors.black), // Set color to white
-              onPressed: () => _showBottomSheet(context),
-            ),
+          // More options button
+          IconButton(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onPressed: () => _showBottomSheet(context),
           ),
         ],
       ),
@@ -104,7 +119,7 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
     return Column(
       children: [
         Container(
-          height: 200, // Adjust the height as necessary
+          height: 200,
           child: PageView.builder(
             controller: _pageController,
             itemCount: board.mediaFiles.length,
@@ -169,27 +184,24 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
                 leading: Icon(Icons.edit),
                 title: Text('Edit'),
                 onTap: () {
-                  // Handle edit action here
                   print("Edit pressed");
-                  Navigator.pop(context); // Close the bottom sheet
+                  Navigator.pop(context);
                 },
               ),
               ListTile(
                 leading: Icon(Icons.delete),
                 title: Text('Delete'),
                 onTap: () {
-                  // Handle delete action here
                   print("Delete pressed");
-                  Navigator.pop(context); // Close the bottom sheet
+                  Navigator.pop(context);
                 },
               ),
               ListTile(
                 leading: Icon(Icons.display_settings),
                 title: Text('Select Display'),
                 onTap: () {
-                  // Handle select display action here
                   print("Select Display pressed");
-                  Navigator.pop(context); // Close the bottom sheet
+                  Navigator.pop(context);
                 },
               ),
             ],

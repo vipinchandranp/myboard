@@ -163,7 +163,7 @@ class _TimeSlotWidgetState extends State<TimeSlotWidget> {
               },
               label: const Text("Confirm timeslot"), // Updated label
               icon: const Icon(Icons.check),
-              backgroundColor: Colors.white,
+              backgroundColor: Colors.blue,
             )
           : null,
     );

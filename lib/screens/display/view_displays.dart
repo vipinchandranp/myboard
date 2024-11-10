@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:myboard/screens/home/home_screen.dart';
 import 'package:shimmer/shimmer.dart'; // Import Shimmer package
 import '../../models/display/bdisplay.dart';
-import '../../models/display/display_filter.dart';
 import '../../repository/display_repository.dart';
-import '../widgets/filter_widget.dart'; // Import the FilterWidget
+import '../common/filter/filter_data.dart';
 import 'display_card.dart';
 import '../../themes/app_theme.dart'; // Import your AppTheme
+import '../common/filter/filter_widget.dart'; // Import FilterWidget
 
 class ViewDisplayWidget extends StatefulWidget {
   @override
@@ -17,6 +17,7 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
   List<BDisplay> _displays = [];
   bool _isLoading = true;
   bool _isFilterVisible = false; // Filter visibility control
+  final GlobalKey<FilterWidgetState> _filterWidgetKey = GlobalKey<FilterWidgetState>();
 
   late DisplayService _displayService;
 
@@ -46,15 +47,19 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
     });
 
     try {
-      final displayFilter = DisplayFilter(
-        searchText: _searchText,
-        dateRange: _dateRange,
-        status: _selectedStatus,
-        isRecent: _isRecent,
-        isFavorite: _isFavorite,
-      );
+      // Retrieve filter data from the FilterWidget
+      final filterMap = _filterWidgetKey.currentState?.getFilterData();
+      final filterData = filterMap != null
+          ? FilterData(
+        searchText: filterMap['searchText'], // Corrected the key
+        startDate: filterMap['startDate'],
+        endDate: filterMap['endDate'],
+        sortBy: filterMap['sortBy'],
+      )
+          : null;
 
-      final displays = await _displayService.getDisplays(displayFilter);
+      // Fetch displays using the filter data
+      final displays = await _displayService.getDisplays(filterData);
 
       setState(() {
         _displays = displays ?? [];
@@ -73,7 +78,7 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Displays'),
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: Theme.of(context).cardColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -91,105 +96,48 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
           // Set the background color
           child: Column(
             children: [
-              _buildFilterToolbar(), // Custom filter toolbar
-              if (_isFilterVisible)
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOut,
-                  height: _isFilterVisible ? 400 : 0,
-                  child: FilterWidget(
-                    suggestions: ['Display 1', 'Display 2', 'Display 3'],
-                    onSearchChanged: (value) {
-                      setState(() {
-                        _searchText = value;
-                        _fetchDisplays();
-                      });
-                    },
-                    dateRange: _dateRange,
-                    onDateRangeChanged: (value) {
-                      setState(() {
-                        _dateRange = value;
-                        _fetchDisplays();
-                      });
-                    },
-                    selectedStatus: _selectedStatus,
-                    onStatusChanged: (value) {
-                      setState(() {
-                        _selectedStatus = value;
-                        _fetchDisplays();
-                      });
-                    },
-                    isRecent: _isRecent,
-                    onRecentToggle: (value) {
-                      setState(() {
-                        _isRecent = value;
-                        _fetchDisplays();
-                      });
-                    },
-                    isFavorite: _isFavorite,
-                    onFavoriteToggle: (value) {
-                      setState(() {
-                        _isFavorite = value;
-                        _fetchDisplays();
-                      });
-                    },
+              // Collapsible "Book Display" Stepper section using ExpansionTile
+              ExpansionTile(
+                title: const Text("Filter"),
+                leading: Icon(Icons.filter),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        if (_isFilterVisible)
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 500),
+                            curve: Curves.easeInOut,
+                            height: _isFilterVisible ? 400 : 0,
+                          ),
+                        // Display filter widget
+                        FilterWidget(
+                          key: _filterWidgetKey,
+                          onApplyFilter: (filterData) {
+                            // Apply the filter data when the user clicks "Apply Filter"
+                            setState(() {
+                              _searchText = filterData['searchText'] ?? '';
+                              _dateRange = DateTimeRange(
+                                start: filterData['startDate'] ?? DateTime.now(),
+                                end: filterData['endDate'] ?? DateTime.now(),
+                              );
+                              _fetchDisplays(); // Fetch filtered displays
+                            });
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
+              ),
               _isLoading
                   ? _buildShimmerEffect() // Use Shimmer effect here
                   : _errorMessage != null
-                      ? Center(child: Text(_errorMessage!))
-                      : _buildDisplayPageView(),
+                  ? Center(child: Text(_errorMessage!))
+                  : _buildDisplayPageView(),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterToolbar() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal, // Enable horizontal scrolling
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-        child: Row(
-          children: [
-            TextButton.icon(
-              onPressed: () {
-                // Handle Sort functionality
-              },
-              icon: Icon(Icons.sort, color: Colors.black),
-              // Changed to black for visibility
-              label: Text(
-                'Sort By (Rating)',
-                style: TextStyle(color: Colors.black), // Changed to black
-              ),
-            ),
-            TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _isFilterVisible = !_isFilterVisible;
-                });
-              },
-              icon: Icon(Icons.filter_alt, color: Colors.black),
-              // Changed to black for visibility
-              label: Text(
-                'All Filters',
-                style: TextStyle(color: Colors.black), // Changed to black
-              ),
-            ),
-            TextButton.icon(
-              onPressed: () {
-                // Handle additional filter functionality
-              },
-              icon: Icon(Icons.star, color: Colors.black),
-              // Changed to black for visibility
-              label: Text(
-                'Star Rating',
-                style: TextStyle(color: Colors.black), // Changed to black
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -207,10 +155,33 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
             baseColor: Colors.grey[300]!,
             highlightColor: Colors.grey[100]!,
             child: Container(
-              height: 100.0,
+              height: 120.0, // Adjust this height to match your card size
+              padding: const EdgeInsets.all(10.0),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 60.0, // Shimmer placeholder for image
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    height: 10.0, // Shimmer placeholder for title
+                    width: 150.0,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(height: 5),
+                  Container(
+                    height: 10.0, // Shimmer placeholder for description or subtitle
+                    width: 100.0,
+                    color: Colors.grey[300],
+                  ),
+                ],
               ),
             ),
           ),

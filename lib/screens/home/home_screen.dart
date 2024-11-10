@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:rive/rive.dart'; // Import Rive package
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../service/websocket_service.dart';
+import '../notification/notification_list.dart';
 import '../support/chat_support.dart';
 import '../tools/main_tools.dart';
 import 'main_header.dart';
@@ -21,6 +22,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WebSocketService().connect(); // Connect to WebSocket
+
     // Simulating a delay to show shimmer effect
     Future.delayed(Duration(seconds: 3), () {
       setState(() {
@@ -37,16 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
           CustomScrollView(
             slivers: <Widget>[
               MainHeaderWidget(), // Main header
-              MainToolsWidget(context), // Directly add MainToolsWidget
-              SliverToBoxAdapter(
-                child: Center(
-                  child: isLoading
-                      ? CircularProgressIndicator() // Show a loading spinner while loading
-                      : RiveAnimation.asset(
-                    'assets/animation.riv', // Path to your Rive animation file
-                  ),
-                ),
-              ),
+              MainToolsWidget(context),
             ],
           ),
           ChatSupportWidget(), // Add the floating chat button and chatbox

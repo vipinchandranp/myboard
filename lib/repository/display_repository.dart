@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../models/display/bdisplay.dart';
 import '../models/display/display_filter.dart';
 import '../models/display/display_geotag_request.dart';
+import '../screens/common/filter/filter_data.dart';
 import 'base_repository.dart';
 
 class DisplayService extends BaseRepository {
@@ -112,16 +113,19 @@ class DisplayService extends BaseRepository {
     }
   }
 
-  Future<List<BDisplay>?> getDisplays(DisplayFilter filter) async {
+  Future<List<BDisplay>?> getDisplays(FilterData? filter) async {
     try {
-      // Build query parameters from the filter
-      final Map<String, dynamic> queryParams = filter.toQueryParameters();
+      // Use toQueryParams method if filter is not null; otherwise, use an empty map
+      final Map<String, dynamic> queryParams = filter?.toQueryParams() ?? {};
 
-      // Create query string
+      // Create query string from query parameters
       final queryString = Uri(queryParameters: queryParams).query;
 
-      // Construct the URL with the query string
-      final url = Uri.parse('$apiUrl/display/list?$queryString');
+      // Construct the complete URL with the query string
+      // Only append '?' if queryString is not empty
+      final url = queryString.isNotEmpty
+          ? Uri.parse('$apiUrl/display/list?$queryString')
+          : Uri.parse('$apiUrl/display/list');
 
       final response = await client.get(
         url,
@@ -129,24 +133,25 @@ class DisplayService extends BaseRepository {
       );
 
       if (response.statusCode == 200) {
+        print('Response body: ${response.body}');
         final Map<String, dynamic> responseBody = json.decode(response.body);
 
         final List<dynamic> responseBodyList = responseBody['data'];
-
-        final List<BDisplay> displays = responseBodyList
-            .map((displayJson) => BDisplay.fromJson(displayJson))
+        final List<BDisplay> boards = responseBodyList
+            .map((boardJson) => BDisplay.fromJson(boardJson))
             .toList();
 
-        return displays;
+        return boards;
       } else {
         handleError(response);
         return null;
       }
     } catch (e) {
-      print('Error fetching displays: $e');
+      print('Error fetching boards: $e');
       return null;
     }
   }
+
 
   // Fetches details of a specific display
   Future<BDisplay?> getDisplayById(String displayId) async {
@@ -308,7 +313,7 @@ class DisplayService extends BaseRepository {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = json.decode(response.body);
         final List<String> boardIds =
-            List<String>.from(responseBody['data']['boardIds']);
+            List<String>.from(responseBody['data']);
         return boardIds;
       } else {
         handleError(response);

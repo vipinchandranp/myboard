@@ -25,8 +25,7 @@ class SelectedBoardWidget extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             BoardCardWidget(
-              board: selectedBoard!, // Pass the entire Board object
-              isSelected: true, // Set this based on your requirements
+              board: selectedBoard!,
             ),
           ] else ...[
             const Text(

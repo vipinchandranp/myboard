@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart'; // Import shimmer package
+import 'package:myboard/screens/board/board_card.dart';
 import '../../models/board/board.dart';
-import '../../models/board/board_filter.dart';
 import '../../repository/board_repository.dart';
 import '../../utils/view_mode.dart';
-import '../widgets/filter_widget.dart';
-import 'board_card.dart';
+import '../common/filter/filter_data.dart';
+import '../common/filter/filter_widget.dart';
 
 class ViewBoardsWidget extends StatefulWidget {
-  final ViewMode viewMode; // ViewMode added as optional
+  final ViewMode viewMode;
+  final List<String>? boardIds; // Optional parameter for board IDs
 
   const ViewBoardsWidget({
     Key? key,
-    this.viewMode = ViewMode.view, // Default value is set to ViewMode.view
+    this.viewMode = ViewMode.view, // Default to ViewMode.view
+    this.boardIds, // Initialize board IDs if passed
   }) : super(key: key);
 
   @override
@@ -23,15 +25,10 @@ class _ViewBoardsWidgetState extends State<ViewBoardsWidget> {
   late final BoardService _boardService;
   List<Board> _boards = [];
   bool _isLoading = true;
-  bool _isFilterVisible = false; // Control filter visibility
-  Board? _singleSelectedBoard; // For ViewMode.timeslotBoardSelection, single selection
-
-  // Filter state variables
-  String _searchText = '';
-  DateTimeRange? _dateRange;
-  String? _selectedStatus;
-  bool _isRecent = false;
-  bool _isFavorite = false;
+  bool _isFilterVisible = false; // Start with filter collapsed
+  Board? _singleSelectedBoard; // Track the selected board
+  final _filterWidgetKey =
+      GlobalKey<FilterWidgetState>(); // Key to access filter state
   String? _errorMessage;
 
   @override
@@ -45,35 +42,49 @@ class _ViewBoardsWidgetState extends State<ViewBoardsWidget> {
     await _fetchBoards();
   }
 
+// Fetch boards by IDs or with filters if IDs are not provided
   Future<void> _fetchBoards() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
-    final filter = BoardFilter(
-      page: 0,
-      size: 10, // Increased size to fetch more boards
-      searchText: _searchText,
-      dateRange: _dateRange,
-      status: _selectedStatus,
-      isRecent: _isRecent,
-      isFavorite: _isFavorite,
-    );
-
     try {
-      final boards = await _boardService.getBoards(filter);
+      // Retrieve filter data from the FilterWidget if available
+      final filterMap = _filterWidgetKey.currentState?.getFilterData();
 
+      // Create a FilterData instance, incorporating `ids` if available
+      final filterData = FilterData(
+        ids: widget.boardIds,
+        // Use boardIds if provided
+        searchText: filterMap?['searchText'],
+        startDate: filterMap?['startDate'],
+        endDate: filterMap?['endDate'],
+        sortBy: filterMap?['sortBy'],
+      );
+
+      // Fetch boards using the combined filterData
+      final boards = await _boardService.getBoards(filterData);
       setState(() {
         _boards = boards ?? [];
-        _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _isLoading = false;
         _errorMessage = 'Error fetching boards: $e';
       });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
+  }
+
+  // Handle board selection
+  void _handleBoardSelection(Board board) {
+    setState(() {
+      _singleSelectedBoard = _singleSelectedBoard == board ? null : board;
+    });
+    Navigator.pop(context, _singleSelectedBoard);
   }
 
   @override
@@ -81,138 +92,86 @@ class _ViewBoardsWidgetState extends State<ViewBoardsWidget> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Boards'),
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: Theme.of(context).cardColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pop(context, _singleSelectedBoard?.boardId);
+            Navigator.pop(context, _singleSelectedBoard);
           },
         ),
-        actions: [
-          IconButton(
-            icon: Icon(_isFilterVisible ? Icons.expand_less : Icons.expand_more),
-            onPressed: () {
-              setState(() {
-                _isFilterVisible = !_isFilterVisible;
-              });
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
-          if (_isFilterVisible)
-            SingleChildScrollView(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 500),
-                curve: Curves.easeInOut,
-                height: _isFilterVisible ? 400 : 0, // Fixed height for filter
-                child: FilterWidget(
-                  suggestions: ['Board 1', 'Board 2', 'Board 3'],
-                  onSearchChanged: (value) {
-                    setState(() {
-                      _searchText = value;
-                      _fetchBoards();
-                    });
-                  },
-                  dateRange: _dateRange,
-                  onDateRangeChanged: (value) {
-                    setState(() {
-                      _dateRange = value;
-                      _fetchBoards();
-                    });
-                  },
-                  selectedStatus: _selectedStatus,
-                  onStatusChanged: (value) {
-                    setState(() {
-                      _selectedStatus = value;
-                      _fetchBoards();
-                    });
-                  },
-                  isRecent: _isRecent,
-                  onRecentToggle: (value) {
-                    setState(() {
-                      _isRecent = value;
-                      _fetchBoards();
-                    });
-                  },
-                  isFavorite: _isFavorite,
-                  onFavoriteToggle: (value) {
-                    setState(() {
-                      _isFavorite = value;
-                      _fetchBoards();
-                    });
-                  },
+          // Expandable Filter Section
+          ExpansionTile(
+            title: const Text("Filter"),
+            leading: Icon(Icons.filter),
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  children: [
+                    if (_isFilterVisible)
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeInOut,
+                        height: _isFilterVisible ? 400 : 0,
+                      ),
+                    // Display filter widget
+                    FilterWidget(
+                      key: _filterWidgetKey,
+                      onApplyFilter: (filterData) {
+                        setState(() {
+                          _fetchBoards();
+                        });
+                      },
+                    ),
+                  ],
                 ),
               ),
-            ),
+            ],
+          ),
           Expanded(
             child: _isLoading
-                ? _buildShimmerLoading() // Replace CircularProgressIndicator with shimmer
-                : _errorMessage != null
-                ? Center(child: Text(_errorMessage!))
-                : _buildBoardPageView(),
+                ? _buildShimmerEffect() // Display shimmer effect when loading
+                : _boards.isEmpty
+                    ? const Center(child: Text('No boards available.'))
+                    : ListView.builder(
+                        itemCount: _boards.length,
+                        itemBuilder: (context, index) {
+                          final board = _boards[index];
+                          return BoardCardWidget(
+                            board: board,
+                            isSelected: board == _singleSelectedBoard,
+                            onSelect: widget.viewMode ==
+                                    ViewMode.timeslotBoardSelection
+                                ? () => _handleBoardSelection(board)
+                                : null,
+                          );
+                        },
+                      ),
           ),
-          if (widget.viewMode == ViewMode.timeslotBoardSelection && _singleSelectedBoard != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context, _singleSelectedBoard);
-                },
-                child: const Text('Confirm Selection'),
-              ),
-            ),
         ],
       ),
     );
   }
 
-  // Shimmer Loading Indicator Widget
-  Widget _buildShimmerLoading() {
+  // Shimmer effect for loading state
+  Widget _buildShimmerEffect() {
     return ListView.builder(
-      itemCount: 4, // Show 4 loading placeholders
+      itemCount: 5, // Number of shimmer items (adjust as needed)
       itemBuilder: (context, index) {
-        return Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
             child: Container(
-              width: double.infinity,
-              height: 100.0, // Fixed height for shimmer placeholder
-              color: Colors.grey[300],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildBoardPageView() {
-    if (_boards.isEmpty) {
-      return const Center(child: Text('No boards found.'));
-    }
-
-    return PageView.builder(
-      scrollDirection: Axis.vertical, // Set the scroll direction to vertical
-      itemCount: _boards.length,
-      itemBuilder: (context, index) {
-        final board = _boards[index];
-
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              if (widget.viewMode == ViewMode.timeslotBoardSelection) {
-                _singleSelectedBoard = board;
-              }
-            });
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: BoardCardWidget(
-              board: board,
-              isSelected: _singleSelectedBoard == board,
+              height: 100.0,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
           ),
         );

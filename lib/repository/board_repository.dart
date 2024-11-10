@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:myboard/screens/common/filter/filter_data.dart';
 import '../models/board/board.dart';
-import '../models/board/board_filter.dart';
 import 'base_repository.dart';
 
 class BoardService extends BaseRepository {
@@ -111,16 +111,19 @@ class BoardService extends BaseRepository {
     }
   }
 
-  Future<List<Board>?> getBoards(BoardFilter filter) async {
+  Future<List<Board>?> getBoards(FilterData? filter) async {
     try {
-      // Use the toQueryParams method to build query parameters
-      final Map<String, dynamic> queryParams = filter.toQueryParams();
+      // Use toQueryParams method if filter is not null; otherwise, use an empty map
+      final Map<String, dynamic> queryParams = filter?.toQueryParams() ?? {};
 
-      // Create query string
+      // Create query string from query parameters
       final queryString = Uri(queryParameters: queryParams).query;
 
-      // Construct the URL with the query string
-      final url = Uri.parse('$apiUrl/board/list?$queryString');
+      // Construct the complete URL with the query string
+      // Only append '?' if queryString is not empty
+      final url = queryString.isNotEmpty
+          ? Uri.parse('$apiUrl/board/list?$queryString')
+          : Uri.parse('$apiUrl/board/list');
 
       final response = await client.get(
         url,
@@ -128,12 +131,10 @@ class BoardService extends BaseRepository {
       );
 
       if (response.statusCode == 200) {
-        print(
-            'Response body: ${response.body}'); // Debugging: print raw response
+        print('Response body: ${response.body}');
         final Map<String, dynamic> responseBody = json.decode(response.body);
 
         final List<dynamic> responseBodyList = responseBody['data'];
-
         final List<Board> boards = responseBodyList
             .map((boardJson) => Board.fromJson(boardJson))
             .toList();
@@ -148,6 +149,7 @@ class BoardService extends BaseRepository {
       return null;
     }
   }
+
 
   // Fetches details of a specific board
   Future<Board?> getBoardById(String boardId) async {

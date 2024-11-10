@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myboard/repository/display_repository.dart';
-import 'package:myboard/screens/display/selected_board.dart';
+import 'package:myboard/screens/display/selected_board.dart'; // Import the new widget
 import 'package:myboard/screens/display/timeslots.dart';
 import 'package:myboard/models/display/bdisplay.dart';
 import 'package:myboard/screens/display/media_carousel.dart';
@@ -15,28 +15,19 @@ import '../board/view_boards.dart';
 
 class DisplayCardWidget extends StatefulWidget {
   final BDisplay display;
-  final bool isSelected;
 
-  const DisplayCardWidget(
-      {Key? key, required this.display, this.isSelected = false})
-      : super(key: key);
+  const DisplayCardWidget({Key? key, required this.display}) : super(key: key);
 
   @override
   _DisplayCardWidgetState createState() => _DisplayCardWidgetState();
 }
 
 class _DisplayCardWidgetState extends State<DisplayCardWidget> {
-  bool _isSelected = false;
   DateTime? _selectedDate;
   List<String>? _selectedTimeSlots;
   Board? _selectedBoard;
-  bool _showSelectBoardButton = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _isSelected = widget.isSelected;
-  }
+  int _currentStep = 0; // Valid step index to prevent assertion error
+  bool _showStepper = false;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +38,7 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
         borderRadius: BorderRadius.circular(15),
       ),
       shadowColor: Colors.black.withOpacity(0.1),
-      color: _isSelected ? Colors.blue[50] : Colors.white,
+      color: Colors.white,
       child: Stack(
         children: [
           Column(
@@ -74,18 +65,6 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
                                 ),
                           ),
                         ),
-                        // Map icon positioned next to the display name
-                        IconButton(
-                          icon: Icon(
-                            Icons.more_vert,
-                            color: Colors
-                                .black87, // Set the color to a visible one
-                          ),
-                          onPressed: () {
-                            _showBottomSheetMenu(context);
-                          },
-                          iconSize: 28,
-                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -96,38 +75,105 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
                       style: TextStyle(color: Colors.grey[700]),
                     ),
                     const SizedBox(height: 12),
-                    _buildBoardList(widget.display.boardIds),
-                    SelectedTimeSlotSectionWidget(
-                        selectedDate: _selectedDate,
-                        selectedTimeSlots: _selectedTimeSlots),
+                    // Call to _buildBoardList to display associated boards
+                    _buildBoardList(),
                     const SizedBox(height: 12),
-                    if (_showSelectBoardButton) _buildSelectBoardButton(),
-                    // Show the selected board if available
-                    if (_selectedBoard != null)
-                      SelectedBoardWidget(selectedBoard: _selectedBoard),
-                    // Pass Board instance
-                    if (_selectedBoard != null) _buildSaveButton(),
-                    // Show save button when a board is selected
+                    // Call to _showDisplayOnMap with the current display object
+                    RoundedButton(
+                      icon: Icons.map,
+                      label: 'Show on Map',
+                      onPressed: () => _showDisplayOnMap(widget.display),
+                    ),
+                    const SizedBox(height: 12),
+                    RoundedButton(
+                      icon:
+                          _showStepper ? Icons.expand_less : Icons.book_online,
+                      // Change icon based on state
+                      label: _showStepper ? 'Collapse' : 'Book Display',
+                      // Change label
+                      onPressed: () {
+                        setState(() {
+                          _showStepper =
+                              !_showStepper; // Toggle stepper visibility
+                        });
+                      },
+                    ),
+                    if (_showStepper) _buildStepper(),
+                    // Show Stepper widget when _showStepper is true
                   ],
                 ),
               ),
             ],
           ),
-          Positioned(
-            top: 10,
-            left: 10,
-            child: Checkbox(
-              value: _isSelected,
-              onChanged: (value) {
-                setState(() {
-                  _isSelected = value ?? false;
-                });
-              },
-            ),
-          ),
         ],
       ),
     );
+  }
+
+  // Stepper Widget
+  Widget _buildStepper() {
+    return Stepper(
+      currentStep: _currentStep,
+      onStepContinue: _onStepContinue,
+      onStepCancel: _onStepCancel,
+      steps: [
+        Step(
+          title: const Text('Select Time Slot'),
+          content: Column(
+            children: [
+              SelectedTimeSlotSectionWidget(
+                selectedDate: _selectedDate,
+                selectedTimeSlots: _selectedTimeSlots,
+              ),
+              ElevatedButton(
+                onPressed: _showBookingDialog,
+                child: const Text('Select Time Slots'),
+              ),
+            ],
+          ),
+          isActive: _currentStep == 0,
+        ),
+        Step(
+          title: const Text('Select Board'),
+          content: Column(
+            children: [
+              _buildSelectBoardButton(),
+              if (_selectedBoard != null) _buildSelectedBoardSection(),
+              // Show selected board if it's not null
+            ],
+          ),
+          isActive: _currentStep == 1,
+        ),
+        Step(
+          title: const Text('Save Selections'),
+          content: Column(
+            children: [
+              if (_selectedBoard != null &&
+                  _selectedTimeSlots != null &&
+                  _selectedDate != null)
+                ElevatedButton(
+                  onPressed: _saveSelectedBoard,
+                  child: const Text('Save Selections'),
+                ),
+              if (_selectedBoard == null ||
+                  _selectedTimeSlots == null ||
+                  _selectedDate == null)
+                const Text('Please select all fields before saving.'),
+            ],
+          ),
+          isActive: _currentStep == 2,
+        ),
+      ],
+    );
+  }
+
+  // Handle when user continues to the next step
+  void _onStepContinue() {
+    setState(() {
+      if (_currentStep < 2) {
+        _currentStep++;
+      }
+    });
   }
 
   void _showDisplayOnMap(BDisplay display) {
@@ -139,6 +185,34 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
     );
   }
 
+  // Handle when user cancels and goes back to the previous step
+  void _onStepCancel() {
+    setState(() {
+      if (_currentStep > 0) {
+        _currentStep--;
+      }
+    });
+  }
+
+  // Show the time slot selection dialog
+  void _showBookingDialog() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            TimeSlotWidget(displayId: widget.display.displayId),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedDate = result['selectedDate'];
+        _selectedTimeSlots = result['selectedSlots'];
+      });
+    }
+  }
+
+  // Show the board selection button
   Widget _buildSelectBoardButton() {
     return RoundedButton(
       icon: Icons.dashboard,
@@ -151,11 +225,9 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
                 ViewBoardsWidget(viewMode: ViewMode.timeslotBoardSelection),
           ),
         ).then((selectedBoard) {
-          // Update the state with the selected board
           if (selectedBoard != null) {
             setState(() {
-              _selectedBoard = selectedBoard; // Set the selected board
-              _showSelectBoardButton = false; // Hide the button after selection
+              _selectedBoard = selectedBoard;
             });
           }
         });
@@ -163,48 +235,60 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
     );
   }
 
-  void _showBookingDialog(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            TimeSlotWidget(displayId: widget.display.displayId),
-      ),
-    ).then((result) {
-      if (result != null) {
-        setState(() {
-          _selectedDate = result['selectedDate'];
-          _selectedTimeSlots = result['selectedSlots'];
-          _showSelectBoardButton = true; // Show the Select Board button
-        });
-      }
-    });
-  }
+// Build the board list section
+  Widget _buildBoardList() {
+    // Return a FutureBuilder to handle the async data
+    return FutureBuilder<List<String>?>(
+      future: DisplayService(context)
+          .getBoardIdsByDisplayId(widget.display.displayId),
+      builder: (BuildContext context, AsyncSnapshot<List<String>?> snapshot) {
+        // Check if the future is still loading
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const CircularProgressIndicator(); // Display a loading indicator
+        }
 
-  void _showEditDialog(BuildContext context) {
-    // Implement your edit dialog or navigation here
-  }
+        // If the future has completed but with an error
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
 
-  void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Display'),
-          content: const Text('Are you sure you want to delete this display?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Dismiss the dialog
+        // If the future completed successfully
+        List<String>? boardIds = snapshot.data;
+
+        // If no boards are associated with the display
+        if (boardIds == null || boardIds.isEmpty) {
+          return const Text(
+            'No boards associated with this display.',
+            style: TextStyle(color: Colors.grey),
+          );
+        }
+
+        // If there are boards, show a list with an option to view boards
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () {
+                // Navigate to ViewBoardsWidget and pass the boardIds
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ViewBoardsWidget(
+                      viewMode: ViewMode.timeslotBoardSelection,
+                      boardIds: boardIds, // Pass the boardIds here
+                    ),
+                  ),
+                );
               },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Implement delete logic here
-                Navigator.of(context).pop(); // Dismiss the dialog
-              },
-              child: const Text('Delete'),
+              child: Text(
+                '${boardIds.length} boards associated',
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ],
         );
@@ -212,55 +296,26 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
     );
   }
 
-  Widget _buildBoardList(List<String> boardIds) {
-    if (boardIds.isEmpty) {
-      return const Text(
-        'No boards associated with this display.',
-        style: TextStyle(color: Colors.grey),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ViewBoardsWidget(
-                  viewMode: ViewMode.timeslotBoardSelection,
-                ),
-              ),
-            );
-          },
-          child: Text(
-            '${boardIds.length} boards associated',
-            style: TextStyle(
-              color: Colors.blue,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Method to build the Save button
-  Widget _buildSaveButton() {
+  // Build the selected board section
+  Widget _buildSelectedBoardSection() {
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: ElevatedButton(
-        onPressed: () {
-          _saveSelectedBoard();
-        },
-        child: const Text('Save Selected Board'),
+      padding: const EdgeInsets.only(top: 12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Selected Board:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          SelectedBoardWidget(selectedBoard: _selectedBoard),
+          // Using the widget
+        ],
       ),
     );
   }
 
+  // Save selected board and time slots
   void _saveSelectedBoard() async {
     if (_selectedBoard != null &&
         _selectedTimeSlots != null &&
@@ -270,7 +325,7 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
         return {
           'startTime': times[0].trim(),
           'endTime': times[1].trim(),
-          'status': 'active'
+          'status': 'active',
         };
       }).toList();
 
@@ -282,6 +337,14 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
       );
 
       if (success) {
+        setState(() {
+          _showStepper = false; // Collapse stepper after successful save
+          _currentStep = 0; // Reset the stepper to the first step
+          _selectedBoard = null; // Reset the selected board
+          _selectedTimeSlots = null; // Reset the selected time slots
+          _selectedDate = null; // Reset the selected date
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content:
@@ -316,27 +379,17 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ListTile(
-                leading: const Icon(Icons.book),
-                title: const Text('Book'),
-                onTap: () {
-                  Navigator.pop(context); // Close the BottomSheet
-                  _showBookingDialog(context);
-                },
-              ),
-              ListTile(
                 leading: const Icon(Icons.edit),
                 title: const Text('Edit'),
                 onTap: () {
-                  Navigator.pop(context); // Close the BottomSheet
-                  _showEditDialog(context);
+                  Navigator.pop(context);
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.delete),
                 title: const Text('Delete'),
                 onTap: () {
-                  Navigator.pop(context); // Close the BottomSheet
-                  _showDeleteConfirmation(context);
+                  Navigator.pop(context);
                 },
               ),
             ],

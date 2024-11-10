@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart' as badges; // Import the badges package with a prefix
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Import FontAwesome package
-import 'package:myboard/screens/notification/notification.dart';
+import 'package:myboard/screens/notification/notification_card.dart';
+import 'package:myboard/screens/notification/notification_icon.dart';
+import 'package:myboard/types/notification_type.dart';
 import '../../themes/app_theme.dart';
 import '../approval/available_dates.dart';
 import '../board/create_board.dart';
 import '../display/create_display.dart';
+import '../notification/notification_list.dart';
 import '../qrscanner/qr_scanner.dart';
 import '../user/mb_user_profile.dart';
 import 'package:myboard/screens/board/view_boards.dart';
@@ -76,15 +79,13 @@ class MainToolsWidget extends StatelessWidget {
               case 6:
                 return _buildQrScannerButton(context);
               case 7:
-                return _buildNotificationButton(); // Update to call the new method
-              case 8:
                 return _buildGridButton(
                   context,
                   icon: FontAwesomeIcons.userCircle, // FontAwesome user icon
                   text: 'Profile',
                   onTap: () => navigateTo(MBUserProfile()),
                 );
-              case 9:
+              case 8:
                 return _buildGridButton(
                   context,
                   icon: FontAwesomeIcons.signOutAlt, // FontAwesome logout icon
@@ -181,30 +182,4 @@ class MainToolsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildNotificationButton() {
-    return Stack(
-      children: [
-        _buildGridButton(
-          context,
-          icon: FontAwesomeIcons.bell, // FontAwesome notification icon
-          text: 'Notification',
-          onTap: () => navigateTo(NotificationWidget()),
-        ),
-        if (notificationCount > 0) // Only show badge if count is greater than 0
-          Positioned(
-            right: 8,
-            top: 8,
-            child: badges.Badge( // Use the badges prefix here
-              badgeStyle: badges.BadgeStyle(
-                badgeColor: Colors.red,
-              ),
-              badgeContent: Text(
-                notificationCount.toString(),
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
 }

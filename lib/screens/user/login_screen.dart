@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:googleapis/connectors/v1.dart';
-import 'package:myboard/screens/user/signup_screen.dart';
 import '../../api_models/user_login_request.dart';
 import '../../repository/user_repository.dart';
 import '../home/home_screen.dart';
 import '../../themes/app_theme.dart';
-import '../notification/mywebsocket.dart'; // Import your AppTheme
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -49,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await _userService.login(userLoginRequest);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => MyWebSocketApp()),
+        MaterialPageRoute(builder: (context) => HomeScreen(context)),
       );
     } catch (e) {
       print(e);
@@ -184,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const SignupScreen()),
+                            builder: (context) => HomeScreen(context)),
                       );
                     },
                     child: const Text(
