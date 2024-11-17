@@ -12,6 +12,8 @@ import '../../models/board/board.dart';
 import '../../utils/utility.dart';
 import '../../widgets/round_button.dart';
 import '../board/view_boards.dart';
+import '../qrcode/show_qr_code.dart';
+import 'current_board_playing.dart';
 
 class DisplayCardWidget extends StatefulWidget {
   final BDisplay display;
@@ -28,7 +30,7 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
   Board? _selectedBoard;
   int _currentStep = 0; // Valid step index to prevent assertion error
   bool _showStepper = false;
-
+  bool _showCurrentlyPlaying = false; // Toggle for showing CurrentBoardPlaying
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -75,31 +77,87 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
                       style: TextStyle(color: Colors.grey[700]),
                     ),
                     const SizedBox(height: 12),
-                    // Call to _buildBoardList to display associated boards
                     _buildBoardList(),
                     const SizedBox(height: 12),
-                    // Call to _showDisplayOnMap with the current display object
-                    RoundedButton(
-                      icon: Icons.map,
-                      label: 'Show on Map',
-                      onPressed: () => _showDisplayOnMap(widget.display),
+
+                    // Add the displayPin here in a large font
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Text(
+                        'Pin: ${widget.display.displayPin}',
+                        style: TextStyle(
+                          fontSize: 32, // Large font size for the displayPin
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue, // Or any color of your choice
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
+
+                    const SizedBox(height: 16),
+
+                    // Horizontally scrollable buttons
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          RoundedButton(
+                            icon: Icons.map,
+                            label: 'Show on Map',
+                            onPressed: () => _showDisplayOnMap(widget.display),
+                          ),
+                          const SizedBox(width: 8), // Spacing between buttons
+                          RoundedButton(
+                            icon: Icons.qr_code,
+                            label: 'Show QR Code',
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ShowQRCode(
+                                    data: widget.display.displayId,
+                                    title:
+                                        'QR Code for ${widget.display.displayName}',
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          RoundedButton(
+                            icon: _showStepper
+                                ? Icons.expand_less
+                                : Icons.book_online,
+                            label: _showStepper ? 'Collapse' : 'Book Display',
+                            onPressed: () {
+                              setState(() {
+                                _showStepper = !_showStepper;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    if (_showStepper) _buildStepper(),
+
+                    const SizedBox(height: 16),
+
+                    // Button to navigate to CurrentBoardPlayingScreen
                     RoundedButton(
-                      icon:
-                          _showStepper ? Icons.expand_less : Icons.book_online,
-                      // Change icon based on state
-                      label: _showStepper ? 'Collapse' : 'Book Display',
-                      // Change label
+                      icon: Icons.play_arrow,
+                      label: 'Show Currently Playing',
                       onPressed: () {
-                        setState(() {
-                          _showStepper =
-                              !_showStepper; // Toggle stepper visibility
-                        });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CurrentBoardPlaying(
+                              displayId: widget.display
+                                  .displayId, // Pass displayId to CurrentBoardPlaying
+                            ),
+                          ),
+                        );
                       },
                     ),
-                    if (_showStepper) _buildStepper(),
-                    // Show Stepper widget when _showStepper is true
                   ],
                 ),
               ),
@@ -139,7 +197,6 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
             children: [
               _buildSelectBoardButton(),
               if (_selectedBoard != null) _buildSelectedBoardSection(),
-              // Show selected board if it's not null
             ],
           ),
           isActive: _currentStep == 1,
@@ -235,27 +292,23 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
     );
   }
 
-// Build the board list section
+  // Build the board list section
   Widget _buildBoardList() {
     // Return a FutureBuilder to handle the async data
     return FutureBuilder<List<String>?>(
       future: DisplayService(context)
           .getBoardIdsByDisplayId(widget.display.displayId),
       builder: (BuildContext context, AsyncSnapshot<List<String>?> snapshot) {
-        // Check if the future is still loading
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator(); // Display a loading indicator
+          return const CircularProgressIndicator();
         }
 
-        // If the future has completed but with an error
         if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         }
 
-        // If the future completed successfully
         List<String>? boardIds = snapshot.data;
 
-        // If no boards are associated with the display
         if (boardIds == null || boardIds.isEmpty) {
           return const Text(
             'No boards associated with this display.',
@@ -263,20 +316,18 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
           );
         }
 
-        // If there are boards, show a list with an option to view boards
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 8),
             GestureDetector(
               onTap: () {
-                // Navigate to ViewBoardsWidget and pass the boardIds
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => ViewBoardsWidget(
                       viewMode: ViewMode.timeslotBoardSelection,
-                      boardIds: boardIds, // Pass the boardIds here
+                      boardIds: boardIds,
                     ),
                   ),
                 );
@@ -309,7 +360,6 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
           ),
           const SizedBox(height: 6),
           SelectedBoardWidget(selectedBoard: _selectedBoard),
-          // Using the widget
         ],
       ),
     );
@@ -338,11 +388,11 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
 
       if (success) {
         setState(() {
-          _showStepper = false; // Collapse stepper after successful save
-          _currentStep = 0; // Reset the stepper to the first step
-          _selectedBoard = null; // Reset the selected board
-          _selectedTimeSlots = null; // Reset the selected time slots
-          _selectedDate = null; // Reset the selected date
+          _showStepper = false;
+          _currentStep = 0;
+          _selectedBoard = null;
+          _selectedTimeSlots = null;
+          _selectedDate = null;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -363,39 +413,5 @@ class _DisplayCardWidgetState extends State<DisplayCardWidget> {
                 Text('Please select a board and time slots before saving.')),
       );
     }
-  }
-
-  void _showBottomSheetMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Edit'),
-                onTap: () {
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete),
-                title: const Text('Delete'),
-                onTap: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 }

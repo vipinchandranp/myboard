@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/display/bdisplay.dart';
+import '../models/display/currently_playing_boards_response.dart';
 import '../models/display/display_filter.dart';
 import '../models/display/display_geotag_request.dart';
 import '../screens/common/filter/filter_data.dart';
@@ -151,7 +152,6 @@ class DisplayService extends BaseRepository {
       return null;
     }
   }
-
 
   // Fetches details of a specific display
   Future<BDisplay?> getDisplayById(String displayId) async {
@@ -312,8 +312,7 @@ class DisplayService extends BaseRepository {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseBody = json.decode(response.body);
-        final List<String> boardIds =
-            List<String>.from(responseBody['data']);
+        final List<String> boardIds = List<String>.from(responseBody['data']);
         return boardIds;
       } else {
         handleError(response);
@@ -357,7 +356,8 @@ class DisplayService extends BaseRepository {
   Future<List<BDisplay>?> getAllDisplays() async {
     try {
       final response = await client.get(
-        Uri.parse('$apiUrl/display/all'), // Assuming this endpoint returns all displays
+        Uri.parse('$apiUrl/display/all'),
+        // Assuming this endpoint returns all displays
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -376,6 +376,28 @@ class DisplayService extends BaseRepository {
       }
     } catch (e) {
       print('Error fetching all displays: $e');
+      return null;
+    }
+  }
+
+  // Method to fetch currently playing boards by display ID
+  Future<CurrentlyPlayingBoardsResponse?> getCurrentlyPlayingBoards(
+      String displayId) async {
+    try {
+      final response = await client.get(
+        Uri.parse('$apiUrl/display/boards/status/$displayId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        print('Response body: ${response.body}');
+        return parseCurrentlyPlayingBoardsResponse(response.body);
+      } else {
+        handleError(response);
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching currently playing boards: $e');
       return null;
     }
   }

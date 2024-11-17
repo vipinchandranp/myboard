@@ -11,6 +11,7 @@ class BDisplay {
   List<String> boardIds; // Changed to List<String>
   final double? latitude;
   final double? longitude;
+  final String displayPin;  // Added the displayPin field
 
   BDisplay({
     required this.displayId,
@@ -21,6 +22,7 @@ class BDisplay {
     this.latitude, // Optional latitude
     this.longitude, // Optional longitude
     this.boardIds = const [], // Provide a default empty list for boardIds
+    required this.displayPin,  // Ensure the displayPin is passed into the constructor
   });
 
   // Factory method to create a BDisplay instance from JSON data
@@ -37,21 +39,19 @@ class BDisplay {
       displayName: json['displayName'] ?? 'Unnamed Display',
       createdDateAndTime: parsedDate,
       mediaFiles: (json['mediaFiles'] as List?)
-              ?.map((mediaJson) => MediaFile.fromJson(mediaJson))
-              .toList() ??
+          ?.map((mediaJson) => MediaFile.fromJson(mediaJson))
+          .toList() ??
           [],
       status: json['status'] ?? 'unknown',
       latitude: json['latitude'] != null
           ? (json['latitude'] as num).toDouble()
           : null,
-      // Ensure correct type
       longitude: json['longitude'] != null
           ? (json['longitude'] as num).toDouble()
           : null,
-      // Ensure correct type
       boardIds:
-          (json['boardIds'] as List?)?.map((id) => id.toString()).toList() ??
-              [], // Handle boardIds
+      (json['boardIds'] as List?)?.map((id) => id.toString()).toList() ?? [],
+      displayPin: json['displayPin'] ?? '',  // Add the displayPin here when parsing from JSON
     );
   }
 
@@ -64,10 +64,9 @@ class BDisplay {
       'mediaFiles': mediaFiles.map((media) => media.toJson()).toList(),
       'status': status,
       'latitude': latitude,
-      // Include latitude
       'longitude': longitude,
-      // Include longitude
       'boardIds': boardIds, // Include boardIds as a list of strings
+      'displayPin': displayPin,  // Add the displayPin field when converting to JSON
     };
   }
 }

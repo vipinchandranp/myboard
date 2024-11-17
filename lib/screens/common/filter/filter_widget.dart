@@ -114,34 +114,39 @@ class FilterWidgetState extends State<FilterWidget> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Stack(
-        alignment: Alignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Filter buttons (Apply and Clear)
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: () => widget.onApplyFilter(getFilterData()),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                ),
+                child: const Text('Apply Filter', style: TextStyle(fontSize: 16)),
+              ),
+              const SizedBox(width: 8.0),
+              ElevatedButton(
+                onPressed: _clearFilters,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                ),
+                child: const Text('Clear Filters', style: TextStyle(fontSize: 16)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16.0), // Add some space between buttons and scrollable filters
+
           // Horizontal scrollable filter row
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             controller: _scrollController,
             child: Row(
               children: [
-                ElevatedButton(
-                  onPressed: () => widget.onApplyFilter(getFilterData()),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                  ),
-                  child: const Text('Apply Filter', style: TextStyle(fontSize: 16)),
-                ),
-                const SizedBox(width: 8.0),
-                ElevatedButton(
-                  onPressed: _clearFilters,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                  ),
-                  child: const Text('Clear Filters', style: TextStyle(fontSize: 16)),
-                ),
-                const SizedBox(width: 16.0),
-
                 // Search field
                 SizedBox(
                   width: 200,

@@ -9,7 +9,7 @@ import '../approval/available_dates.dart';
 import '../board/create_board.dart';
 import '../display/create_display.dart';
 import '../notification/notification_list.dart';
-import '../qrscanner/qr_scanner.dart';
+import '../qrcode/qr_scanner.dart';
 import '../user/mb_user_profile.dart';
 import 'package:myboard/screens/board/view_boards.dart';
 import 'package:myboard/screens/display/view_displays.dart';

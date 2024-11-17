@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:myboard/screens/user/signup_screen.dart';
 import '../../api_models/user_login_request.dart';
 import '../../repository/user_repository.dart';
 import '../home/home_screen.dart';
+import '../play/play_widget.dart'; // Import PlayWidget here
 import '../../themes/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -15,6 +17,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final List<TextEditingController> _pinControllers = List.generate(6, (_) => TextEditingController()); // Assuming PIN length is 6
   late UserService _userService;
 
   @override
@@ -26,6 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     final String username = _usernameController.text;
     final String password = _passwordController.text;
+    final String displayPin = _pinControllers.map((controller) => controller.text).join(); // Combine all PIN digits
 
     if (username.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -40,23 +44,66 @@ class _LoginScreenState extends State<LoginScreen> {
     final userLoginRequest = UserLoginRequest(
       username: username,
       password: password,
+      displayPin: displayPin, // Include the Display PIN in the request
     );
 
     try {
       await _userService.login(userLoginRequest);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen(context)),
-      );
+
+      // Navigate based on whether displayPin is provided or not
+      if (displayPin.isNotEmpty) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => PlayWidget(displayPin: displayPin)),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen(context)),
+        );
+      }
     } catch (e) {
       print(e);
+    }
+  }
+
+  void _onFieldChanged(int index, String value) {
+    // If user enters a value, move to the next field
+    if (value.isNotEmpty && index < _pinControllers.length - 1) {
+      FocusScope.of(context).requestFocus(FocusNode());
+      FocusScope.of(context).requestFocus(FocusNode());
+    }
+  }
+
+  // Intercept paste action and fill the fields accordingly
+  void _onPinPaste(String pastedValue) {
+    // Ensure the pasted value fits the PIN length
+    String pin = pastedValue.substring(0, 6).padRight(6, '');  // Make sure it doesn't exceed 6 characters
+
+    for (int i = 0; i < pin.length; i++) {
+      _pinControllers[i].text = pin[i];
+    }
+  }
+
+  void _prepopulatePin() {
+    // Prepopulate the PIN fields with "egx3Hy" or any other value
+    String pin = "egx3Hy";
+    for (int i = 0; i < pin.length; i++) {
+      _pinControllers[i].text = pin[i];
+    }
+  }
+
+  void _clearPin() {
+    // Clear the PIN fields
+    for (int i = 0; i < _pinControllers.length; i++) {
+      _pinControllers[i].clear();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor, // Check if this is set correctly
+      backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -65,8 +112,6 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 48),
-
-                // App logo
                 Center(
                   child: SvgPicture.asset(
                     'assets/display_icon.png',
@@ -74,23 +119,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // Delivery boy illustration (or any other professional illustration)
                 Center(
                   child: Image.asset(
-                    'assets/display_icon.png', // Replace with your image
+                    'assets/display_icon.png',
                     width: 200,
                     height: 200,
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
-                // Email or Phone field
                 Text(
                   'Email or Phone',
                   style: AppTheme.lightTheme.textTheme.headlineMedium?.copyWith(
-                    color: AppTheme.lightTheme.textTheme.bodyLarge?.color, // Use theme color
+                    color: AppTheme.lightTheme.textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -105,14 +145,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     contentPadding: const EdgeInsets.symmetric(vertical: 16.0),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                // Password field
                 Text(
                   'Password',
                   style: AppTheme.lightTheme.textTheme.headlineMedium?.copyWith(
-                    color: AppTheme.lightTheme.textTheme.bodyLarge?.color, // Use theme color
+                    color: AppTheme.lightTheme.textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -128,10 +165,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     contentPadding: const EdgeInsets.symmetric(vertical: 16.0),
                   ),
                 ),
+                const SizedBox(height: 24),
 
-                const SizedBox(height: 16),
 
-                // Forgot Password? link
+                // Forgot Password button placed above Display PIN
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -147,6 +184,61 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
+
+                // Display PIN field with OTP-like input
+                Text(
+                  'Display PIN (Optional)',
+                  style: AppTheme.lightTheme.textTheme.headlineMedium?.copyWith(
+                    color: AppTheme.lightTheme.textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(6, (index) {
+                    return SizedBox(
+                      width: 40,
+                      child: TextField(
+                        controller: _pinControllers[index],
+                        onChanged: (value) => _onFieldChanged(index, value),
+                        keyboardType: TextInputType.number,
+                        maxLength: 1,
+                        textAlign: TextAlign.center,
+                        onEditingComplete: () {
+                          // Automatically move to the next field on paste or manual entry
+                          if (_pinControllers[index].text.length == 1 && index < 5) {
+                            FocusScope.of(context).nextFocus();
+                          }
+                        },
+                        decoration: InputDecoration(
+                          counterText: '',
+                          hintText: '-',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 32),
+
+                // Prepopulate Pin and Clear Pin Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _prepopulatePin,
+                      child: const Text("Prepopulate PIN"),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: _clearPin,
+                      child: const Text("Clear PIN"),
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 32),
 
@@ -159,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      backgroundColor: AppTheme.lightTheme.primaryColor, // Use primary color from AppTheme
+                      backgroundColor: AppTheme.lightTheme.primaryColor,
                     ),
                     child: const Text(
                       'Login',
@@ -170,18 +262,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                // Create an account button
                 Center(
                   child: TextButton(
                     onPressed: () {
-                      // Navigate to SignupScreen
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => HomeScreen(context)),
+                            builder: (context) => SignupScreen()),
                       );
                     },
                     child: const Text(

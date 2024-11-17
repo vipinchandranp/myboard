@@ -8,12 +8,14 @@ class UserLoginRequest {
   final String password;
   final String? email;
   final int? phone;
+  final String? displayPin;
 
   UserLoginRequest({
     required this.username,
     required this.password,
     this.email,
     this.phone,
+    this.displayPin
   });
 
   // Convert a JSON map to a UserLoginRequest instance
