@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../../models/play/TimeSlotBoardToBePlayed.dart';
@@ -35,12 +36,14 @@ class _PlayWidgetState extends State<PlayWidget> {
   }
 
   Future<void> _fetchBoard() async {
-    TimeSlotBoardToBePlayed? board = await _playService.getBoardForDisplay(widget.displayPin);
+    TimeSlotBoardToBePlayed? board =
+        await _playService.getBoardForDisplay(widget.displayPin);
     if (board != null) {
       setState(() {
         _currentBoard = board;
       });
-      _initializeMedia(board.boardMediaPath);  // Initialize media based on the URL
+      _initializeMedia(
+          board.boardMediaPath); // Initialize media based on the URL
     } else {
       print("Failed to fetch the board.");
     }
@@ -56,7 +59,7 @@ class _PlayWidgetState extends State<PlayWidget> {
         _videoController = VideoPlayerController.network(mediaPath)
           ..initialize().then((_) {
             setState(() {});
-            _videoController!.play();  // Autoplay video
+            _videoController!.play(); // Autoplay video
           });
       }
     }
@@ -97,25 +100,50 @@ class _PlayWidgetState extends State<PlayWidget> {
       body: Center(
         child: _currentBoard == null
             ? CircularProgressIndicator()
-            : Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'Board Name: ${_currentBoard!.boardName}',
-              style: TextStyle(fontSize: 24),
-            ),
-            SizedBox(height: 20),
-            _buildMediaContent(_currentBoard!.boardMediaPath),  // Display media
-            SizedBox(height: 20),
-            Text(
-              'Display Name: ${_currentBoard!.displayName}',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
+            : _buildBoardContent(),
       ),
     );
+  }
+
+  bool isBoardNameEmpty(String? boardName) {
+    return boardName == null || boardName.isEmpty || boardName == "N/A";
+  }
+
+  Widget _buildBoardContent() {
+    if (isBoardNameEmpty(_currentBoard!.boardName)) {
+      // Show QR code and message if board name is empty or "N/A"
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildQrCode(_currentBoard!.displayQrCode), // Display QR code
+          SizedBox(height: 20),
+          Text(
+            _currentBoard!.message,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      );
+    } else {
+      // Show normal board content
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            'Board Name: ${_currentBoard!.boardName}',
+            style: TextStyle(fontSize: 24),
+          ),
+          SizedBox(height: 20),
+          _buildMediaContent(_currentBoard!.boardMediaPath), // Display media
+          SizedBox(height: 20),
+          Text(
+            'Display Name: ${_currentBoard!.displayName}',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ],
+      );
+    }
   }
 
   // Widget to display media based on URL
@@ -125,7 +153,9 @@ class _PlayWidgetState extends State<PlayWidget> {
     } else if (mediaPath.endsWith('.jpg') || mediaPath.endsWith('.png')) {
       // Display image from URL
       return Image.network(mediaPath);
-    } else if (mediaPath.endsWith('.mp4') && _videoController != null && _videoController!.value.isInitialized) {
+    } else if (mediaPath.endsWith('.mp4') &&
+        _videoController != null &&
+        _videoController!.value.isInitialized) {
       // Display video if URL points to a video and is initialized
       return AspectRatio(
         aspectRatio: _videoController!.value.aspectRatio,
@@ -134,5 +164,13 @@ class _PlayWidgetState extends State<PlayWidget> {
     } else {
       return Text('Unsupported media type');
     }
+  }
+
+  // Widget to display QR code
+  Widget _buildQrCode(Uint8List? qrCodeBytes) {
+    if (qrCodeBytes == null) {
+      return Text('QR code unavailable');
+    }
+    return Image.memory(qrCodeBytes); // Display QR code from bytes
   }
 }
