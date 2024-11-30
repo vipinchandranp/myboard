@@ -1,5 +1,5 @@
-import 'dart:convert'; // Import for base64 decoding
-import 'dart:typed_data';
+import 'dart:convert';  // Import for base64 decoding
+import 'dart:typed_data';  // For handling byte arrays (Uint8List)
 
 class TimeSlotBoardToBePlayed {
   final String timeslotId;
@@ -7,9 +7,12 @@ class TimeSlotBoardToBePlayed {
   final String displayId;
   final String boardName;
   final String displayName;
-  final String boardMediaPath; // updated field name
+  final String boardMediaPath;  // updated field name
   final Uint8List? displayQrCode; // Using Uint8List for byte arrays
   final String message;
+
+  final String startTime;  // Start time for the board
+  final String endTime;    // End time for the board
 
   // Constructor
   TimeSlotBoardToBePlayed({
@@ -21,6 +24,8 @@ class TimeSlotBoardToBePlayed {
     required this.boardMediaPath, // updated field name
     this.displayQrCode, // Nullable to account for optional QR code
     required this.message,
+    required this.startTime, // Start time
+    required this.endTime,   // End time
   });
 
   // Factory method to create an instance of TimeSlotBoardToBePlayed from JSON
@@ -45,6 +50,8 @@ class TimeSlotBoardToBePlayed {
       boardMediaPath: json['boardMediaPath'] ?? 'N/A', // updated field name
       displayQrCode: qrCodeBytes, // Handle byte array
       message: json['message'] ?? 'N/A',
+      startTime: json['startTime'] ?? 'N/A', // Start time
+      endTime: json['endTime'] ?? 'N/A',     // End time
     );
   }
 
@@ -59,6 +66,8 @@ class TimeSlotBoardToBePlayed {
       'boardMediaPath': boardMediaPath, // updated field name
       'displayQrCode': displayQrCode?.toList(), // Convert Uint8List to List<int>
       'message': message,
+      'startTime': startTime,  // Add start time to JSON
+      'endTime': endTime,      // Add end time to JSON
     };
   }
 }

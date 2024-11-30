@@ -47,8 +47,6 @@ class _MainHeaderWidgetState extends State<MainHeaderWidget> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8.0),
-
                   // User location and notification icons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -60,13 +58,6 @@ class _MainHeaderWidgetState extends State<MainHeaderWidget> {
                   ),
                 ],
               ),
-            ),
-
-            // Divider below the header
-            const Divider(
-              thickness: 1.5,
-              color: Colors.grey,
-              height: 24,
             ),
           ],
         ),

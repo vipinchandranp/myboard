@@ -26,4 +26,26 @@ class PlayService extends BaseRepository {
       return null;
     }
   }
+
+  // Method to mark the content as played
+  Future<bool> markAsPlayed(String boardId) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$apiUrl/timeslot/play/mark_as_played'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'boardId': boardId}),
+      );
+
+      if (response.statusCode == 200) {
+        print("Content marked as played successfully.");
+        return true;
+      } else {
+        handleError(response);
+        return false;
+      }
+    } catch (e) {
+      print('Error marking content as played: $e');
+      return false;
+    }
+  }
 }

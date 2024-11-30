@@ -12,7 +12,6 @@ UserLoginRequest _$UserLoginRequestFromJson(Map<String, dynamic> json) =>
       password: json['password'] as String,
       email: json['email'] as String,
       phone: json['phone'] as int,
-      displayPin: json['displayPin'] as String
     );
 
 Map<String, dynamic> _$UserLoginRequestToJson(UserLoginRequest instance) =>
@@ -21,5 +20,4 @@ Map<String, dynamic> _$UserLoginRequestToJson(UserLoginRequest instance) =>
       'password': instance.password,
       'email': instance.email,
       'phone': instance.phone,
-      'displayPin': instance.displayPin
     };

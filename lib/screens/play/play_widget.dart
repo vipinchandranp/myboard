@@ -1,80 +1,59 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
-import '../../models/play/TimeSlotBoardToBePlayed.dart';
-import '../../repository/play_repository.dart';
 import '../user/login_screen.dart';
+import '../websocket/mbwebsocket_mixin.dart';
 
 class PlayWidget extends StatefulWidget {
   final String displayPin;
 
-  PlayWidget({required this.displayPin});
+  const PlayWidget({Key? key, required this.displayPin}) : super(key: key);
 
   @override
   _PlayWidgetState createState() => _PlayWidgetState();
 }
 
-class _PlayWidgetState extends State<PlayWidget> {
-  late PlayService _playService;
-  TimeSlotBoardToBePlayed? _currentBoard;
-  late Timer _timer;
+class _PlayWidgetState extends State<PlayWidget> with MBWebSocketMixin {
   VideoPlayerController? _videoController;
+  String? _currentBoardId;
+  DateTime? _endTime;
+  bool isImage = false;
 
   @override
   void initState() {
     super.initState();
-    _playService = PlayService(context);
+    print('PlayWidget initialized.');
+    connect(); // Connect to the STOMP server
 
-    // Fetch the board for display initially
-    _fetchBoard();
-
-    // Set up a timer to fetch the board every minute
-    _timer = Timer.periodic(Duration(minutes: 1), (timer) {
-      _fetchBoard();
-    });
+    // Send displayPin to the STOMP server after connection
+    Future.delayed(Duration(seconds: 1), _sendRegisterDisplayRequest);
   }
 
-  Future<void> _fetchBoard() async {
-    TimeSlotBoardToBePlayed? board =
-        await _playService.getBoardForDisplay(widget.displayPin);
-    if (board != null) {
-      setState(() {
-        _currentBoard = board;
-      });
-      _initializeMedia(
-          board.boardMediaPath); // Initialize media based on the URL
-    } else {
-      print("Failed to fetch the board.");
-    }
+  void _sendRegisterDisplayRequest() {
+    sendMessage(
+      '/app/register_display',
+      {
+        'action': 'register_display',
+        'data': {'displayPin': widget.displayPin},
+      },
+    );
   }
 
-  void _initializeMedia(String? mediaPath) {
-    // Dispose any previous video controller
-    _videoController?.dispose();
-
-    if (mediaPath != null) {
-      if (mediaPath.endsWith('.mp4')) {
-        // Initialize video controller for video URL
-        _videoController = VideoPlayerController.network(mediaPath)
-          ..initialize().then((_) {
-            setState(() {});
-            _videoController!.play(); // Autoplay video
-          });
-      }
-    }
-  }
-
-  void _logout() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginScreen()),
+  // Add other request methods as needed
+  void _sendPlayContentRequest() {
+    sendMessage(
+      '/app/play_content',
+      {
+        'action': 'play_content',
+        'data': {'displayPin': widget.displayPin},
+      },
     );
   }
 
   @override
   void dispose() {
-    _timer.cancel();
+    print('PlayWidget disposed.');
+    disconnect(); // Disconnect from STOMP server
     _videoController?.dispose();
     super.dispose();
   }
@@ -83,94 +62,54 @@ class _PlayWidgetState extends State<PlayWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Currently Playing Board"),
+        title: Text(_currentBoardId ?? 'Currently Playing Board'),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _fetchBoard,
-            tooltip: 'Refresh',
-          ),
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: _logout,
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
             tooltip: 'Logout',
           ),
         ],
       ),
       body: Center(
-        child: _currentBoard == null
-            ? CircularProgressIndicator()
+        child: _currentBoardId == null
+            ? const CircularProgressIndicator()
             : _buildBoardContent(),
       ),
     );
   }
 
-  bool isBoardNameEmpty(String? boardName) {
-    return boardName == null || boardName.isEmpty || boardName == "N/A";
-  }
-
   Widget _buildBoardContent() {
-    if (isBoardNameEmpty(_currentBoard!.boardName)) {
-      // Show QR code and message if board name is empty or "N/A"
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildQrCode(_currentBoard!.displayQrCode), // Display QR code
-          SizedBox(height: 20),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (_currentBoardId != null)
           Text(
-            _currentBoard!.message,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
+            'Board ID: $_currentBoardId',
+            style: const TextStyle(fontSize: 24),
           ),
-        ],
-      );
-    } else {
-      // Show normal board content
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'Board Name: ${_currentBoard!.boardName}',
-            style: TextStyle(fontSize: 24),
-          ),
-          SizedBox(height: 20),
-          _buildMediaContent(_currentBoard!.boardMediaPath), // Display media
-          SizedBox(height: 20),
-          Text(
-            'Display Name: ${_currentBoard!.displayName}',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ],
-      );
-    }
+      ],
+    );
   }
 
-  // Widget to display media based on URL
   Widget _buildMediaContent(String? mediaPath) {
     if (mediaPath == null) {
-      return Text('No media available');
-    } else if (mediaPath.endsWith('.jpg') || mediaPath.endsWith('.png')) {
-      // Display image from URL
+      return const Text('No media available');
+    } else if (isImage) {
       return Image.network(mediaPath);
-    } else if (mediaPath.endsWith('.mp4') &&
-        _videoController != null &&
-        _videoController!.value.isInitialized) {
-      // Display video if URL points to a video and is initialized
+    } else if (_videoController != null && _videoController!.value.isInitialized) {
       return AspectRatio(
         aspectRatio: _videoController!.value.aspectRatio,
         child: VideoPlayer(_videoController!),
       );
     } else {
-      return Text('Unsupported media type');
+      return const Text('Unsupported media type');
     }
-  }
-
-  // Widget to display QR code
-  Widget _buildQrCode(Uint8List? qrCodeBytes) {
-    if (qrCodeBytes == null) {
-      return Text('QR code unavailable');
-    }
-    return Image.memory(qrCodeBytes); // Display QR code from bytes
   }
 }

@@ -41,7 +41,7 @@ class NotificationBroadcaster with MBWebSocketMixin {
 
   @override
   void dispose() {
-    super.dispose();
+    super.disconnect();
     _controller.close();
   }
 }

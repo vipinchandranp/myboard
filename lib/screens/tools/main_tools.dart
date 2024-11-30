@@ -18,9 +18,8 @@ import '../display/nearby_display_map.dart';
 
 class MainToolsWidget extends StatelessWidget {
   final BuildContext context;
-  final int notificationCount; // Add a variable for the notification count
 
-  MainToolsWidget(this.context, {this.notificationCount = 10}); // Pass notification count through constructor
+  MainToolsWidget(this.context); // Pass notification count through constructor
 
   @override
   Widget build(BuildContext context) {
@@ -116,6 +115,7 @@ class MainToolsWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Card(
+        color: Colors.teal.shade100,
         elevation: 4, // Adds a shadow for a raised effect
         margin: EdgeInsets.all(8.0),
         shape: RoundedRectangleBorder(

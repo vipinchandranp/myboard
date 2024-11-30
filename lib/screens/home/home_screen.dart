@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../service/websocket_service.dart';
+import '../display/enter_display_pin.dart';
 import '../notification/notification_list.dart';
 import '../support/chat_support.dart';
 import '../tools/main_tools.dart';
@@ -18,6 +19,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = true; // Simulating loading state
+  final TextEditingController _textController =
+      TextEditingController(); // Controller for TextField
 
   @override
   void initState() {
@@ -35,25 +38,28 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.deepPurple.shade300,
       body: Stack(
         children: [
           CustomScrollView(
             slivers: <Widget>[
               MainHeaderWidget(), // Main header
-              MainToolsWidget(context),
+
+              // Removed any unnecessary padding or space
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    EnterDisplayPinWidget(),
+                    // Ensure this widget has no unnecessary padding or margin
+                  ],
+                ),
+              ),
+              MainToolsWidget(context), // Main tools
             ],
           ),
-          ChatSupportWidget(), // Add the floating chat button and chatbox
         ],
       ),
-      bottomNavigationBar: MainFooterWidget(), // Use MainFooterWidget here
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Add your action for the FAB button
-        },
-        child: FaIcon(FontAwesomeIcons.comment), // Font Awesome icon
-        backgroundColor: Theme.of(context).primaryColor,
-      ),
+      bottomNavigationBar: MainFooterWidget(),
     );
   }
 }
