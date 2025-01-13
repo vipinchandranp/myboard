@@ -1,14 +1,21 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:myboard/screens/websocket/request/websocket_main_response.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 mixin MBWebSocketMixin {
   StompClient? _stompClient;
   bool _isConnected = false;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final StreamController<MBWebSocketResponse> _messageController =
+  StreamController<MBWebSocketResponse>.broadcast();
 
   // Getter to access connection status
   bool get isConnected => _isConnected;
+
+  // Getter for message stream
+  Stream<MBWebSocketResponse> get messageStream => _messageController.stream;
 
   // Connect method ensures only one connection is established with token
   Future<void> connect() async {
@@ -45,6 +52,9 @@ mixin MBWebSocketMixin {
           await Future.delayed(const Duration(milliseconds: 500));
           print('Connecting...');
         },
+        webSocketConnectHeaders: {
+          'Authorization': 'Bearer $token',
+        },
         stompConnectHeaders: {
           'Authorization': 'Bearer $token',
         },
@@ -55,24 +65,6 @@ mixin MBWebSocketMixin {
 
     _stompClient!.activate();
   }
-
-  // Callback when STOMP is connected
-  void _onStompConnect(StompFrame frame) {
-    print('Connected to STOMP server.');
-    _isConnected = true;
-
-    // Example subscription (adjust as needed)
-    _stompClient!.subscribe(
-      destination: '/topic/register',
-      callback: (frame) {
-        if (frame.body != null) {
-          _handleIncomingMessage(frame.body!);
-        }
-      },
-    );
-  }
-
-  // Send message over STOMP
   void sendMessage(String destination, Map<String, dynamic> body) {
     if (_stompClient != null && _isConnected) {
       print('Sending message to $destination: $body');
@@ -84,11 +76,40 @@ mixin MBWebSocketMixin {
       print('STOMP client is not connected.');
     }
   }
+  // Callback when STOMP is connected
+  void _onStompConnect(StompFrame frame) {
+    print('Connected to STOMP server.');
+    _isConnected = true;
 
-  // Handle incoming STOMP messages
+    // Example subscription (adjust as needed)
+    _stompClient!.subscribe(
+      destination: '/topic/register', // Adjust the topic if needed
+      callback: (frame) {
+        if (frame.body != null) {
+          // Handle incoming message, parsing it correctly
+          _handleIncomingMessage(frame.body!);
+        }
+      },
+    );
+  }
+
+  // Handle incoming STOMP messages and parse them as WebSocketResponse
   void _handleIncomingMessage(String message) {
-    print('Received STOMP message: $message');
-    // Implement message handling logic
+    try {
+      // Decode the incoming message
+      final Map<String, dynamic> messageMap = json.decode(message);
+
+      // Convert the message to the WebSocket response model
+      MBWebSocketResponse mbWebSocketResponse =
+      MBWebSocketResponse.fromJson(messageMap);
+
+      print('Received STOMP message: ${mbWebSocketResponse.toJson()}');
+
+      // Emit the message to the stream
+      _messageController.add(mbWebSocketResponse);
+    } catch (e) {
+      print('Error handling incoming message: $e');
+    }
   }
 
   // Disconnect the STOMP client
@@ -99,5 +120,6 @@ mixin MBWebSocketMixin {
       _stompClient = null;
       _isConnected = false;
     }
+    _messageController.close(); // Close the stream controller
   }
 }
