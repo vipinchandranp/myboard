@@ -1,11 +1,11 @@
-import 'dart:async';
-import 'dart:convert';
+import 'dart:async'; // For Timer
+import 'dart:convert'; // For base64Decode
+import 'dart:typed_data'; // For Uint8List
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import '../../models/play/TimeSlotBoardToBePlayed.dart';
+import '../../repository/play_repository.dart';
 import '../user/login_screen.dart';
-import '../websocket/mbwebsocket_mixin.dart';
-import '../websocket/request/websocket_main_response.dart';
-import '../websocket/types/websocket_action_types.dart';
 
 class PlayWidget extends StatefulWidget {
   final String displayPin;
@@ -16,159 +16,76 @@ class PlayWidget extends StatefulWidget {
   _PlayWidgetState createState() => _PlayWidgetState();
 }
 
-class _PlayWidgetState extends State<PlayWidget> with MBWebSocketMixin {
+class _PlayWidgetState extends State<PlayWidget> {
   VideoPlayerController? _videoController;
   String? _currentBoardId;
-  DateTime? _endTime;
   bool isImage = false;
-
-  // Variable to hold the WebSocket message stream subscription
-  late StreamSubscription<MBWebSocketResponse> _messageSubscription;
-
-  // Variables to store QR code data and message
-  String? _qrCodeBase64;
-  String? _qrCodeMessage;
+  TimeSlotBoardToBePlayed? _timeSlotBoard;
+  late PlayService _playService;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     print('PlayWidget initialized.');
+    _playService = PlayService(context);
 
-    // Connect to the WebSocket server
-    connect();
+    // Fetch the board content for the first time
+    _fetchBoardContent();
 
-    // Send displayPin to the STOMP server after connection
-    Future.delayed(Duration(seconds: 1), _sendRegisterDisplayRequest);
-
-    // Listen to the WebSocket message stream
-    _messageSubscription = messageStream.listen((message) {
-      onMessageReceived(message);
+    // Set up a timer to call the service every 1 minute
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      _fetchBoardContent();
     });
   }
 
   @override
   void dispose() {
     print('PlayWidget disposed.');
-
-    // Cancel the subscription when the widget is disposed
-    _messageSubscription.cancel();
-
-    // Disconnect from STOMP server and clean up
-    disconnect();
-
+    _timer?.cancel(); // Cancel the timer when the widget is disposed
     _videoController?.dispose();
     super.dispose();
   }
 
-  // Handle messages received from the WebSocket server
-  void onMessageReceived(MBWebSocketResponse decodedMessage) {
+  // Fetch the board content from the REST API
+  Future<void> _fetchBoardContent() async {
     try {
-      switch (decodedMessage.action) {
-        case WebSocketAction.registerDisplay:
-          _handleRegisterDisplay(decodedMessage.data);
-          break;
-        case WebSocketAction.playContent:
-          _handlePlayContent(decodedMessage.data);
-          break;
-        case WebSocketAction.stopContent:
-          _handleStopContent(decodedMessage.data);
-          break;
-        case WebSocketAction.qr_code:
-          _handleQrCode(decodedMessage.data);
-          break;
-        case WebSocketAction.unknown:
-        default:
-          print('Unknown action received: ${decodedMessage.action}');
+      final content = await _playService.getBoardForDisplay(widget.displayPin);
+      if (content != null) {
+        setState(() {
+          _timeSlotBoard = content;
+          _currentBoardId = content.boardId;
+
+          // Determine if media path is for an image
+          if (content.boardMediaPath != null) {
+            final mediaPath = content.boardMediaPath!;
+            final extension = mediaPath.split('.').last.toLowerCase();
+            isImage = ['jpg', 'jpeg', 'png', 'gif'].contains(extension);
+
+            // Initialize video controller for non-image media
+            if (!isImage) {
+              _videoController?.dispose(); // Dispose of the previous controller
+              _videoController = VideoPlayerController.network(mediaPath)
+                ..initialize().then((_) {
+                  setState(() {});
+                  _videoController!.play();
+                });
+            }
+          }
+        });
+      } else {
+        print('No board content available.');
       }
     } catch (e) {
-      print('Error parsing WebSocket message: $e');
+      print('Error fetching board content: $e');
     }
-  }
-
-  // Handle the register display action
-  void _handleRegisterDisplay(Map<String, dynamic> data) {
-    setState(() {
-      _currentBoardId = data['boardId'] as String?;
-    });
-    print('Register display successful. Board ID: $_currentBoardId');
-  }
-
-  // Handle play content action
-  void _handlePlayContent(Map<String, dynamic> data) {
-    final mediaPath = data['mediaPath'] as String?;
-    final mediaType = data['mediaType'] as String?;
-
-    if (mediaPath != null) {
-      setState(() {
-        isImage = mediaType == 'image';
-        if (!isImage) {
-          _videoController = VideoPlayerController.network(mediaPath)
-            ..initialize().then((_) {
-              setState(() {});
-              _videoController!.play();
-            });
-        }
-      });
-    }
-    print('Play content: $mediaPath');
-  }
-
-  // Handle stop content action
-  void _handleStopContent(Map<String, dynamic> data) {
-    setState(() {
-      _currentBoardId = null;
-      _videoController?.pause();
-      _videoController?.dispose();
-      _videoController = null;
-    });
-    print('Content stopped.');
-  }
-
-  // Handle qr_code action
-  void _handleQrCode(Map<String, dynamic> data) {
-    final qrCode = data['qrCode'] as String?;
-    final message = data['message'] as String?;
-
-    if (qrCode != null && message != null) {
-      setState(() {
-        _qrCodeBase64 = qrCode;
-        _qrCodeMessage = message;
-      });
-    }
-    print('Received QR code and message: $qrCode, $message');
-  }
-
-  // Send the register display request to the server
-  void _sendRegisterDisplayRequest() {
-    sendMessage(
-      '/app/register_display',
-      {
-        'action': WebSocketAction.registerDisplay.actionValue, // Corrected to use actionValue
-        'data': {'displayPin': widget.displayPin},
-      },
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-       // title: Text(_currentBoardId ?? 'Currently Playing Board'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
-            tooltip: 'Logout',
-          ),
-        ],
-      ),
       body: Center(
-        child: (_currentBoardId == null && _qrCodeBase64 == null)
+        child: _timeSlotBoard == null
             ? const CircularProgressIndicator()
             : _buildBoardContent(),
       ),
@@ -176,53 +93,76 @@ class _PlayWidgetState extends State<PlayWidget> with MBWebSocketMixin {
   }
 
   Widget _buildBoardContent() {
-    if (_qrCodeBase64 != null && _qrCodeMessage != null) {
+    if (_timeSlotBoard!.boardMediaPath == null &&
+        _timeSlotBoard!.displayQrCode != null) {
       return _buildQrCodeContent();
-    } else if (_currentBoardId != null) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Board ID: $_currentBoardId',
-            style: const TextStyle(fontSize: 24),
-          ),
-          _buildMediaContent(),
-        ],
-      );
     } else {
-      return const Text('No content available.');
+      return SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildMediaContent(),
+          ],
+        ),
+      );
     }
   }
 
-
   Widget _buildMediaContent() {
-    // Display image or video based on media type
     if (isImage) {
-      return const CircularProgressIndicator(); // Placeholder for loading image
+      // Display image content
+      return Image.network(
+        _timeSlotBoard!.boardMediaPath!,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            return child;
+          }
+          return const CircularProgressIndicator();
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return const Text('Failed to load image');
+        },
+      );
     } else if (_videoController != null && _videoController!.value.isInitialized) {
+      // Display video content
       return AspectRatio(
         aspectRatio: _videoController!.value.aspectRatio,
         child: VideoPlayer(_videoController!),
       );
+    } else if (_timeSlotBoard!.displayQrCode != null) {
+      // Fallback to QR code content
+      return _buildQrCodeContent();
     } else {
       return const Text('Unsupported media type');
     }
   }
-
   Widget _buildQrCodeContent() {
-    // Decode the QR code from base64 and display it
-    final qrImage = base64Decode(_qrCodeBase64!);
+    try {
+      // Use the NativeUint8List directly
+      final Uint8List qrImageBytes = _timeSlotBoard!.displayQrCode!;
+      final String qrMessage = _timeSlotBoard!.message ?? 'Scan the QR code below';
 
-    return Column(
-      children: [
-        Image.memory(qrImage), // Display the decoded QR code
-        const SizedBox(height: 20),
-        Text(
-          _qrCodeMessage ?? 'No message available.',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18),
-        ),
-      ],
-    );
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Display the QR code image
+          Image.memory(qrImageBytes),
+          const SizedBox(height: 20),
+          // Display the message below the QR code
+          Text(
+            qrMessage,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 18),
+          ),
+        ],
+      );
+    } catch (e) {
+      // Handle errors gracefully
+      return const Text(
+        'Failed to load QR code',
+        style: TextStyle(fontSize: 18, color: Colors.red),
+      );
+    }
   }
+
 }

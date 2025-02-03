@@ -2,42 +2,49 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../api_models/display_save.dart';
 import '../models/display/bdisplay.dart';
 import '../models/display/currently_playing_boards_response.dart';
-import '../models/display/display_filter.dart';
 import '../models/display/display_geotag_request.dart';
 import '../screens/common/filter/filter_data.dart';
 import 'base_repository.dart';
 
 class DisplayService extends BaseRepository {
   DisplayService(BuildContext context) : super(context);
-
-  // Saves a new display with the given media file and display name
-
-  // Saves a new display with the given media file and display name
-  Future<Map?> saveDisplay(File file, String displayName) async {
+// Saves a new display with the given media file and display name
+  Future<String?> saveDisplay(SaveDisplay saveDisplay) async {
     try {
+      // Print field values before sending the request
+      print('Display Name: ${saveDisplay.displayName}');
+      print('Price: ${saveDisplay.price}');
+      print('Latitude: ${saveDisplay.latitude}');
+      print('Longitude: ${saveDisplay.longitude}');
+      print('Number of Files: ${saveDisplay.files.length}');
+
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('$apiUrl/display/media/save'),
+        Uri.parse('$apiUrl/display/save'),
       )
-        ..fields['displayName'] = displayName
-        ..files.add(await http.MultipartFile.fromPath('file', file.path));
+        ..fields['displayName'] = saveDisplay.displayName
+        ..fields['price'] = saveDisplay.price.toString()
+        ..fields['latitude'] = saveDisplay.latitude?.toString() ?? ''
+        ..fields['longitude'] = saveDisplay.longitude?.toString() ?? '';
+
+      // Add multiple files
+      for (var file in saveDisplay.files) {
+        request.files.add(await http.MultipartFile.fromPath('files', file.path));
+      }
 
       // Send the request and get the streamed response
       final streamedResponse = await client.send(request);
 
       // Convert the streamed response to a regular response
       final response = await http.Response.fromStream(streamedResponse);
-      Map data = extractDataFromResponseBody(response);
-      // Print response details
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${data['displayId']}');
-      print('Response Body: ${data['fileName']}');
-      print('Response Headers: ${response.headers}');
+      String data = extractDataFromResponseBody(response);
+
 
       if (response.statusCode == 200) {
-        // Assuming the response body contains the boardId directly
+        // Assuming the response body contains the displayId directly
         return data;
       } else {
         handleError(response);
@@ -48,6 +55,7 @@ class DisplayService extends BaseRepository {
       return null;
     }
   }
+
 
   // Adds media to an existing display
   Future<String?> addDisplayMedia(String displayId, File file) async {

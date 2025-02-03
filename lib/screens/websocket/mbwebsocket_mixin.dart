@@ -40,7 +40,7 @@ mixin MBWebSocketMixin {
     _stompClient = StompClient(
       config: StompConfig(
         url: 'ws://192.168.1.43:8080/myboard/websocket',
-        onConnect: _onStompConnect,
+        onConnect: (frame) => _onStompConnect(frame, token),
         onDisconnect: (frame) {
           print('Disconnected from STOMP server.');
           _isConnected = false;
@@ -48,6 +48,7 @@ mixin MBWebSocketMixin {
         onStompError: (frame) => print('STOMP Error: ${frame.body}'),
         onWebSocketError: (error) => print('WebSocket Error: $error'),
         beforeConnect: () async {
+          print('Bearer $token');
           print('Waiting to connect...');
           await Future.delayed(const Duration(milliseconds: 500));
           print('Connecting...');
@@ -65,6 +66,7 @@ mixin MBWebSocketMixin {
 
     _stompClient!.activate();
   }
+
   void sendMessage(String destination, Map<String, dynamic> body) {
     if (_stompClient != null && _isConnected) {
       print('Sending message to $destination: $body');
@@ -76,13 +78,19 @@ mixin MBWebSocketMixin {
       print('STOMP client is not connected.');
     }
   }
+
   // Callback when STOMP is connected
-  void _onStompConnect(StompFrame frame) {
+  Future<void> _onStompConnect(StompFrame frame, String token) async {
     print('Connected to STOMP server.');
     _isConnected = true;
 
-    // Example subscription (adjust as needed)
+    // Example subscription with Authorization header
+    final Map<String, String> headers = {
+      'Authorization': 'Bearer $token',
+    };
+
     _stompClient!.subscribe(
+      headers: headers,
       destination: '/topic/register', // Adjust the topic if needed
       callback: (frame) {
         if (frame.body != null) {
@@ -120,6 +128,10 @@ mixin MBWebSocketMixin {
       _stompClient = null;
       _isConnected = false;
     }
-    _messageController.close(); // Close the stream controller
+  }
+
+  // Dispose the mixin and close the stream
+  void dispose() {
+    _messageController.close();
   }
 }

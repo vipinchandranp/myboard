@@ -3,7 +3,7 @@ import 'dart:convert';
 import '../websocket/mbwebsocket_mixin.dart';
 import 'notification_broadcaster_model.dart';
 
-class NotificationBroadcaster with MBWebSocketMixin {
+class NotificationBroadcaster /*with MBWebSocketMixin*/ {
   static final NotificationBroadcaster _instance = NotificationBroadcaster._internal();
   final StreamController<NotificationBroadcasterModel> _controller =
   StreamController.broadcast();
@@ -16,7 +16,7 @@ class NotificationBroadcaster with MBWebSocketMixin {
 
   @override
   Future<void> connect() async {
-    await super.connect();  // Connect using the MBWebSocketMixin
+    //await super.connect();  // Connect using the MBWebSocketMixin
     // Additional logic (if needed) after WebSocket connection
   }
 
@@ -34,14 +34,14 @@ class NotificationBroadcaster with MBWebSocketMixin {
 
   // Optional manual broadcasting for testing
   void broadcastNotification(NotificationBroadcasterModel notification) {
-    if (isConnected) {
+    /*if (isConnected) {
       _controller.add(notification);
-    }
+    }*/
   }
 
   @override
   void dispose() {
-    super.disconnect();
-    _controller.close();
+   /* super.disconnect();
+    _controller.close();*/
   }
 }

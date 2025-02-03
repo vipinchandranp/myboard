@@ -1,8 +1,9 @@
 import 'dart:io';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:myboard/repository/display_repository.dart'; // Import the DisplayService
+import 'package:myboard/models/display/bdisplay.dart'; // Import the BDisplay model
 import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:myboard/screens/display/stepper_screen.dart'; // Import StepperScreen
 
 class QRScannerWidget extends StatefulWidget {
   @override
@@ -84,38 +85,32 @@ class _QRScannerWidgetState extends State<QRScannerWidget> {
         setState(() {
           result = scanData; // Store the result
         });
-        _navigateToResultScreen(scanData.code!);
+        _fetchDisplay(scanData.code!); // Fetch the BDisplay by QR code
       }
     });
   }
 
-  void _navigateToResultScreen(String qrData) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => QRResultScreen(scanData: qrData),
-      ),
-    );
-  }
-}
-
-class QRResultScreen extends StatelessWidget {
-  final String scanData;
-
-  const QRResultScreen({Key? key, required this.scanData}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Scan Result'),
-      ),
-      body: Center(
-        child: Text(
-          'Scanned QR Code Data: $scanData',
-          style: TextStyle(fontSize: 20),
-        ),
-      ),
-    );
+  // Fetch display details by the QR code
+  void _fetchDisplay(String displayId) async {
+    try {
+      BDisplay? display = await DisplayService(context).getDisplayById(displayId);
+      if (display != null) {
+        // Navigate to the StepperScreen with the fetched display
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StepperScreen(display: display),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Display not found for the scanned QR code.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching display: $e')),
+      );
+    }
   }
 }

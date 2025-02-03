@@ -12,36 +12,27 @@ class FilterWidgetState extends State<FilterWidget> {
   final _searchController = TextEditingController();
   DateTimeRange? _dateRange;
   String? _sortBy;
-  List<String> _statusFilters = []; // To store selected status filters
+  List<String> _statusFilters = [];
   final ScrollController _scrollController = ScrollController();
-  bool _showLeftArrow = false;
-  bool _showRightArrow = true;
 
-  // Retrieve the current filter settings
   Map<String, dynamic> getFilterData() {
     return {
       'searchText': _searchController.text,
       'startDate': _dateRange?.start,
       'endDate': _dateRange?.end,
       'sortBy': _sortBy,
-      'statusFilters': _statusFilters, // Include selected status filters
+      'statusFilters': _statusFilters,
     };
   }
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
-  void _onScroll() {
-    setState(() {
-      _showLeftArrow = _scrollController.offset > 0;
-      _showRightArrow = _scrollController.offset < _scrollController.position.maxScrollExtent;
+    _scrollController.addListener(() {
+      setState(() {});
     });
   }
 
-  // Open date range picker
   Future<void> _selectDateRange(BuildContext context) async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
@@ -49,7 +40,6 @@ class FilterWidgetState extends State<FilterWidget> {
       lastDate: DateTime(2101),
       initialDateRange: _dateRange,
     );
-
     if (picked != null && picked != _dateRange) {
       setState(() {
         _dateRange = picked;
@@ -57,18 +47,16 @@ class FilterWidgetState extends State<FilterWidget> {
     }
   }
 
-  // Clear filters and reset
   void _clearFilters() {
     setState(() {
       _searchController.clear();
       _dateRange = null;
       _sortBy = null;
-      _statusFilters.clear(); // Reset status filters
+      _statusFilters.clear();
     });
     widget.onApplyFilter(getFilterData());
   }
 
-  // Build the dropdown with checkboxes for the status filters
   Widget _buildStatusDropdown() {
     return PopupMenuButton<String>(
       onSelected: (String status) {
@@ -82,30 +70,22 @@ class FilterWidgetState extends State<FilterWidget> {
         });
       },
       itemBuilder: (BuildContext context) {
-        return [
-          'Favourites',
-          'Approved',
-          'Rejected',
-          'Waiting For Approval',
-        ].map((status) {
+        return ['Favourites', 'Approved', 'Rejected', 'Waiting For Approval']
+            .map((status) {
           return CheckedPopupMenuItem<String>(
             value: status,
             checked: _statusFilters.contains(status),
-            child: Text(status),
+            child: Text(status, style: const TextStyle(fontSize: 14)),
           );
         }).toList();
       },
       child: Container(
-        width: 250,
-        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.grey),
           borderRadius: BorderRadius.circular(8.0),
         ),
-        child: const Padding(
-          padding: EdgeInsets.all(12.0),
-          child: Text('Select Status', style: TextStyle(color: Colors.black54)),
-        ),
+        child: const Text('Select Status', style: TextStyle(fontSize: 14, color: Colors.black54)),
       ),
     );
   }
@@ -117,60 +97,52 @@ class FilterWidgetState extends State<FilterWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Filter buttons (Apply and Clear)
           Row(
             children: [
               ElevatedButton(
                 onPressed: () => widget.onApplyFilter(getFilterData()),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
                 ),
-                child: const Text('Apply Filter', style: TextStyle(fontSize: 16)),
+                child: const Text('Apply Filter', style: TextStyle(fontSize: 14)),
               ),
               const SizedBox(width: 8.0),
               ElevatedButton(
                 onPressed: _clearFilters,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
                 ),
-                child: const Text('Clear Filters', style: TextStyle(fontSize: 16)),
+                child: const Text('Clear Filters', style: TextStyle(fontSize: 14)),
               ),
             ],
           ),
-          const SizedBox(height: 16.0), // Add some space between buttons and scrollable filters
-
-          // Horizontal scrollable filter row
+          const SizedBox(height: 12.0),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             controller: _scrollController,
             child: Row(
               children: [
-                // Search field
                 SizedBox(
-                  width: 200,
+                  width: 180,
                   child: TextField(
                     controller: _searchController,
                     decoration: const InputDecoration(
-                      labelText: 'Search..',
+                      labelText: 'Search',
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+                      contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16.0),
-
-                // Status dropdown (with checkboxes)
+                const SizedBox(width: 12.0),
                 _buildStatusDropdown(),
-                const SizedBox(width: 16.0),
-
-                // Date Range Picker
+                const SizedBox(width: 12.0),
                 GestureDetector(
                   onTap: () => _selectDateRange(context),
                   child: Container(
-                    width: 200,
-                    padding: const EdgeInsets.all(12.0),
+                    width: 180,
+                    padding: const EdgeInsets.all(8.0),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey),
                       borderRadius: BorderRadius.circular(8.0),
@@ -179,16 +151,14 @@ class FilterWidgetState extends State<FilterWidget> {
                       _dateRange == null
                           ? 'Select Date Range'
                           : '${_dateRange!.start.toLocal()} - ${_dateRange!.end.toLocal()}',
-                      style: const TextStyle(color: Colors.black54),
+                      style: const TextStyle(fontSize: 14, color: Colors.black54),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16.0),
-
-                // Sort By Dropdown
+                const SizedBox(width: 12.0),
                 Container(
-                  width: 150,
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  width: 140,
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(8.0),
@@ -201,66 +171,19 @@ class FilterWidgetState extends State<FilterWidget> {
                         _sortBy = newValue;
                       });
                     },
-                    hint: const Text('Sort By'),
+                    hint: const Text('Sort By', style: TextStyle(fontSize: 14)),
                     underline: const SizedBox(),
                     items: ['Name', 'Date', 'Priority'].map((String sortBy) {
                       return DropdownMenuItem<String>(
                         value: sortBy,
-                        child: Text(sortBy),
+                        child: Text(sortBy, style: const TextStyle(fontSize: 14)),
                       );
                     }).toList(),
                   ),
                 ),
-                const SizedBox(width: 16.0),
               ],
             ),
           ),
-
-          // Left Arrow Indicator
-          if (_showLeftArrow)
-            Positioned(
-              left: 0,
-              child: GestureDetector(
-                onTap: () => _scrollController.animateTo(
-                  _scrollController.offset - 100,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.ease,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.white.withOpacity(0.7), Colors.transparent],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                  ),
-                  child: const Icon(Icons.chevron_left, size: 32),
-                ),
-              ),
-            ),
-
-          // Right Arrow Indicator
-          if (_showRightArrow)
-            Positioned(
-              right: 0,
-              child: GestureDetector(
-                onTap: () => _scrollController.animateTo(
-                  _scrollController.offset + 100,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.ease,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.transparent, Colors.white.withOpacity(0.7)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                  ),
-                  child: const Icon(Icons.chevron_right, size: 32),
-                ),
-              ),
-            ),
         ],
       ),
     );

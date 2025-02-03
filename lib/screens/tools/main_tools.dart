@@ -37,42 +37,42 @@ class MainToolsWidget extends StatelessWidget {
                 return _buildGridButton(
                   context,
                   icon: FontAwesomeIcons.display, // FontAwesome display icon
-                  text: 'Add Display',
-                  onTap: () => navigateTo(CreateDisplayWidget(context)),
+                  text: '',
+                  onTap: () => navigateTo(CreateDisplayWidget()),
                 );
               case 1:
                 return _buildGridButton(
                   context,
                   icon: FontAwesomeIcons.chalkboard, // FontAwesome board icon
-                  text: 'Add Board',
+                  text: '',
                   onTap: () => navigateTo(CreateBoardWidget(context)),
                 );
               case 2:
                 return _buildGridButton(
                   context,
                   icon: FontAwesomeIcons.tv, // FontAwesome TV icon
-                  text: 'My Displays',
+                  text: 's',
                   onTap: () => navigateTo(ViewDisplayWidget()),
                 );
               case 3:
                 return _buildGridButton(
                   context,
                   icon: FontAwesomeIcons.list, // FontAwesome list icon
-                  text: 'My Boards',
+                  text: '',
                   onTap: () => navigateTo(ViewBoardsWidget()),
                 );
               case 4:
                 return _buildGridButton(
                   context,
                   icon: FontAwesomeIcons.thumbsUp, // FontAwesome approval icon
-                  text: 'Approvals',
+                  text: '',
                   onTap: () => navigateTo(AvailableDatesWidget()),
                 );
               case 5:
                 return _buildGridButton(
                   context,
                   icon: FontAwesomeIcons.mapMarkedAlt, // FontAwesome map icon
-                  text: 'Explore Displays',
+                  text: '',
                   onTap: () => navigateTo(NearbyDisplaysMap()),
                 );
               case 6:
@@ -81,14 +81,14 @@ class MainToolsWidget extends StatelessWidget {
                 return _buildGridButton(
                   context,
                   icon: FontAwesomeIcons.userCircle, // FontAwesome user icon
-                  text: 'Profile',
+                  text: '',
                   onTap: () => navigateTo(MBUserProfile()),
                 );
               case 8:
                 return _buildGridButton(
                   context,
                   icon: FontAwesomeIcons.signOutAlt, // FontAwesome logout icon
-                  text: 'Logout',
+                  text: '',
                   onTap: () => navigateTo(LoginScreen()),
                 );
               default:

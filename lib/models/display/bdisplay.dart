@@ -12,6 +12,7 @@ class BDisplay {
   final double? latitude;
   final double? longitude;
   final String displayPin;  // Added the displayPin field
+  final double? price;
 
   BDisplay({
     required this.displayId,
@@ -23,6 +24,7 @@ class BDisplay {
     this.longitude, // Optional longitude
     this.boardIds = const [], // Provide a default empty list for boardIds
     required this.displayPin,  // Ensure the displayPin is passed into the constructor
+    this.price,
   });
 
   // Factory method to create a BDisplay instance from JSON data
@@ -52,6 +54,9 @@ class BDisplay {
       boardIds:
       (json['boardIds'] as List?)?.map((id) => id.toString()).toList() ?? [],
       displayPin: json['displayPin'] ?? '',  // Add the displayPin here when parsing from JSON
+      price: json['price'] != null
+          ? (json['price'] as num).toDouble()
+          : null,
     );
   }
 
@@ -67,6 +72,7 @@ class BDisplay {
       'longitude': longitude,
       'boardIds': boardIds, // Include boardIds as a list of strings
       'displayPin': displayPin,  // Add the displayPin field when converting to JSON
+      'price': price,
     };
   }
 }
