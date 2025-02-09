@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myboard/models/display/bdisplay.dart';
+import 'package:myboard/screens/payments/payment.dart';
 import 'package:myboard/screens/display/selected_board.dart';
 import 'package:myboard/screens/display/selected_time_slot_section.dart';
 import 'package:myboard/screens/display/timeslots.dart';
@@ -8,6 +9,7 @@ import '../../repository/display_repository.dart';
 import '../../utils/view_mode.dart';
 import '../../widgets/round_button.dart';
 import '../board/view_boards.dart';
+
 class StepperScreen extends StatefulWidget {
   final BDisplay display;
 
@@ -21,80 +23,137 @@ class _StepperScreenState extends State<StepperScreen> {
   DateTime? _selectedDate;
   List<String>? _selectedTimeSlots;
   Board? _selectedBoard;
+  bool _isPaymentSuccessful = false;
   int _currentStep = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Book Display: ${widget.display.displayName}'),
+        title: Text(
+          'Book Display: ${widget.display.displayName}',
+          style: TextStyle(fontSize: 18),
+        ),
+        centerTitle: true,
       ),
-      body: Stepper(
-        currentStep: _currentStep,
-        onStepContinue: _onStepContinue,
-        onStepCancel: _onStepCancel,
-        steps: [
-          Step(
-            title: const Text('Select Time Slot'),
-            content: Column(
-              children: [
-                SelectedTimeSlotSectionWidget(
-                  selectedDate: _selectedDate,
-                  selectedTimeSlots: _selectedTimeSlots,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Stepper(
+          currentStep: _currentStep,
+          onStepContinue: _currentStep == 2 ? null : _onStepContinue,
+          onStepCancel: _currentStep == 0 ? null : _onStepCancel,
+          controlsBuilder: (context, details) => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (_currentStep > 0)
+                OutlinedButton(
+                  onPressed: details.onStepCancel,
+                  child: const Text('Back'),
                 ),
-                ElevatedButton(
-                  onPressed: _showBookingDialog,
-                  child: const Text('Select Time Slots'),
-                ),
-              ],
-            ),
-            isActive: _currentStep == 0,
+              ElevatedButton(
+                onPressed: details.onStepContinue,
+                child: const Text('Next'),
+              ),
+            ],
           ),
-          Step(
-            title: const Text('Select Board'),
-            content: Column(
-              children: [
-                RoundedButton(
-                  icon: Icons.dashboard,
-                  label: 'Select Board',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ViewBoardsWidget(viewMode: ViewMode.timeslotBoardSelection),
-                      ),
-                    ).then((selectedBoard) {
-                      if (selectedBoard != null) {
-                        setState(() {
-                          _selectedBoard = selectedBoard;
+          steps: [
+            Step(
+              title: const Text('Select Time Slot'),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SelectedTimeSlotSectionWidget(
+                    selectedDate: _selectedDate,
+                    selectedTimeSlots: _selectedTimeSlots,
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: _showBookingDialog,
+                      icon: const Icon(Icons.calendar_today),
+                      label: const Text('Select Time Slots'),
+                    ),
+                  ),
+                ],
+              ),
+              isActive: _currentStep == 0,
+            ),
+            Step(
+              title: const Text('Select Board'),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: RoundedButton(
+                      icon: Icons.dashboard,
+                      label: 'Select Board',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ViewBoardsWidget(
+                              viewMode: ViewMode.timeslotBoardSelection,
+                            ),
+                          ),
+                        ).then((selectedBoard) {
+                          if (selectedBoard != null) {
+                            setState(() {
+                              _selectedBoard = selectedBoard;
+                            });
+                          }
                         });
-                      }
-                    });
-                  },
-                ),
-                if (_selectedBoard != null) SelectedBoardWidget(selectedBoard: _selectedBoard),
-              ],
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_selectedBoard != null)
+                    Card(
+                      margin: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: SelectedBoardWidget(selectedBoard: _selectedBoard),
+                      ),
+                    ),
+                ],
+              ),
+              isActive: _currentStep == 1,
             ),
-            isActive: _currentStep == 1,
-          ),
-          Step(
-            title: const Text('Save Selections'),
-            content: ElevatedButton(
-              onPressed: _saveSelections,
-              child: const Text('Save'),
+            Step(
+              title: const Text('Make Payment'),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: _navigateToPayment,
+                      icon: const Icon(Icons.payment),
+                      label: const Text('Proceed to Payment'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_isPaymentSuccessful)
+                    const Text(
+                      'Payment Successful!',
+                      style: TextStyle(color: Colors.green, fontSize: 16),
+                    ),
+                  if (!_isPaymentSuccessful && _currentStep > 2)
+                    const Text(
+                      'Payment Failed. Try Again.',
+                      style: TextStyle(color: Colors.red, fontSize: 16),
+                    ),
+                ],
+              ),
+              isActive: _currentStep == 2,
             ),
-            isActive: _currentStep == 2,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // Methods to handle steps
   void _onStepContinue() {
     setState(() {
-      if (_currentStep < 2) {
+      if (_currentStep < 3) {
         _currentStep++;
       }
     });
@@ -124,6 +183,39 @@ class _StepperScreenState extends State<StepperScreen> {
     }
   }
 
+  void _navigateToPayment() async {
+    if (_selectedBoard == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a board first.')),
+      );
+      return;
+    }
+
+    final paymentSuccess = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentScreen(
+          displayId: widget.display.displayId,
+          boardId: _selectedBoard!.boardId,
+          timeSlots: _selectedTimeSlots ?? [],
+          date: _selectedDate?.toIso8601String() ?? '',
+        ),
+      ),
+    );
+
+    setState(() {
+      _isPaymentSuccessful = paymentSuccess;
+    });
+
+    if (paymentSuccess) {
+      _saveSelections();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Payment failed. Please try again.')),
+      );
+    }
+  }
+
   void _saveSelections() async {
     if (_selectedBoard == null || _selectedTimeSlots == null || _selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -132,7 +224,6 @@ class _StepperScreenState extends State<StepperScreen> {
       return;
     }
 
-    // Prepare the time slots
     List<Map<String, String>> timeSlots = _selectedTimeSlots!.map((slot) {
       var times = slot.split(' - ');
       return {
@@ -143,7 +234,6 @@ class _StepperScreenState extends State<StepperScreen> {
     }).toList();
 
     try {
-      // Save the selections
       bool success = await DisplayService(context).saveBoardsWithTimeSlots(
         displayId: widget.display.displayId,
         boardIds: [_selectedBoard!.boardId],
@@ -152,16 +242,11 @@ class _StepperScreenState extends State<StepperScreen> {
       );
 
       if (success) {
-        setState(() {
-          _currentStep = 0;
-          _selectedBoard = null;
-          _selectedTimeSlots = null;
-          _selectedDate = null;
-        });
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Selected board and time slots saved successfully!')),
         );
+
+        Navigator.pop(context); // Navigate back to the parent screen
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to save selected board and time slots.')),

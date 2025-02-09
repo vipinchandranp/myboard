@@ -12,7 +12,7 @@ class MediaFileWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (mediaFile.mediaType == MediaType.image) {
       return ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(1)),
         child: Image.network(
           mediaFile.filename,
           // Assuming filename contains the URL for the image

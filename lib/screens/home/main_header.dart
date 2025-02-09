@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../themes/app_theme.dart';
 import '../notification/notification_icon.dart';
 import '../user/user_location.dart';
 
@@ -23,15 +24,15 @@ class _MainHeaderWidgetState extends State<MainHeaderWidget> {
               padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.teal.shade500, Colors.teal.shade300],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  colors: [Colors.black, Colors.black],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black26,
                     offset: Offset(0, 4),
-                    blurRadius: 8,
+                    blurRadius: 2,
                   ),
                 ],
               ),
@@ -41,16 +42,17 @@ class _MainHeaderWidgetState extends State<MainHeaderWidget> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset(
-                        'assets/myboard_logo_round.png',
-                        height: 60,
-                      ),
+                      SizedBox(height: 50)
                     ],
                   ),
                   // User location and notification icons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Image.asset(
+                        'assets/myboard_logo_round.png',
+                        height: 100,
+                      ),
                       Expanded(child: UserLocationWidget()),
                       const SizedBox(width: 16.0),
                       NotificationIconWidget(),

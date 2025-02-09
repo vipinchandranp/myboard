@@ -25,14 +25,6 @@ class FilterWidgetState extends State<FilterWidget> {
     };
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(() {
-      setState(() {});
-    });
-  }
-
   Future<void> _selectDateRange(BuildContext context) async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
@@ -75,17 +67,17 @@ class FilterWidgetState extends State<FilterWidget> {
           return CheckedPopupMenuItem<String>(
             value: status,
             checked: _statusFilters.contains(status),
-            child: Text(status, style: const TextStyle(fontSize: 14)),
+            child: Text(status, style: const TextStyle(fontSize: 12)),
           );
         }).toList();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12.0),
         ),
-        child: const Text('Select Status', style: TextStyle(fontSize: 14, color: Colors.black54)),
+        child: const Text('Status', style: TextStyle(fontSize: 12)),
       ),
     );
   }
@@ -93,98 +85,93 @@ class FilterWidgetState extends State<FilterWidget> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              ElevatedButton(
-                onPressed: () => widget.onApplyFilter(getFilterData()),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                ),
-                child: const Text('Apply Filter', style: TextStyle(fontSize: 14)),
+      padding: const EdgeInsets.all(12.0),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        controller: _scrollController,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: () => widget.onApplyFilter(getFilterData()),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
               ),
-              const SizedBox(width: 8.0),
-              ElevatedButton(
-                onPressed: _clearFilters,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                ),
-                child: const Text('Clear Filters', style: TextStyle(fontSize: 14)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12.0),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            controller: _scrollController,
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 180,
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      labelText: 'Search',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12.0),
-                _buildStatusDropdown(),
-                const SizedBox(width: 12.0),
-                GestureDetector(
-                  onTap: () => _selectDateRange(context),
-                  child: Container(
-                    width: 180,
-                    padding: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: Text(
-                      _dateRange == null
-                          ? 'Select Date Range'
-                          : '${_dateRange!.start.toLocal()} - ${_dateRange!.end.toLocal()}',
-                      style: const TextStyle(fontSize: 14, color: Colors.black54),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12.0),
-                Container(
-                  width: 140,
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: _sortBy,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _sortBy = newValue;
-                      });
-                    },
-                    hint: const Text('Sort By', style: TextStyle(fontSize: 14)),
-                    underline: const SizedBox(),
-                    items: ['Name', 'Date', 'Priority'].map((String sortBy) {
-                      return DropdownMenuItem<String>(
-                        value: sortBy,
-                        child: Text(sortBy, style: const TextStyle(fontSize: 14)),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
+              child: const Text('Apply Filter', style: TextStyle(fontSize: 12)),
             ),
-          ),
-        ],
+            const SizedBox(width: 8.0),
+            ElevatedButton(
+              onPressed: _clearFilters,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+              ),
+              child: const Text('Clear Filters', style: TextStyle(fontSize: 12)),
+            ),
+            const SizedBox(width: 20.0),
+            SizedBox(
+              width: 150,
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  labelText: 'Search',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+                ),
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+            const SizedBox(width: 10.0),
+            _buildStatusDropdown(),
+            const SizedBox(width: 10.0),
+            GestureDetector(
+              onTap: () => _selectDateRange(context),
+              child: Container(
+                width: 160,
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: Text(
+                  _dateRange == null
+                      ? 'Date Range'
+                      : '${_dateRange!.start.toLocal()} - ${_dateRange!.end.toLocal()}',
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10.0),
+            Container(
+              width: 120,
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: _sortBy,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _sortBy = newValue;
+                  });
+                },
+                hint: const Text('Sort By', style: TextStyle(fontSize: 12)),
+                underline: const SizedBox(),
+                items: ['Name', 'Date', 'Priority'].map((String sortBy) {
+                  return DropdownMenuItem<String>(
+                    value: sortBy,
+                    child: Text(sortBy, style: const TextStyle(fontSize: 12)),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

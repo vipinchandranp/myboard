@@ -4,7 +4,7 @@ import '../../repository/approval_repository.dart';
 
 class TimeslotCard extends StatefulWidget {
   final TimeslotStatusResponse timeslot;
-  final Function() onStatusChanged; // Callback to notify parent to reload data
+  final VoidCallback onStatusChanged;
 
   const TimeslotCard({
     Key? key,
@@ -13,24 +13,23 @@ class TimeslotCard extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _TimeslotCardState createState() => _TimeslotCardState();
+  State<TimeslotCard> createState() => _TimeslotCardState();
 }
 
 class _TimeslotCardState extends State<TimeslotCard> {
   late bool approvalStatus;
-  bool _isLoading = false; // Loading state
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // Initialize the approval status based on the timeslot's current status
     approvalStatus = widget.timeslot.status.toUpperCase() == 'APPROVED';
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -38,7 +37,7 @@ class _TimeslotCardState extends State<TimeslotCard> {
       child: ListTile(
         title: Text(
           widget.timeslot.boardName,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -47,26 +46,26 @@ class _TimeslotCardState extends State<TimeslotCard> {
             children: [
               Text(
                 widget.timeslot.displayName,
-                style: TextStyle(fontSize: 16),
-                overflow: TextOverflow.ellipsis, // Handle overflow
-                maxLines: 1, // Limit to 1 line
+                style: const TextStyle(fontSize: 16),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
               Row(
                 children: [
                   Icon(
                     _getStatusIcon(widget.timeslot.status),
                     size: 16,
-                    color: _getSwitchColor(widget.timeslot.status),
+                    color: _getStatusColor(widget.timeslot.status),
                   ),
-                  SizedBox(width: 5),
+                  const SizedBox(width: 5),
                   Expanded(
-                    // Wrap in Expanded to prevent overflow
                     child: Text(
                       'Status: ${widget.timeslot.status}',
                       style: TextStyle(
-                          fontSize: 14,
-                          color: _getSwitchColor(widget.timeslot.status)),
-                      overflow: TextOverflow.ellipsis, // Handle overflow
+                        fontSize: 14,
+                        color: _getStatusColor(widget.timeslot.status),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -78,76 +77,71 @@ class _TimeslotCardState extends State<TimeslotCard> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              formatDate(widget.timeslot.date),
-              style: TextStyle(color: Colors.grey),
+              _formatDate(widget.timeslot.date),
+              style: const TextStyle(color: Colors.grey),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             _isLoading
-                ? CircularProgressIndicator() // Show loading indicator
+                ? const CircularProgressIndicator()
                 : IconButton(
-                    icon: Icon(Icons.more_vert),
-                    onPressed: () {
-                      _showApprovalOptions(); // Show bottom sheet
-                    },
-                  ),
+              icon: const Icon(Icons.more_vert),
+              onPressed: _showApprovalOptions,
+            ),
           ],
         ),
       ),
     );
   }
 
-  // Method to get the icon based on the current status
   IconData _getStatusIcon(String status) {
     switch (status.toUpperCase()) {
       case 'APPROVED':
-        return Icons.check_circle; // Check icon for approved
+        return Icons.check_circle;
       case 'REJECTED':
-        return Icons.cancel; // Cancel icon for rejected
+        return Icons.cancel;
       case 'WAITING_FOR_APPROVAL':
-        return Icons.hourglass_empty; // Hourglass for waiting
+        return Icons.hourglass_empty;
       default:
-        return Icons.help; // Help icon for unknown status
+        return Icons.help;
     }
   }
 
-  // Method to get the switch color based on the current status
-  Color _getSwitchColor(String status) {
+  Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
       case 'APPROVED':
-        return Colors.green; // Green for approved
+        return Colors.green;
       case 'REJECTED':
-        return Colors.red; // Red for rejected
+        return Colors.red;
       case 'WAITING_FOR_APPROVAL':
-        return Colors.grey; // Grey for waiting
+        return Colors.grey;
       default:
-        return Colors.grey; // Default to grey if status is unknown
+        return Colors.grey;
     }
   }
 
-  // Method to show the approval options in a bottom sheet
   void _showApprovalOptions() {
     showModalBottomSheet(
       context: context,
       builder: (context) {
-        return Container(
-          padding: EdgeInsets.all(16.0),
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.check),
-                title: Text('Approve'),
+                leading: const Icon(Icons.check),
+                title: const Text('Approve'),
                 onTap: () {
                   _updateApprovalStatus('APPROVED');
-                  Navigator.of(context).pop(); // Close bottom sheet
+                  Navigator.of(context).pop();
                 },
               ),
               ListTile(
-                leading: Icon(Icons.cancel),
-                title: Text('Reject'),
+                leading: const Icon(Icons.cancel),
+                title: const Text('Reject'),
                 onTap: () {
                   _updateApprovalStatus('REJECTED');
-                  Navigator.of(context).pop(); // Close bottom sheet
+                  Navigator.of(context).pop();
                 },
               ),
             ],
@@ -157,23 +151,21 @@ class _TimeslotCardState extends State<TimeslotCard> {
     );
   }
 
-  // Helper method to format DateTime in a user-friendly format
-  String formatDate(DateTime date) {
-    return "${date.day}-${date.month}-${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
+  String _formatDate(DateTime date) {
+    return "${date.day}-${date.month}-${date.year} "
+        "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
   }
 
-  // Method to update the approval status in the backend
   Future<void> _updateApprovalStatus(String status) async {
     setState(() {
-      _isLoading = true; // Set loading state
+      _isLoading = true;
     });
 
     try {
-      bool success = await ApprovalService(context).updateTimeslotApproval(
-          widget.timeslot.timeslotId,
-          status == 'APPROVED'); // Convert to boolean
+      final success = await ApprovalService(context)
+          .updateTimeslotApproval(widget.timeslot.timeslotId, status == 'APPROVED');
+
       if (success) {
-        // Notify parent to reload data
         widget.onStatusChanged();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -182,26 +174,23 @@ class _TimeslotCardState extends State<TimeslotCard> {
           ),
         );
       } else {
-        // Handle failure
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update approval status.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showErrorSnackBar('Failed to update approval status.');
       }
     } catch (e) {
-      // Handle any other errors
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showErrorSnackBar('Error: $e');
     } finally {
       setState(() {
-        _isLoading = false; // Reset loading state
+        _isLoading = false;
       });
     }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 }

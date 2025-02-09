@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:myboard/screens/display/stepper_screen.dart'; // Import the new widget
+import 'package:myboard/screens/common/status/status_button.dart';
+import 'package:myboard/screens/display/stepper_screen.dart';
 import 'package:myboard/models/display/bdisplay.dart';
 import 'package:myboard/screens/display/media_carousel.dart';
-import 'package:myboard/screens/display/status_indicator.dart';
 import 'package:myboard/utils/utility.dart';
 import 'package:myboard/widgets/round_button.dart';
+import '../../utils/content_type.dart';
+import '../common/comments_interaction_widget.dart';
+import '../common/like_dislike_widget.dart';
+import '../common/show_ratings_star.dart';
 import '../qrcode/show_qr_code.dart';
 import 'associated_boards_screen.dart';
 import 'current_board_playing.dart';
@@ -16,6 +20,7 @@ class DisplayCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       elevation: 8,
@@ -27,22 +32,17 @@ class DisplayCardWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 12),
+          _buildHeader(theme, context),
           MediaCarouselWidget(display: display),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  display.displayName,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
                 const SizedBox(height: 6),
-                StatusIndicatorWidget(status: display.status),
+                // Status Button Integration
+                StatusButton(status: display.status),
+
                 const SizedBox(height: 6),
                 Text(
                   'Created on: ${Utility.formatDate(display.createdDateAndTime)}',
@@ -55,11 +55,11 @@ class DisplayCardWidget extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 16.0),
                     child: Text(
-                      'Price: ₹${display.price!.toStringAsFixed(2)} / hour', // Price display with Indian Rupee symbol
+                      'Price: ₹${display.price!.toStringAsFixed(2)} / hour',
                       style: const TextStyle(
-                        fontSize: 28, // Large font size for the price
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: Colors.green, // You can change the color to suit your theme
+                        color: Colors.green,
                       ),
                     ),
                   ),
@@ -72,7 +72,7 @@ class DisplayCardWidget extends StatelessWidget {
                   child: Text(
                     'Pin: ${display.displayPin}',
                     style: const TextStyle(
-                      fontSize: 32, // Large font size for the displayPin
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: Colors.blue,
                     ),
@@ -84,6 +84,26 @@ class DisplayCardWidget extends StatelessWidget {
                 // Board List Section
                 AssociatedBoardsScreen(displayId: display.displayId),
 
+
+                const SizedBox(height: 10),
+
+
+                ShowRatingStarsWidget(  // Display rating stars here
+                  contentId: display.displayId,
+                  contentType: MBContentType.DISPLAY,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Add Like and Dislike Buttons here
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    LikeDislikeWidget(
+                        contentId: display.displayId,
+                        contentType: MBContentType.DISPLAY),
+                  ],
+                ),
                 const SizedBox(height: 16),
 
                 // Horizontally scrollable buttons
@@ -135,6 +155,12 @@ class DisplayCardWidget extends StatelessWidget {
                           );
                         },
                       ),
+                      const SizedBox(width: 8),
+                      RoundedButton(
+                        icon: Icons.comment,
+                        label: 'Comments',
+                        onPressed: () => _showCommentsInteraction(context),
+                      ),
                     ],
                   ),
                 ),
@@ -143,6 +169,93 @@ class DisplayCardWidget extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeader(ThemeData theme, BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      color: theme.colorScheme.primary,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              display.displayName,
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onPrimary,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.more_vert, color: theme.colorScheme.onPrimary),
+            onPressed: () => _showBottomSheet(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.edit),
+                title: const Text('Edit'),
+                onTap: () {
+                  print("Edit pressed");
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete),
+                title: const Text('Delete'),
+                onTap: () {
+                  print("Delete pressed");
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.display_settings),
+                title: const Text('Select Display'),
+                onTap: () {
+                  print("Select Display pressed");
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showCommentsInteraction(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.5,
+          minChildSize: 0.3,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return CommentsInteractionWidget(
+              contentId: display.displayId,
+              contentType: MBContentType.DISPLAY,
+            );
+          },
+        );
+      },
     );
   }
 }

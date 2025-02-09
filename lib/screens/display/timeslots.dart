@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../repository/display_repository.dart';
-import '../board/view_boards.dart'; // Ensure this is your BoardService
+import '../board/view_boards.dart';
 
 class TimeSlotWidget extends StatefulWidget {
   final String displayId;
@@ -30,15 +30,15 @@ class _TimeSlotWidgetState extends State<TimeSlotWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Select Time Slots"),
         actions: [
           IconButton(
             icon: const Icon(Icons.close),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
+            onPressed: () => Navigator.of(context).pop(),
           ),
         ],
       ),
@@ -46,103 +46,11 @@ class _TimeSlotWidgetState extends State<TimeSlotWidget> {
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TableCalendar<DateTime>(
-                focusedDay: focusedDate,
-                firstDay: DateTime.now(),
-                lastDay: DateTime(2101),
-                selectedDayPredicate: (day) => isSameDay(selectedDate, day),
-                onDaySelected: (selectedDay, focusedDay) {
-                  setState(() {
-                    selectedDate = selectedDay;
-                    focusedDate = focusedDay;
-                    selectedSlots.clear();
-                    timeSlotsFuture = _fetchTimeSlots();
-                  });
-                },
-                calendarStyle: CalendarStyle(
-                  selectedDecoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    shape: BoxShape.rectangle,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  todayDecoration: BoxDecoration(
-                    color: Colors.orangeAccent,
-                    shape: BoxShape.rectangle,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  defaultDecoration: BoxDecoration(
-                    shape: BoxShape.rectangle,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  weekendDecoration: BoxDecoration(
-                    shape: BoxShape.rectangle,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
+              _buildCalendar(theme),
               const SizedBox(height: 16),
-              FutureBuilder<List<Map<String, dynamic>>?>(
-                future: timeSlotsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return _buildErrorDialog(
-                        "Failed to fetch time slots: ${snapshot.error}");
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return _buildErrorDialog(
-                        "No time slots available for this date.");
-                  }
-
-                  final timeSlots = snapshot.data!;
-
-                  return SizedBox(
-                    width: double.maxFinite,
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: timeSlots.length,
-                      itemBuilder: (context, index) {
-                        final timeSlot = timeSlots[index];
-                        final startTime = DateFormat.Hm()
-                            .format(DateTime.parse(timeSlot['startTime']));
-                        final endTime = DateFormat.Hm()
-                            .format(DateTime.parse(timeSlot['endTime']));
-                        final slotKey = '$startTime - $endTime';
-                        final isSelected = selectedSlots.contains(slotKey);
-
-                        Color tileColor;
-                        if (isSelected) {
-                          tileColor = Colors.lightBlue[100]!;
-                        } else if (timeSlot['status'] == 'AVAILABLE') {
-                          tileColor = Colors.green[100]!;
-                        } else {
-                          tileColor = Colors.red[100]!;
-                        }
-
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: ListTile(
-                            title: Text(slotKey),
-                            subtitle: Text('Status: ${timeSlot['status']}'),
-                            tileColor: tileColor,
-                            onTap: () {
-                              setState(() {
-                                if (isSelected) {
-                                  selectedSlots.remove(slotKey);
-                                } else {
-                                  selectedSlots.add(slotKey);
-                                }
-                              });
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
+              _buildTimeSlots(),
               const SizedBox(height: 16),
             ],
           ),
@@ -150,51 +58,138 @@ class _TimeSlotWidgetState extends State<TimeSlotWidget> {
       ),
       floatingActionButton: selectedSlots.isNotEmpty
           ? FloatingActionButton.extended(
-              onPressed: () async {
-                // Pass the selected date and slots back to the previous screen
-                final selectedData = {
-                  'displayId': widget.displayId,
-                  'selectedDate': selectedDate,
-                  'selectedSlots': selectedSlots.toList(),
-                };
-
-                // Return selected data and go back
-                Navigator.of(context).pop(selectedData);
-              },
-              label: const Text("Confirm timeslot"), // Updated label
-              icon: const Icon(Icons.check),
-              backgroundColor: Colors.blue,
-            )
+        onPressed: () => _onConfirm(),
+        label: const Text("Confirm Time Slot"),
+        icon: const Icon(Icons.check),
+        backgroundColor: theme.colorScheme.primary,
+      )
           : null,
+    );
+  }
+
+  Widget _buildCalendar(ThemeData theme) {
+    return TableCalendar<DateTime>(
+      focusedDay: focusedDate,
+      firstDay: DateTime.now(),
+      lastDay: DateTime(2101),
+      selectedDayPredicate: (day) => isSameDay(selectedDate, day),
+      onDaySelected: (selectedDay, focusedDay) {
+        setState(() {
+          selectedDate = selectedDay;
+          focusedDate = focusedDay;
+          selectedSlots.clear();
+          timeSlotsFuture = _fetchTimeSlots();
+        });
+      },
+      calendarStyle: CalendarStyle(
+        selectedDecoration: BoxDecoration(
+          color: theme.colorScheme.primary,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        todayDecoration: BoxDecoration(
+          color: theme.colorScheme.secondary,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        defaultDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        weekendDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeSlots() {
+    return FutureBuilder<List<Map<String, dynamic>>?>(
+      future: timeSlotsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return _buildErrorMessage("Failed to fetch time slots: ${snapshot.error}");
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return _buildErrorMessage("No time slots available for this date.");
+        }
+
+        final timeSlots = snapshot.data!;
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: timeSlots.length,
+          itemBuilder: (context, index) {
+            return _buildTimeSlotCard(timeSlots[index]);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildTimeSlotCard(Map<String, dynamic> timeSlot) {
+    final theme = Theme.of(context);
+    final startTime = DateFormat.Hm().format(DateTime.parse(timeSlot['startTime']));
+    final endTime = DateFormat.Hm().format(DateTime.parse(timeSlot['endTime']));
+    final slotKey = '$startTime - $endTime';
+    final isSelected = selectedSlots.contains(slotKey);
+
+    final tileColor = isSelected
+        ? theme.colorScheme.primary.withOpacity(0.2)
+        : (timeSlot['status'] == 'AVAILABLE'
+        ? Colors.green[100]
+        : Colors.red[100]);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ListTile(
+        title: Text(
+          slotKey,
+          style: TextStyle(
+            color: isSelected ? theme.colorScheme.primary : Colors.black,
+          ),
+        ),
+        subtitle: Text('Status: ${timeSlot['status']}'),
+        tileColor: tileColor,
+        onTap: () {
+          setState(() {
+            if (isSelected) {
+              selectedSlots.remove(slotKey);
+            } else if (timeSlot['status'] == 'AVAILABLE') {
+              selectedSlots.add(slotKey);
+            }
+          });
+        },
+      ),
     );
   }
 
   Future<List<Map<String, dynamic>>?> _fetchTimeSlots() async {
     final displayService = DisplayService(context);
     try {
-      final timeSlots =
-          await displayService.getTimeSlots(widget.displayId, selectedDate);
-      return timeSlots;
+      return await displayService.getTimeSlots(widget.displayId, selectedDate);
     } catch (e) {
       return null;
     }
   }
 
-  Widget _buildErrorDialog(String message) {
-    return Container(
-      margin: const EdgeInsets.only(top: 10),
-      child: AlertDialog(
-        title: const Text("Error"),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text("Close"),
-          ),
-        ],
+  Widget _buildErrorMessage(String message) {
+    return Center(
+      child: Text(
+        message,
+        style: TextStyle(
+          color: Colors.grey[600],
+          fontSize: 16,
+        ),
+        textAlign: TextAlign.center,
       ),
     );
+  }
+
+  void _onConfirm() {
+    final selectedData = {
+      'displayId': widget.displayId,
+      'selectedDate': selectedDate,
+      'selectedSlots': selectedSlots.toList(),
+    };
+    Navigator.of(context).pop(selectedData);
   }
 }

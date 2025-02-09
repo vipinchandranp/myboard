@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:myboard/screens/common/filter/filter_data.dart';
 import '../models/board/board.dart';
+import '../models/common/comment.dart';
 import 'base_repository.dart';
 
 class BoardService extends BaseRepository {
@@ -171,4 +172,175 @@ class BoardService extends BaseRepository {
       return null;
     }
   }
+
+  // Adds a rating to a board
+  Future<String?> addRating(String boardId, double ratingValue) async {
+    try {
+      final request = http.Request(
+        'POST',
+        Uri.parse('$apiUrl/board/$boardId/rating?rating=$ratingValue'), // Updated URL to use displayId
+      )
+        ..headers['Content-Type'] = 'application/json';
+
+      final response = await client.send(request);
+
+      if (response.statusCode == 200) {
+        return 'Rating added successfully';
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error adding rating: $e');
+      return null;
+    }
+  }
+
+
+
+  // Method to get the rating of a board by its ID
+  Future<double?> getBoardRating(String boardId) async {
+    try {
+      // Send GET request to fetch rating for the board with given boardId
+      final response = await client.get(
+        Uri.parse('$apiUrl/board/$boardId/rating'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        // Assuming the response contains the rating directly as a double
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+        final double rating = responseBody['data'];
+        return rating;
+      } else {
+        handleError(response);
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching board rating: $e');
+      return null;
+    }
+  }
+
+  // Adds a comment to a board
+  Future<String?> addComment(String boardId, String commentText) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$apiUrl/board/$boardId/comment'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'commentText': commentText}),
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body)['message'];
+      } else {
+        handleError(response);
+        return null;
+      }
+    } catch (e) {
+      print('Error adding comment: $e');
+      return null;
+    }
+  }
+
+  Future<List<Comment>?> getComments(String boardId) async {
+    try {
+      final response = await client.get(
+        Uri.parse('$apiUrl/board/$boardId/comments'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> responseBody = json.decode(response.body)['data'];
+        return responseBody.map((commentJson) => Comment.fromJson(commentJson)).toList();
+      } else {
+        handleError(response);
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching comments for display: $e');
+      return null;
+    }
+  }
+
+
+
+  // Method to add a like to a display
+  Future<bool> likeBoard(String boardId) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$apiUrl/board/like/$boardId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        handleError(response);
+        return false;
+      }
+    } catch (e) {
+      print('Error liking board: $e');
+      return false;
+    }
+  }
+
+  // Method to add a dislike to a display
+  Future<bool> dislikeBoard(String boardId) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$apiUrl/board/dislike/$boardId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        handleError(response);
+        return false;
+      }
+    } catch (e) {
+      print('Error disliking board: $e');
+      return false;
+    }
+  }
+
+  // Undoes like for a display
+  Future<bool> undoLikeBoard(String boardId) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$apiUrl/board/undo-like/$boardId'),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        handleError(response);
+        return false;
+      }
+    } catch (e) {
+      print('Error undoing like for display: $e');
+      return false;
+    }
+  }
+
+  // Undoes dislike for a display
+  Future<bool> undoDislikeBoard(String boardId) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$apiUrl/board/undo-dislike/$boardId'),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        handleError(response);
+        return false;
+      }
+    } catch (e) {
+      print('Error undoing dislike for display: $e');
+      return false;
+    }
+  }
+
+
 }

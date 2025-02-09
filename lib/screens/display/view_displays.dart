@@ -78,7 +78,7 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Displays'),
-        backgroundColor: Theme.of(context).cardColor,
+        backgroundColor: Theme.of(context).primaryColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -92,8 +92,7 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
       body: SingleChildScrollView(
         // Wrap the entire body with SingleChildScrollView
         child: Container(
-          color: AppTheme.lightTheme.scaffoldBackgroundColor,
-          // Set the background color
+          color: AppTheme.lightTheme.scaffoldBackgroundColor, // Apply the theme color
           child: Column(
             children: [
               // Collapsible "Book Display" Stepper section using ExpansionTile
@@ -152,8 +151,8 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Shimmer.fromColors(
-            baseColor: Colors.grey[300]!,
-            highlightColor: Colors.grey[100]!,
+            baseColor: AppTheme.shimmerBaseColor, // Use shimmer base color from AppTheme
+            highlightColor: AppTheme.shimmerHighlightColor, // Use shimmer highlight color from AppTheme
             child: Container(
               height: 120.0, // Adjust this height to match your card size
               padding: const EdgeInsets.all(10.0),
@@ -213,7 +212,7 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
         );
       },
       separatorBuilder: (context, index) => Divider(
-        color: Colors.grey, // You can adjust the color of the divider
+        color: AppTheme.secondaryColor, // Use secondary color from AppTheme
         thickness: 1, // Adjust the thickness of the divider
       ),
     );

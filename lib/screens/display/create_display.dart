@@ -2,11 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:video_player/video_player.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:myboard/screens/display/select_display_location.dart';
+
 import '../../api_models/display_save.dart';
-import '../../models/common/media_type.dart';
-import '../../models/display/display_media_file.dart';
 import '../../repository/display_repository.dart';
 
 class CreateDisplayWidget extends StatefulWidget {
@@ -16,31 +15,13 @@ class CreateDisplayWidget extends StatefulWidget {
 
 class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
   final ImagePicker _picker = ImagePicker();
-  final ScrollController _scrollController = ScrollController();
   final TextEditingController _displayNameController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   List<File> _mediaFiles = [];
-  List<VideoPlayerController> _videoControllers = [];
-  bool _isUploading = false;
-  String _displayName = "";
-  double _pricePerHour = 0.0;
-  LatLng _selectedLocation = LatLng(12.9716, 77.5946); // Default to Bangalore
   String? _selectedAddress;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchAddress(_selectedLocation);
-  }
-
-  @override
-  void dispose() {
-    for (var controller in _videoControllers) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
+  LatLng _selectedLocation = LatLng(12.9716, 77.5946); // Default to Bangalore
+  bool _isUploading = false;
 
   Future<void> _fetchAddress(LatLng location) async {
     try {
@@ -56,18 +37,36 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
         });
       }
     } catch (e) {
-      print('Error fetching address: $e');
       setState(() {
         _selectedAddress = 'Address not found';
       });
     }
   }
 
+  Future<void> _navigateToMap(BuildContext context) async {
+    final LatLng? result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectLocationWidget(
+          initialLocation: _selectedLocation,
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedLocation = result;
+      });
+      _fetchAddress(result);
+    }
+  }
+
   Future<void> _pickMedia() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile =
+    await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _mediaFiles.add(File(pickedFile.path)); // Add the file correctly
+        _mediaFiles.add(File(pickedFile.path));
       });
     }
   }
@@ -82,7 +81,7 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.file(
-                file, // Directly use the File object
+                file,
                 width: 100,
                 height: 100,
                 fit: BoxFit.cover,
@@ -106,102 +105,44 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
     );
   }
 
-  Widget _buildMapWidget() {
-    return Expanded(
-      child: Stack(
-        children: [
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: _selectedLocation,
-              zoom: 12,
-            ),
-            markers: {
-              Marker(
-                markerId: MarkerId('selected-location'),
-                position: _selectedLocation,
-                draggable: true,
-                onDragEnd: (LatLng newPosition) {
-                  setState(() {
-                    _selectedLocation = newPosition;
-                  });
-                  _fetchAddress(newPosition);
-                },
-              ),
-            },
-            onCameraMove: (CameraPosition position) {
-              setState(() {
-                _selectedLocation = position.target;
-              });
-            },
-            onCameraIdle: () {
-              _fetchAddress(_selectedLocation);
-            },
-          ),
-          if (_selectedAddress != null)
-            Positioned(
-              bottom: 16,
-              left: 16,
-              right: 16,
-              child: Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  'Selected Address: $_selectedAddress',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _saveDisplay() async {
-    // Check form state before proceeding
     if (_formKey.currentState == null || !_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please fill all required fields.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please fill all required fields.')));
       return;
     }
 
-    // If form is valid, proceed to save
     setState(() {
       _isUploading = true;
     });
 
     try {
-      // Gather the display details into a SaveDisplay object
       SaveDisplay saveDisplay = SaveDisplay(
-        displayName: _displayNameController.text, // Ensure you're using the controller's text directly
-        price: double.tryParse(_priceController.text) ?? 0.0, // Same for price
+        displayName: _displayNameController.text.trim(),
+        price: double.parse(_priceController.text.trim()),
         latitude: _selectedLocation.latitude,
         longitude: _selectedLocation.longitude,
-        files: _mediaFiles, // Assuming _mediaFiles is a list of File objects
+        files: _mediaFiles,
       );
 
-      // Call the SaveDisplayService to save the display
       var response = await DisplayService(context).saveDisplay(saveDisplay);
-      if (response != null ) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response)));
+      if (response != null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(response)));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save display.')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed to save display.')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving display: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error saving display: $e')));
     } finally {
       setState(() {
         _isUploading = false;
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -209,12 +150,11 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
         title: Text('Create Display'),
         backgroundColor: Theme.of(context).primaryColor,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          child: Form(  // Wrap the form fields inside Form
-            key: _formKey, // Use the form key here
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -223,19 +163,12 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
                   decoration: InputDecoration(
                     labelText: 'Display Name',
                     border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Colors.white,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a display name';
                     }
                     return null;
-                  },
-                  onChanged: (value) {
-                    setState(() {
-                      _displayName = value;
-                    });
                   },
                 ),
                 SizedBox(height: 16),
@@ -244,8 +177,6 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
                   decoration: InputDecoration(
                     labelText: 'Price per Hour (in Rupees)',
                     border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Colors.white,
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
@@ -257,16 +188,29 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
                     }
                     return null;
                   },
-                  onChanged: (value) {
-                    setState(() {
-                      _pricePerHour = double.tryParse(value) ?? 0.0;
-                    });
-                  },
                 ),
                 SizedBox(height: 16),
-                Container(
-                  height: 300,
-                  child: _buildMapWidget(),
+                GestureDetector(
+                  onTap: () => _navigateToMap(context),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.location_on, color: Colors.red),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _selectedAddress ?? 'Select Location',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 SizedBox(height: 16),
                 ElevatedButton.icon(
@@ -278,8 +222,10 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
                 _buildMediaPreview(),
                 SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: _saveDisplay,
-                  child: Text('Save Display'),
+                  onPressed: _isUploading ? null : _saveDisplay,
+                  child: Text(
+                    _isUploading ? 'Saving...' : 'Save Display',
+                  ),
                 ),
               ],
             ),

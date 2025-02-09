@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../api_models/display_save.dart';
+import '../models/common/comment.dart';
 import '../models/display/bdisplay.dart';
 import '../models/display/currently_playing_boards_response.dart';
 import '../models/display/display_geotag_request.dart';
@@ -11,6 +12,7 @@ import 'base_repository.dart';
 
 class DisplayService extends BaseRepository {
   DisplayService(BuildContext context) : super(context);
+
 // Saves a new display with the given media file and display name
   Future<String?> saveDisplay(SaveDisplay saveDisplay) async {
     try {
@@ -32,7 +34,8 @@ class DisplayService extends BaseRepository {
 
       // Add multiple files
       for (var file in saveDisplay.files) {
-        request.files.add(await http.MultipartFile.fromPath('files', file.path));
+        request.files
+            .add(await http.MultipartFile.fromPath('files', file.path));
       }
 
       // Send the request and get the streamed response
@@ -41,7 +44,6 @@ class DisplayService extends BaseRepository {
       // Convert the streamed response to a regular response
       final response = await http.Response.fromStream(streamedResponse);
       String data = extractDataFromResponseBody(response);
-
 
       if (response.statusCode == 200) {
         // Assuming the response body contains the displayId directly
@@ -55,7 +57,6 @@ class DisplayService extends BaseRepository {
       return null;
     }
   }
-
 
   // Adds media to an existing display
   Future<String?> addDisplayMedia(String displayId, File file) async {
@@ -407,6 +408,172 @@ class DisplayService extends BaseRepository {
     } catch (e) {
       print('Error fetching currently playing boards: $e');
       return null;
+    }
+  }
+
+  Future<String?> addRating(String displayId, double ratingValue) async {
+    try {
+      final request = http.Request(
+        'POST',
+        Uri.parse('$apiUrl/display/$displayId/rating?rating=$ratingValue'), // Updated URL to use displayId
+      )
+        ..headers['Content-Type'] = 'application/json';
+
+      final response = await client.send(request);
+
+      if (response.statusCode == 200) {
+        return 'Rating added successfully';
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Error adding rating: $e');
+      return null;
+    }
+  }
+
+  // Method to get the rating of a display by its ID
+  Future<double?> getDisplayRating(String displayId) async {
+    try {
+      // Send GET request to fetch rating for the display with given displayId
+      final response = await client.get(
+        Uri.parse('$apiUrl/display/$displayId/rating'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        // Assuming the response contains the rating directly as a double
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+        final double rating = responseBody['data'];
+        return rating;
+      } else {
+        handleError(response);
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching display rating: $e');
+      return null;
+    }
+  }
+
+
+
+  Future<String?> addComment(String displayId, String commentText) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$apiUrl/display/$displayId/comment'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'commentText': commentText,
+          // Send the commentText in the request body
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Assuming the response contains a success message or data
+        return 'Comment added successfully';
+      } else {
+        handleError(response); // Handle the error if the response is not 200
+        return null;
+      }
+    } catch (e) {
+      print('Error adding comment: $e');
+      return null;
+    }
+  }
+
+  Future<List<Comment>?> getComments(String displayId) async {
+    try {
+      final response = await client.get(
+        Uri.parse('$apiUrl/display/$displayId/comments'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> responseBody = json.decode(response.body)['data'];
+        return responseBody
+            .map((commentJson) => Comment.fromJson(commentJson))
+            .toList();
+      } else {
+        handleError(response);
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching comments for display: $e');
+      return null;
+    }
+  }
+
+  // Method to add a like to a display
+  Future<bool> likeDisplay(String displayId) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$apiUrl/display/like/$displayId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        handleError(response);
+        return false;
+      }
+    } catch (e) {
+      print('Error liking display: $e');
+      return false;
+    }
+  }
+
+  // Method to add a dislike to a display
+  Future<bool> dislikeDisplay(String displayId) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$apiUrl/display/dislike/$displayId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        handleError(response);
+        return false;
+      }
+    } catch (e) {
+      print('Error disliking display: $e');
+      return false;
+    }
+  }
+
+// Undoes like for a display
+  Future<bool> undoLikeDisplay(String displayId) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$apiUrl/display/undo-like/$displayId'),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        handleError(response);
+        return false;
+      }
+    } catch (e) {
+      print('Error undoing like for display: $e');
+      return false;
+    }
+  }
+
+  // Undoes dislike for a display
+  Future<bool> undoDislikeDisplay(String displayId) async {
+    try {
+      final response = await client.post(
+        Uri.parse('$apiUrl/display/undo-dislike/$displayId'),
+      );
+
+      return false;
+    } catch (e) {
+      print('Error undoing dislike for display: $e');
+      return false;
     }
   }
 }
