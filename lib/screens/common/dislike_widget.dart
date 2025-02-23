@@ -18,28 +18,54 @@ class DislikeWidget extends StatefulWidget {
 
 class _DislikeWidgetState extends State<DislikeWidget> {
   bool _isDisliked = false;
+  int _dislikesCount = 0; // Holds the number of dislikes
 
-  // Toggle dislike functionality
+  @override
+  void initState() {
+    super.initState();
+    _loadDislikesCount();
+  }
+
+  // Load the current number of dislikes for the content
+  Future<void> _loadDislikesCount() async {
+    try {
+      if (widget.contentType == MBContentType.DISPLAY) {
+        final count = await DisplayService(context).getNumberOfDisLikes(widget.contentId);
+        setState(() {
+          _dislikesCount = count ?? 0;
+        });
+      } else if (widget.contentType == MBContentType.BOARD) {
+        final count = await BoardService(context).getNumberOfDisLikes(widget.contentId);
+        setState(() {
+          _dislikesCount = count ?? 0;
+        });
+      }
+    } catch (e) {
+      print("Error loading dislikes count: $e");
+    }
+  }
+
+  // Toggle dislike status and update the dislikes count
   Future<void> _toggleDislike() async {
     try {
       if (widget.contentType == MBContentType.DISPLAY) {
         if (_isDisliked) {
-          // Undo dislike for display
           final success = await DisplayService(context).undoDislikeDisplay(widget.contentId);
-          if (success != null) {
+          if (success) {
             setState(() {
               _isDisliked = false;
+              _dislikesCount = (_dislikesCount > 0) ? _dislikesCount - 1 : 0;
             });
             print("Dislike undone for display ${widget.contentId}.");
           } else {
             print("Failed to undo dislike for display ${widget.contentId}.");
           }
         } else {
-          // Dislike display
           final success = await DisplayService(context).dislikeDisplay(widget.contentId);
-          if (success != null) {
+          if (success) {
             setState(() {
               _isDisliked = true;
+              _dislikesCount++;
             });
             print("Display ${widget.contentId} has been disliked.");
           } else {
@@ -47,27 +73,49 @@ class _DislikeWidgetState extends State<DislikeWidget> {
           }
         }
       } else if (widget.contentType == MBContentType.BOARD) {
-        // Add logic for board dislike or undo dislike if needed
+        // Add board logic if needed
         print("Board functionality not yet implemented.");
       }
     } catch (e) {
-      print('Error toggling dislike: $e');
+      print("Error toggling dislike: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Text("Dislike this content:", style: TextStyle(fontSize: 16)),
-        IconButton(
-          icon: Icon(
-            _isDisliked ? Icons.thumb_down : Icons.thumb_down_off_alt,
-            color: _isDisliked ? Colors.red : Colors.grey,
-          ),
-          onPressed: _toggleDislike, // Toggle dislike on press
+        // Stack used to overlay the badge on the dislike icon
+        Stack(
+          children: [
+            IconButton(
+              icon: Icon(
+                _isDisliked ? Icons.thumb_down : Icons.thumb_down_off_alt,
+                color: _isDisliked ? Colors.red : Colors.grey,
+              ),
+              onPressed: _toggleDislike,
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              child: _dislikesCount > 0
+                  ? Container(
+                padding: EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '$_dislikesCount',
+                  style: TextStyle(color: Colors.white, fontSize: 10),
+                ),
+              )
+                  : SizedBox.shrink(),
+            ),
+          ],
         ),
+        SizedBox(width: 8),
+        Text("Dislike")
       ],
     );
   }

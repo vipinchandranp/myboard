@@ -12,7 +12,6 @@ import 'base_repository.dart';
 
 class DisplayService extends BaseRepository {
   DisplayService(BuildContext context) : super(context);
-
 // Saves a new display with the given media file and display name
   Future<String?> saveDisplay(SaveDisplay saveDisplay) async {
     try {
@@ -34,14 +33,14 @@ class DisplayService extends BaseRepository {
 
       // Add multiple files
       for (var file in saveDisplay.files) {
-        request.files
-            .add(await http.MultipartFile.fromPath('files', file.path));
+        request.files.add(
+            await http.MultipartFile.fromPath('files', file.path));
       }
 
-      // Send the request and get the streamed response
+      // Send the request using the inherited client
       final streamedResponse = await client.send(request);
 
-      // Convert the streamed response to a regular response
+      // Convert the streamed response to a regular response using http.Response.fromStream
       final response = await http.Response.fromStream(streamedResponse);
       String data = extractDataFromResponseBody(response);
 
@@ -272,42 +271,31 @@ class DisplayService extends BaseRepository {
   }
 
   Future<bool> saveBoardsWithTimeSlots({
-    required String displayId, // The display ID
-    required List<String> boardIds, // List of selected board IDs
-    required DateTime date, // Selected date
-    required List<Map<String, String>> timeSlots, // List of selected time slots
+    required String displayId,
+    required List<String> boardIds,
+    required DateTime date,
+    required List<Map<String, String>> timeSlots,
+    required String transactionId, // Add transactionId parameter
   }) async {
     try {
-      // Format the DateTime to ISO 8601 format for LocalDateTime in Java
-      String formattedDate =
-          date.toIso8601String(); // e.g., '2024-10-02T00:00:00'
-
-      // Prepare the request body
-      Map<String, dynamic> requestBody = {
-        'displayId': displayId,
-        'boardIds': boardIds, // Use board IDs directly
-        'date': formattedDate, // ISO 8601 formatted date
-        'timeslots': timeSlots,
-      };
-
-      // Send PUT request to save boards with time slots
-      final response = await client.put(
-        Uri.parse('$apiUrl/display/update/time-slots'),
+      final response = await http.post(
+        Uri.parse('$apiUrl/displays/$displayId/save'),
+        body: jsonEncode({
+          'boardIds': boardIds,
+          'date': date.toIso8601String(),
+          'timeSlots': timeSlots,
+          'transactionId': transactionId, // Include transactionId in the request
+        }),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(requestBody),
       );
 
-      print('Request body: ${jsonEncode(requestBody)}');
-
       if (response.statusCode == 200) {
-        print('Successfully saved boards with time slots.');
-        return true; // Successfully saved
+        return true;
       } else {
-        handleError(response); // Handle error response
-        return false; // Failed to save
+        throw Exception('Failed to save data: ${response.body}');
       }
     } catch (e) {
-      print('Error saving boards with time slots: $e');
+      debugPrint('Error in saveBoardsWithTimeSlots: $e');
       return false;
     }
   }
@@ -576,4 +564,50 @@ class DisplayService extends BaseRepository {
       return false;
     }
   }
+
+  Future<int?> getNumberOfLikes(String displayId) async {
+    try {
+      final response = await client.get(
+        Uri.parse('$apiUrl/display/$displayId/likes'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+        // Assuming the display details include a 'likes' field in the 'data' section
+        final int likes = responseBody['data']?? 0;
+        return likes;
+      } else {
+        handleError(response);
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching number of likes: $e');
+      return null;
+    }
+  }
+
+  Future<int?> getNumberOfDisLikes(String displayId) async {
+    try {
+      final response = await client.get(
+        Uri.parse('$apiUrl/display/$displayId/dislikes'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+        // Assuming the display details include a 'likes' field in the 'data' section
+        final int likes = responseBody['data']?? 0;
+        return likes;
+      } else {
+        handleError(response);
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching number of likes: $e');
+      return null;
+    }
+  }
+
+
 }

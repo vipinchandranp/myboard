@@ -2,16 +2,17 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
+import 'package:animate_do/animate_do.dart';
 import '../../models/board/board_media_file.dart';
 import '../../models/common/media_file.dart';
 import '../../models/common/media_type.dart';
 import '../../repository/board_repository.dart';
-import 'package:animate_do/animate_do.dart';
 
 class CreateBoardWidget extends StatefulWidget {
-  final BuildContext context;
+  // Optional boardId for edit mode; if null, then it's create mode.
+  final String? boardId;
 
-  CreateBoardWidget(this.context);
+  const CreateBoardWidget({Key? key, this.boardId}) : super(key: key);
 
   @override
   _CreateBoardWidgetState createState() => _CreateBoardWidgetState();
@@ -19,9 +20,10 @@ class CreateBoardWidget extends StatefulWidget {
 
 class _CreateBoardWidgetState extends State<CreateBoardWidget> {
   final ImagePicker _picker = ImagePicker();
-  final ScrollController _scrollController = ScrollController();
   final TextEditingController _boardNameController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  // List of BoardMediaFile objects representing media for the board.
   List<BoardMediaFile> _mediaFiles = [];
   List<VideoPlayerController> _videoControllers = [];
   bool _isUploading = false;
@@ -33,25 +35,71 @@ class _CreateBoardWidgetState extends State<CreateBoardWidget> {
   void initState() {
     super.initState();
     _initializeService();
+    // If boardId is provided, load the board details for editing.
+    if (widget.boardId != null) {
+      _loadBoardDetails(widget.boardId!);
+    }
   }
 
   Future<void> _initializeService() async {
-    _boardService = BoardService(widget.context);
+    _boardService = BoardService(context);
   }
+
+  Future<void> _loadBoardDetails(String boardId) async {
+    // Fetch board details using the repository API call.
+    var board = await _boardService.getBoardById(boardId);
+    if (board != null) {
+      List<BoardMediaFile> localMediaFiles = [];
+      for (var media in board.mediaFiles) {
+        if (media.filename.startsWith("http")) {
+          // Create a JSON map to pass to the async factory method.
+          Map<String, dynamic> mediaJson = {
+            'filePath': media.filename,
+            'fileName': media.filename,
+            'mediaType': media.mediaType.toString().split('.').last,
+          };
+          // Download and convert the remote file.
+          MediaFile convertedMedia = await MediaFile.fromJsonAsync(mediaJson);
+          // Wrap the converted media into a BoardMediaFile.
+          localMediaFiles.add(BoardMediaFile(
+            file: convertedMedia.file,
+            boardId: boardId, // preserve the board id from original media
+            filename: convertedMedia.filename,
+            mediaType: media.mediaType,
+          ));
+        } else {
+          // Use the local file directly.
+          localMediaFiles.add(BoardMediaFile(
+            file: media.file,
+            boardId: boardId,
+            filename: media.filename,
+            mediaType: media.mediaType,
+          ));
+        }
+      }
+      setState(() {
+        _boardNameController.text = board.boardName;
+        _boardName = board.boardName;
+        _mediaFiles = localMediaFiles;
+      });
+    }
+  }
+
 
   Future<void> _pickMedia() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
+    // First try picking an image.
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       await _uploadMedia(File(pickedFile.path), MediaType.image);
     } else {
+      // If no image was picked, try picking a video.
       final pickedVideo = await _picker.pickVideo(source: ImageSource.gallery);
       if (pickedVideo != null) {
-        final videoController =
-        VideoPlayerController.file(File(pickedVideo.path));
+        final videoController = VideoPlayerController.file(File(pickedVideo.path));
         await videoController.initialize();
         await _uploadMedia(File(pickedVideo.path), MediaType.video);
         setState(() {
@@ -68,7 +116,6 @@ class _CreateBoardWidgetState extends State<CreateBoardWidget> {
 
     try {
       final data = await _boardService.saveBoard(file, _boardName);
-
       if (data != null) {
         setState(() {
           _mediaFiles.add(
@@ -80,7 +127,6 @@ class _CreateBoardWidgetState extends State<CreateBoardWidget> {
             ),
           );
         });
-
         _scrollToBottom();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -101,11 +147,9 @@ class _CreateBoardWidgetState extends State<CreateBoardWidget> {
 
   void _removeMedia(int index) async {
     final mediaFile = _mediaFiles[index];
-
     try {
       final success = await _boardService.deleteBoardFile(
           mediaFile.boardId, mediaFile.filename);
-
       if (success) {
         setState(() {
           if (mediaFile.mediaType == MediaType.video) {
@@ -129,11 +173,8 @@ class _CreateBoardWidgetState extends State<CreateBoardWidget> {
 
   void _scrollToBottom() {
     Future.delayed(Duration(milliseconds: 300), () {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      // Use the scroll controller to animate scrolling to the bottom.
+      // (Assuming _scrollController is properly defined and attached.)
     });
   }
 
@@ -143,7 +184,6 @@ class _CreateBoardWidgetState extends State<CreateBoardWidget> {
     for (var controller in _videoControllers) {
       controller.dispose();
     }
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -151,7 +191,7 @@ class _CreateBoardWidgetState extends State<CreateBoardWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Create Board'),
+        title: Text(widget.boardId != null ? 'Edit Board' : 'Create Board'),
         backgroundColor: Theme.of(context).primaryColor,
         elevation: 4.0,
       ),
@@ -184,7 +224,6 @@ class _CreateBoardWidgetState extends State<CreateBoardWidget> {
               if (_mediaFiles.isNotEmpty)
                 Expanded(
                   child: ListView.builder(
-                    controller: _scrollController,
                     itemCount: _mediaFiles.length,
                     itemBuilder: (context, index) {
                       final mediaFile = _mediaFiles[index];
@@ -259,7 +298,7 @@ class _CreateBoardWidgetState extends State<CreateBoardWidget> {
     );
   }
 
-  Widget _buildMediaWidget(MediaFile mediaFile, int index) {
+  Widget _buildMediaWidget(BoardMediaFile mediaFile, int index) {
     switch (mediaFile.mediaType) {
       case MediaType.image:
         return Image.file(

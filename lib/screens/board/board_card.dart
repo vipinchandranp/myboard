@@ -3,14 +3,14 @@ import '../../models/board/board.dart';
 import '../../themes/app_theme.dart';
 import '../../utils/content_type.dart';
 import '../../widgets/round_button.dart';
-import '../common/AddRatingWidget.dart';
 import '../common/comments_interaction_widget.dart';
 import '../common/like_dislike_widget.dart';
-import '../common/show_ratings_star.dart'; // Importing the ShowRatingStarsWidget
+import '../common/show_ratings_star.dart';
 import '../common/status/status_button.dart';
 import '../widgets/media_file_widget.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../utils/utility.dart';
+import 'create_board.dart';
 
 class BoardCardWidget extends StatefulWidget {
   final Board board;
@@ -89,6 +89,10 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
                   LikeDislikeWidget(
                     contentId: widget.board.boardId,
                     contentType: MBContentType.BOARD,
+                    initialLikes: widget.board.numberOfLikes,
+                    initialDislikes: widget.board.numberOfDislikes,
+                    initiallyLiked: widget.board.likedByCurrentUser,
+                    initiallyDisliked: widget.board.dislikedByCurrentUser,
                   )
                 ],
               ),
@@ -179,8 +183,8 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         RoundedButton(
-          icon: Icons.comment,
-          label: 'Comments',
+          icon: Icons.reviews,
+          label: 'reviews',
           onPressed: () => _showCommentsInteraction(context),
         ),
       ],
@@ -190,42 +194,54 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
   void _showBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
+      ),
       builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('Edit'),
-                onTap: () {
-                  print("Edit pressed");
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete),
-                title: const Text('Delete'),
-                onTap: () {
-                  print("Delete pressed");
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.display_settings),
-                title: const Text('Select Display'),
-                onTap: () {
-                  print("Select Display pressed");
-                  Navigator.pop(context);
-                },
-              ),
-            ],
+        return SafeArea(
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            child: Wrap(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.edit),
+                  title: const Text('Edit'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navigate to CreateBoardWidget in edit mode by passing the boardId
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            CreateBoardWidget(boardId: widget.board.boardId),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete),
+                  title: const Text('Delete'),
+                  onTap: () {
+                    print("Delete pressed");
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.display_settings),
+                  title: const Text('Select Display'),
+                  onTap: () {
+                    print("Select Display pressed");
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
     );
   }
+
 
   void _showCommentsInteraction(BuildContext context) {
     showModalBottomSheet(

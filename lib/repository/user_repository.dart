@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import '../api_models/user_cities_response.dart';
 import '../api_models/user_details_request.dart';
+import '../api_models/user_details_response.dart';
 import '../repository/base_repository.dart';
 import '../api_models/user_signup_request.dart';
 import '../api_models/user_login_request.dart';
@@ -49,9 +50,9 @@ class UserService extends BaseRepository {
 
   Future<void> saveProfilePic(XFile image) async {
     final request =
-        http.MultipartRequest('POST', Uri.parse('$apiUrl/user/profile-pic'))
-          ..files.add(await http.MultipartFile.fromPath(
-              'file', image.path)); // Ensure the part name is 'file'
+    http.MultipartRequest('POST', Uri.parse('$apiUrl/user/profile-pic'))
+      ..files.add(await http.MultipartFile.fromPath(
+          'file', image.path)); // Ensure the part name is 'file'
     client.send(request);
   }
 
@@ -69,9 +70,10 @@ class UserService extends BaseRepository {
     }
   }
 
-  Future<void> updateUserDetails(UserDetailsRequest userDetailsRequest) async {
+  // Updated method: saveOrUpdateUserDetails
+  Future<void> saveOrUpdateUserDetails(UserDetailsRequest userDetailsRequest) async {
     final response = await client.put(
-      Uri.parse('$apiUrl/user/update'),
+      Uri.parse('$apiUrl/user/save-or-update'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8'
       },
@@ -79,11 +81,10 @@ class UserService extends BaseRepository {
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to update user details: ${response.statusCode}');
+      throw Exception('Failed to save or update user details: ${response.statusCode}');
     }
   }
 
-// Update UserService
   Future<String> getUserCity() async {
     final response = await client.get(Uri.parse('$apiUrl/user/user-city'));
 
@@ -108,6 +109,16 @@ class UserService extends BaseRepository {
       }; // Returning a map with latitude and longitude
     } else {
       throw Exception('Failed to fetch user location: ${response.statusCode}');
+    }
+  }
+
+  Future<UserProfileResponse> getUserProfileDetails() async {
+    final response = await client.get(Uri.parse('$apiUrl/user/profile-details'));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body)['data'];
+      return UserProfileResponse.fromJson(data);
+    } else {
+      throw Exception('Failed to load user profile details: ${response.statusCode}');
     }
   }
 }

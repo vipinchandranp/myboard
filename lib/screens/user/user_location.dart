@@ -66,7 +66,7 @@ class _UserLocationWidgetState extends State<UserLocationWidget> {
       );
 
       // Update user details
-      await userService.updateUserDetails(updatedUserDetails);
+      await userService.saveOrUpdateUserDetails(updatedUserDetails);
     } catch (e) {
       print('Failed to update user city: $e'); // Handle errors accordingly
     }

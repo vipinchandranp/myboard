@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../themes/app_theme.dart';
-import '../notification/notification_icon.dart';
 import '../user/user_location.dart';
 
 class MainHeaderWidget extends StatefulWidget {
@@ -17,6 +15,8 @@ class _MainHeaderWidgetState extends State<MainHeaderWidget> {
       expandedHeight: 220.0,
       automaticallyImplyLeading: false,
       backgroundColor: Colors.transparent,
+      floating: true, // Allow the app bar to float
+      snap: true, // Snap back to the top when scrolling
       flexibleSpace: FlexibleSpaceBar(
         background: Column(
           children: [
@@ -42,20 +42,17 @@ class _MainHeaderWidgetState extends State<MainHeaderWidget> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SizedBox(height: 50)
-                    ],
-                  ),
-                  // User location and notification icons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
                       Image.asset(
                         'assets/myboard_logo_round.png',
                         height: 100,
                       ),
-                      Expanded(child: UserLocationWidget()),
-                      const SizedBox(width: 16.0),
-                      NotificationIconWidget(),
+                    ],
+                  ),
+                  // User location widget
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(child: UserLocationWidget()), // Only UserLocationWidget
                     ],
                   ),
                 ],
@@ -65,7 +62,6 @@ class _MainHeaderWidgetState extends State<MainHeaderWidget> {
         ),
       ),
       pinned: true,
-      floating: false,
     );
   }
 }

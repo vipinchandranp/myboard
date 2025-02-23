@@ -37,8 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
               MainHeaderWidget(), // Main header
               SliverToBoxAdapter(
                 child: Column(
-                  children: const [
-                    // Removed EnterDisplayPinWidget
+                  children: [
+                    MainToolsWidget(context),
                   ],
                 ),
               ),

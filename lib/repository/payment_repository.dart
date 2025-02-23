@@ -138,4 +138,23 @@ class PaymentService extends BaseRepository {
     }
   }
 
+
+  // Method to check if payment is completed
+  Future<bool> isPaymentCompleted(String transactionId) async {
+    try {
+      final url = Uri.parse('$apiUrl/payment/is-completed/$transactionId');
+      final response = await client.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['data'] ?? false; // Return the completion status
+      } else {
+        throw Exception('Failed to check payment completion status');
+      }
+    } catch (e) {
+      print('Error: $e');
+      rethrow;
+    }
+  }
+
 }

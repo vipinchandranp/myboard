@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../repository/board_repository.dart';
-import '../../repository/display_repository.dart'; // Assuming this is the correct import for display-related services
-import '../../utils/content_type.dart'; // Assuming MBContentType is declared here
+import '../../repository/display_repository.dart';
+import '../../utils/content_type.dart';
 
 class AddRatingWidget extends StatefulWidget {
   final String contentId;  // The ID of the content to be rated
@@ -35,9 +35,9 @@ class _AddRatingWidgetState extends State<AddRatingWidget> {
 
     // Call the appropriate service based on the content type
     if (widget.contentType == MBContentType.BOARD) {
-      result = await new BoardService(context).addRating(widget.contentId, _rating);
+      result = await BoardService(context).addRating(widget.contentId, _rating);
     } else if (widget.contentType == MBContentType.DISPLAY) {
-      result = await new DisplayService(context).addRating(widget.contentId, _rating);
+      result = await DisplayService(context).addRating(widget.contentId, _rating);
     }
 
     setState(() {
@@ -56,6 +56,27 @@ class _AddRatingWidgetState extends State<AddRatingWidget> {
     }
   }
 
+  // Build a row of stars for rating selection
+  Widget buildStars() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (index) {
+        final starIndex = index + 1;
+        return IconButton(
+          icon: Icon(
+            starIndex <= _rating ? Icons.star : Icons.star_border,
+            color: Colors.amber,
+          ),
+          onPressed: () {
+            setState(() {
+              _rating = starIndex.toDouble();
+            });
+          },
+        );
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -68,21 +89,8 @@ class _AddRatingWidgetState extends State<AddRatingWidget> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),
-          // Rating bar widget (you can use a custom rating bar widget)
-          Slider(
-            value: _rating,
-            min: 0,
-            max: 5,
-            divisions: 5,
-            label: _rating.toStringAsFixed(1),
-            onChanged: (value) {
-              setState(() {
-                _rating = value;
-              });
-            },
-          ),
+          buildStars(),
           SizedBox(height: 16),
-          // Submit Button
           _isSubmitting
               ? Center(child: CircularProgressIndicator())
               : ElevatedButton(

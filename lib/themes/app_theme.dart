@@ -9,7 +9,7 @@ class AppTheme {
       // Define color scheme for the theme
       colorScheme: ColorScheme.light(
         primary: Colors.black, // Set black as the primary color
-        secondary: Colors.cyan, // Set cyan as the secondary color
+        secondary: Colors.green, // Set green as the secondary color
       ),
 
       // Set scaffold background color to white
@@ -58,7 +58,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.black, // Black button background
-          foregroundColor: Colors.cyan, // Cyan text for contrast
+          foregroundColor: Colors.green, // Cyan text for contrast
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10.0),
           ),
@@ -69,7 +69,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.black, // Black text
-          side: const BorderSide(color: Colors.cyan), // Cyan border
+          side: const BorderSide(color: Colors.green), // Cyan border
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10.0),
           ),
@@ -79,7 +79,7 @@ class AppTheme {
       // Text button theme customization
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: Colors.cyan, // Cyan text
+          foregroundColor: Colors.green, // Cyan text
         ),
       ),
 
@@ -118,7 +118,7 @@ class AppTheme {
       // Bottom navigation bar theme customization
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: Colors.black, // Black for background
-        selectedItemColor: Colors.cyan, // Cyan for selected item
+        selectedItemColor: Colors.green, // Cyan for selected item
         unselectedItemColor: Colors.grey, // Grey for unselected items
         elevation: 8,
       ),
@@ -132,5 +132,5 @@ class AppTheme {
     end: Alignment.bottomRight,
   );
 
-  static Color get secondaryColor => Colors.cyan; // Cyan color getter
+  static Color get secondaryColor => Colors.green; // Cyan color getter
 }

@@ -342,5 +342,49 @@ class BoardService extends BaseRepository {
     }
   }
 
+  Future<int?> getNumberOfLikes(String boardId) async {
+    try {
+      final response = await client.get(
+        Uri.parse('$apiUrl/board/$boardId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+        final int likes = responseBody['data'] ?? 0;
+        return likes;
+      } else {
+        handleError(response);
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching number of likes for board: $e');
+      return null;
+    }
+  }
+  Future<int?> getNumberOfDisLikes(String boardId) async {
+    try {
+      final response = await client.get(
+        Uri.parse('$apiUrl/board/$boardId/dislikes'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+        // Assuming the display details include a 'likes' field in the 'data' section
+        final int likes = responseBody['data'] ?? 0;
+        return likes;
+      } else {
+        handleError(response);
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching number of likes: $e');
+      return null;
+    }
+  }
+
+
+
 
 }

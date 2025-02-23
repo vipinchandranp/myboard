@@ -46,7 +46,7 @@ class MainToolsWidget extends StatelessWidget {
                 context,
                 icon: FontAwesomeIcons.chalkboard,
                 text: 'Create\nBoard',
-                onTap: () => navigateTo(CreateBoardWidget(context)),
+                onTap: () => navigateTo(CreateBoardWidget()),
               );
             case 2:
               return _buildGridButton(
@@ -83,7 +83,7 @@ class MainToolsWidget extends StatelessWidget {
                 context,
                 icon: FontAwesomeIcons.userCircle,
                 text: 'Profile',
-                onTap: () => navigateTo(MBUserProfile()),
+                onTap: () => navigateTo(MBUserProfile(editable: true,)),
               );
             case 8:
               return _buildGridButton(
@@ -114,19 +114,19 @@ class MainToolsWidget extends StatelessWidget {
         required VoidCallback onTap,
       }) {
     return Tooltip(
-      message: text.replaceAll('\n', ' '), // Tooltip shows full text
+      message: text.replaceAll('\n', ' '),
       child: GestureDetector(
         onTap: onTap,
         child: Card(
-          color: AppTheme.lightTheme.primaryColor.withOpacity(0.1), // Light primary color
-          elevation: 3,
+          color: Colors.black, // Set background color to black
+          elevation: 5, // Slightly higher elevation for a modern look
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(50), // Fully round the corners
           ),
           child: InkWell(
-            splashColor: AppTheme.lightTheme.primaryColor.withOpacity(0.2),
-            highlightColor: Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            splashColor: Colors.white.withOpacity(0.2),
+            highlightColor: Colors.green,
+            borderRadius: BorderRadius.circular(50), // Fully round the corners
             onTap: onTap,
             child: Center(
               child: Column(
@@ -134,16 +134,16 @@ class MainToolsWidget extends StatelessWidget {
                 children: <Widget>[
                   FaIcon(
                     icon,
-                    size: 32,
-                    color: AppTheme.lightTheme.primaryColor, // Primary color for icons
+                    size: 36, // Slightly larger icon size for better visual impact
+                    color: Colors.white, // Set icon color to white
                   ),
                   const SizedBox(height: 8),
                   Text(
                     text,
                     textAlign: TextAlign.center,
-                    style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.lightTheme.primaryColor, // Primary color for text
-                      fontWeight: FontWeight.w600,
+                    style: TextStyle(
+                      color: Colors.white, // Set text color to white
+                      fontWeight: FontWeight.bold, // Slightly bolder text
                     ),
                   ),
                 ],
@@ -174,10 +174,10 @@ class MainToolsWidget extends StatelessWidget {
           }
         },
         child: Card(
-          color: AppTheme.lightTheme.primaryColor.withOpacity(0.1), // Light primary color
-          elevation: 3,
+          color: Colors.black, // Set background color to black
+          elevation: 5, // Slightly higher elevation for a modern look
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(50), // Fully round the corners
           ),
           child: Center(
             child: Column(
@@ -185,16 +185,16 @@ class MainToolsWidget extends StatelessWidget {
               children: <Widget>[
                 FaIcon(
                   FontAwesomeIcons.qrcode,
-                  size: 32,
-                  color: AppTheme.lightTheme.primaryColor, // Primary color for icons
+                  size: 36,
+                  color: Colors.white, // Set icon color to white
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Scan QR',
                   textAlign: TextAlign.center,
-                  style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.lightTheme.primaryColor, // Primary color for text
-                    fontWeight: FontWeight.w600,
+                  style: TextStyle(
+                    color: Colors.white, // Set text color to white
+                    fontWeight: FontWeight.bold, // Slightly bolder text
                   ),
                 ),
               ],

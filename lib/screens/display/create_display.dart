@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -6,9 +7,16 @@ import 'package:geocoding/geocoding.dart';
 import 'package:myboard/screens/display/select_display_location.dart';
 
 import '../../api_models/display_save.dart';
+import '../../models/common/media_file.dart';
+import '../../models/display/bdisplay.dart';
 import '../../repository/display_repository.dart';
 
 class CreateDisplayWidget extends StatefulWidget {
+  // Optional displayId indicates edit mode; if null, then it's create mode.
+  final String? displayId;
+
+  CreateDisplayWidget({this.displayId});
+
   @override
   _CreateDisplayWidgetState createState() => _CreateDisplayWidgetState();
 }
@@ -18,10 +26,59 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
   final TextEditingController _displayNameController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   List<File> _mediaFiles = [];
   String? _selectedAddress;
   LatLng _selectedLocation = LatLng(12.9716, 77.5946); // Default to Bangalore
   bool _isUploading = false;
+  bool _isPriceEnabled = false; // Toggle for enabling price input
+
+  @override
+  void initState() {
+    super.initState();
+    // If a displayId is provided, load the display details for editing.
+    if (widget.displayId != null) {
+      _loadDisplayDetails(widget.displayId!);
+    }
+  }
+  Future<void> _loadDisplayDetails(String displayId) async {
+    // Fetch display details using the repository API call.
+    BDisplay? display = await DisplayService(context).getDisplayById(displayId);
+    if (display != null) {
+      // Process media files: if the file path is a URL, convert it asynchronously.
+      List<File> localMediaFiles = [];
+      for (var media in display.mediaFiles) {
+        String path = media.filename;
+        if (path.startsWith("http")) {
+          // Create a JSON map to pass to the async factory method.
+          Map<String, dynamic> mediaJson = {
+            'filePath': path,
+            'fileName': media.filename,
+            'mediaType': media.mediaType.toString().split('.').last,
+          };
+          // Download and convert the remote file.
+          MediaFile convertedMedia = await MediaFile.fromJsonAsync(mediaJson);
+          localMediaFiles.add(convertedMedia.file);
+        } else {
+          localMediaFiles.add(media.file);
+        }
+      }
+
+      setState(() {
+        _displayNameController.text = display.displayName;
+        if (display.price != null) {
+          _priceController.text = display.price.toString();
+          _isPriceEnabled = true;
+        }
+        _mediaFiles = localMediaFiles;
+        if (display.latitude != null && display.longitude != null) {
+          _selectedLocation = LatLng(display.latitude!, display.longitude!);
+          _fetchAddress(_selectedLocation);
+        }
+      });
+    }
+  }
+
 
   Future<void> _fetchAddress(LatLng location) async {
     try {
@@ -117,9 +174,15 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
     });
 
     try {
+      // Only parse price if enabled; otherwise, set to null.
+      double? price;
+      if (_isPriceEnabled) {
+        price = double.parse(_priceController.text.trim());
+      }
+
       SaveDisplay saveDisplay = SaveDisplay(
         displayName: _displayNameController.text.trim(),
-        price: double.parse(_priceController.text.trim()),
+        price: price,
         latitude: _selectedLocation.latitude,
         longitude: _selectedLocation.longitude,
         files: _mediaFiles,
@@ -144,10 +207,17 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
   }
 
   @override
+  void dispose() {
+    _displayNameController.dispose();
+    _priceController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Create Display'),
+        title: Text(widget.displayId != null ? 'Edit Display' : 'Create Display'),
         backgroundColor: Theme.of(context).primaryColor,
       ),
       body: SingleChildScrollView(
@@ -158,6 +228,7 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Display Name
                 TextFormField(
                   controller: _displayNameController,
                   decoration: InputDecoration(
@@ -172,24 +243,49 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
                   },
                 ),
                 SizedBox(height: 16),
-                TextFormField(
-                  controller: _priceController,
-                  decoration: InputDecoration(
-                    labelText: 'Price per Hour (in Rupees)',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a price';
-                    }
-                    if (double.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
+                // Toggle for enabling price
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Set Price for Display?'),
+                    Switch(
+                      value: _isPriceEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          _isPriceEnabled = value;
+                          if (!value) {
+                            _priceController.clear();
+                          }
+                        });
+                      },
+                    ),
+                  ],
                 ),
-                SizedBox(height: 16),
+                // Price Input Field (visible only if enabled)
+                if (_isPriceEnabled)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: TextFormField(
+                      controller: _priceController,
+                      decoration: InputDecoration(
+                        labelText: 'Price per Hour (in Rupees)',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (_isPriceEnabled) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a price';
+                          }
+                          if (double.tryParse(value) == null) {
+                            return 'Please enter a valid number';
+                          }
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                // Location Selector
                 GestureDetector(
                   onTap: () => _navigateToMap(context),
                   child: Container(
@@ -213,14 +309,17 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
                   ),
                 ),
                 SizedBox(height: 16),
+                // Add Media Button
                 ElevatedButton.icon(
                   onPressed: _pickMedia,
                   icon: Icon(Icons.add_photo_alternate),
                   label: Text('Add Media'),
                 ),
                 SizedBox(height: 16),
+                // Media Preview
                 _buildMediaPreview(),
                 SizedBox(height: 16),
+                // Save Display Button
                 ElevatedButton(
                   onPressed: _isUploading ? null : _saveDisplay,
                   child: Text(
