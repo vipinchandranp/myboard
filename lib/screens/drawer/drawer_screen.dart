@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myboard/repository/display_repository.dart';
-import 'package:myboard/screens/approval/available_dates.dart';
+import 'package:myboard/screens/approval/ApproveBoardForDisplay.dart';
 import 'package:myboard/screens/approval/my_approval.dart';
 import 'package:myboard/screens/board/view_boards.dart';
 import 'package:myboard/screens/display/view_displays.dart';
@@ -50,7 +50,7 @@ class _DrawerWidgetState extends State<DrawerWidget> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => HomeScreen(context)),
+                            builder: (context) => HomeScreen()),
                       );
                     },
                   ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myboard/repository/display_repository.dart';
 import 'package:myboard/screens/common/status/status_button.dart';
 import 'package:myboard/screens/display/stepper_screen.dart';
 import 'package:myboard/models/display/bdisplay.dart';
@@ -204,7 +205,6 @@ class DisplayCardWidget extends StatelessWidget {
       ),
     );
   }
-
   void _showBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -235,16 +235,8 @@ class DisplayCardWidget extends StatelessWidget {
                   leading: const Icon(Icons.delete),
                   title: const Text('Delete'),
                   onTap: () {
-                    print("Delete pressed");
                     Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.display_settings),
-                  title: const Text('Select Display'),
-                  onTap: () {
-                    print("Select Display pressed");
-                    Navigator.pop(context);
+                    _showDeleteConfirmationDialog(context);
                   },
                 ),
               ],
@@ -254,6 +246,39 @@ class DisplayCardWidget extends StatelessWidget {
       },
     );
   }
+
+  void _showDeleteConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Delete'),
+          content: const Text('Are you sure you want to delete this display?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context); // Close the dialog
+                await new DisplayService(context).deleteDisplay(display.displayId);
+                print('Display deleted');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Display deleted successfully')),
+                );
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
 
   void _showCommentsInteraction(BuildContext context) {

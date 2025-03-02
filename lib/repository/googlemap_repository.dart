@@ -2,13 +2,15 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../api_models/user_cities_response.dart';
 import 'base_repository.dart';
+
 class GoogleMapService extends BaseRepository {
   GoogleMapService(BuildContext context) : super(context);
 
-  Future<List<CitiesResponse>?> getCities() async {
+  Future<List<CitiesResponse>?> getCities(String query) async {
     try {
+      // Construct the request URL with the query parameter
       final response = await client.get(
-        Uri.parse('$apiUrl/map/cities'),
+        Uri.parse('$apiUrl/map/cities?query=$query'),
         headers: {'Content-Type': 'application/json'},
       );
 

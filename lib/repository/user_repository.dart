@@ -95,18 +95,23 @@ class UserService extends BaseRepository {
       throw Exception('Failed to fetch user city: ${response.statusCode}');
     }
   }
-
-  Future<Map<String, double>> getUserLocation() async {
+  Future<UserDetailsRequest> getUserLocation() async {
     final response = await client.get(Uri.parse('$apiUrl/user/user-location'));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+
+      // Extract fields from the response
       final double latitude = data['data']['latitude'];
       final double longitude = data['data']['longitude'];
-      return {
-        'latitude': latitude,
-        'longitude': longitude,
-      }; // Returning a map with latitude and longitude
+      final String cityName = data['data']['cityName'];
+
+      // Return a UserDetailsRequest object
+      return UserDetailsRequest(
+        latitude: latitude,
+        longitude: longitude,
+        cityName: cityName,
+      );
     } else {
       throw Exception('Failed to fetch user location: ${response.statusCode}');
     }

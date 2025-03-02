@@ -113,6 +113,14 @@ dev_dependencies:
 flutter:
   assets:
     - assets/
+    - assets/thumpsdown.png
+    - assets/thumpsup.png
+    - assets/search.png
+    - assets/userlocation.png
+    - assets/myboard_logo_round.png
+    - assets/qr-scan-icon.png
+    - assets/display.png
+    - assets/pin-location.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

@@ -1,206 +1,190 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:myboard/screens/notification/notification_list.dart';
 import '../../themes/app_theme.dart';
-import '../approval/available_dates.dart';
+import '../approval/ApproveBoardForDisplay.dart';
 import '../board/create_board.dart';
 import '../display/create_display.dart';
-import '../display/nearby_display_map.dart';
 import '../display/view_displays.dart';
 import '../board/view_boards.dart';
-import '../qrcode/qr_scanner.dart';
 import '../user/login_screen.dart';
 import '../user/mb_user_profile.dart';
 
 class MainToolsWidget extends StatelessWidget {
-  final BuildContext context;
-
-  MainToolsWidget(this.context);
+  const MainToolsWidget({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final double gridItemWidth = MediaQuery.of(context).size.width / 4 - 16;
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          crossAxisSpacing: 12.0,
-          mainAxisSpacing: 12.0,
-          childAspectRatio: gridItemWidth / (gridItemWidth + 30),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSection(
+              context,
+              title: "Display",
+              actions: [
+                _buildQuickActionIcon(
+                  icon: Icons.display_settings,
+                  label: "Create Display",
+                  onTap: () => _navigateTo(context, CreateDisplayWidget()),
+                ),
+                _buildQuickActionIcon(
+                  icon: Icons.view_list,
+                  label: "My Displays",
+                  onTap: () => _navigateTo(context, ViewDisplayWidget()),
+                ),
+                _buildQuickActionIcon(
+                  icon: Icons.approval,
+                  label: "Approvals",
+                  onTap: () => _navigateTo(context, AvailableDatesWidget()),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildDivider(),
+            const SizedBox(height: 16),
+            _buildSection(
+              context,
+              title: "Boards",
+              actions: [
+                _buildQuickActionIcon(
+                  icon: Icons.create,
+                  label: "Create Board",
+                  onTap: () => _navigateTo(context, CreateBoardWidget()),
+                ),
+                _buildQuickActionIcon(
+                  icon: Icons.view_agenda,
+                  label: "My Boards",
+                  onTap: () => _navigateTo(context, ViewBoardsWidget()),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildDivider(),
+            const SizedBox(height: 16),
+            _buildSection(
+              context,
+              title: "Notifications",
+              actions: [
+                _buildQuickActionIcon(
+                  icon: Icons.notifications,
+                  label: "Notifications",
+                  onTap: () => _navigateTo(context, NotificationListWidget()),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildDivider(),
+            const SizedBox(height: 16),
+            _buildSection(
+              context,
+              title: "Account",
+              actions: [
+                _buildQuickActionIcon(
+                  icon: Icons.account_circle,
+                  label: "Profile",
+                  onTap: () => _navigateTo(context, MBUserProfile(editable: true,)),
+                ),
+                _buildQuickActionIcon(
+                  icon: Icons.logout,
+                  label: "Logout",
+                  onTap: () => _logout(context),
+                ),
+              ],
+            ),
+          ],
         ),
-        itemCount: 9,
-        itemBuilder: (BuildContext context, int index) {
-          switch (index) {
-            case 0:
-              return _buildGridButton(
-                context,
-                icon: FontAwesomeIcons.display,
-                text: 'Create\nDisplay',
-                onTap: () => navigateTo(CreateDisplayWidget()),
-              );
-            case 1:
-              return _buildGridButton(
-                context,
-                icon: FontAwesomeIcons.chalkboard,
-                text: 'Create\nBoard',
-                onTap: () => navigateTo(CreateBoardWidget()),
-              );
-            case 2:
-              return _buildGridButton(
-                context,
-                icon: FontAwesomeIcons.tv,
-                text: 'View\nDisplays',
-                onTap: () => navigateTo(ViewDisplayWidget()),
-              );
-            case 3:
-              return _buildGridButton(
-                context,
-                icon: FontAwesomeIcons.list,
-                text: 'View\nBoards',
-                onTap: () => navigateTo(ViewBoardsWidget()),
-              );
-            case 4:
-              return _buildGridButton(
-                context,
-                icon: FontAwesomeIcons.thumbsUp,
-                text: 'Approvals',
-                onTap: () => navigateTo(AvailableDatesWidget()),
-              );
-            case 5:
-              return _buildGridButton(
-                context,
-                icon: FontAwesomeIcons.mapMarkedAlt,
-                text: 'Nearby\nDisplays',
-                onTap: () => navigateTo(NearbyDisplaysMap()),
-              );
-            case 6:
-              return _buildQrScannerButton(context);
-            case 7:
-              return _buildGridButton(
-                context,
-                icon: FontAwesomeIcons.userCircle,
-                text: 'Profile',
-                onTap: () => navigateTo(MBUserProfile(editable: true,)),
-              );
-            case 8:
-              return _buildGridButton(
-                context,
-                icon: FontAwesomeIcons.signOutAlt,
-                text: 'Logout',
-                onTap: () => navigateTo(LoginScreen()),
-              );
-            default:
-              return Container();
-          }
-        },
       ),
     );
   }
 
-  void navigateTo(Widget page) {
+  Widget _buildSection(BuildContext context, {required String title, required List<Widget> actions}) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        border: Border.all(
+          color: AppTheme.lightTheme.primaryColor.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: actions.map((action) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: action,
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Divider(
+      color: AppTheme.lightTheme.primaryColor.withOpacity(0.5),
+      thickness: 1,
+    );
+  }
+
+  void _navigateTo(BuildContext context, Widget page) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => page),
     );
   }
 
-  Widget _buildGridButton(
-      BuildContext context, {
-        required IconData icon,
-        required String text,
-        required VoidCallback onTap,
-      }) {
-    return Tooltip(
-      message: text.replaceAll('\n', ' '),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Card(
-          color: Colors.black, // Set background color to black
-          elevation: 5, // Slightly higher elevation for a modern look
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(50), // Fully round the corners
-          ),
-          child: InkWell(
-            splashColor: Colors.white.withOpacity(0.2),
-            highlightColor: Colors.green,
-            borderRadius: BorderRadius.circular(50), // Fully round the corners
-            onTap: onTap,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  FaIcon(
-                    icon,
-                    size: 36, // Slightly larger icon size for better visual impact
-                    color: Colors.white, // Set icon color to white
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    text,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white, // Set text color to white
-                      fontWeight: FontWeight.bold, // Slightly bolder text
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+  void _showFeatureComingSoon(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("This feature is coming soon!")),
     );
   }
 
-  Widget _buildQrScannerButton(BuildContext context) {
-    return Tooltip(
-      message: 'Scan QR Code',
-      child: GestureDetector(
-        onTap: () async {
-          final scannedData = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => QRScannerWidget(),
-            ),
-          );
+  void _logout(BuildContext context) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()),
+          (Route<dynamic> route) => false,
+    );
+  }
 
-          if (scannedData != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Scanned QR Code: $scannedData')),
-            );
-          }
-        },
-        child: Card(
-          color: Colors.black, // Set background color to black
-          elevation: 5, // Slightly higher elevation for a modern look
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(50), // Fully round the corners
+  Widget _buildQuickActionIcon({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: AppTheme.lightTheme.primaryColor.withOpacity(0.2),
+            child: Icon(icon, size: 28, color: AppTheme.lightTheme.primaryColor),
           ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                FaIcon(
-                  FontAwesomeIcons.qrcode,
-                  size: 36,
-                  color: Colors.white, // Set icon color to white
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Scan QR',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white, // Set text color to white
-                    fontWeight: FontWeight.bold, // Slightly bolder text
-                  ),
-                ),
-              ],
-            ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
           ),
-        ),
+        ],
       ),
     );
   }

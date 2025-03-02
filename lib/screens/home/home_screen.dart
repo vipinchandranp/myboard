@@ -1,25 +1,24 @@
+// Home Screen with a professional design
 import 'package:flutter/material.dart';
 import 'package:myboard/themes/app_theme.dart';
 import '../tools/main_tools.dart';
-import 'main_header.dart';
+import 'header/main_header.dart';
 
 class HomeScreen extends StatefulWidget {
-  final BuildContext context;
-
-  HomeScreen(this.context); // Keep context as is
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool isLoading = true; // Simulating loading state
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // Simulating a delay to show shimmer effect
-    Future.delayed(const Duration(seconds: 3), () {
+    // Simulate a loading delay
+    Future.delayed(const Duration(seconds: 2), () {
       setState(() {
         isLoading = false;
       });
@@ -30,88 +29,43 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            slivers: <Widget>[
-              MainHeaderWidget(), // Main header
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    MainToolsWidget(context),
-                  ],
-                ),
-              ),
-              // Removed MainToolsWidget from here
-            ],
-          ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          const MainHeaderWidget(),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showMainToolsBottomSheet(context);
-        },
-        child: const Icon(Icons.settings),
+        onPressed: () => _showMainToolsBottomSheet(context),
+        child: ClipOval(
+          child: Image.asset(
+            'assets/myboard_logo_round.png',
+            fit: BoxFit.cover,
+          ),
+        ),
         backgroundColor: AppTheme.lightTheme.primaryColor,
-        elevation: 6,
       ),
     );
   }
 
+  // Bottom sheet for tools
   void _showMainToolsBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent, // Transparent for custom design
-      builder: (BuildContext context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 10,
-                offset: Offset(0, -4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Top drag handle
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                child: Container(
-                  width: 40,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: DraggableScrollableSheet(
-                  initialChildSize: 0.5, // Start with 50% height
-                  minChildSize: 0.3, // Minimum height
-                  maxChildSize: 0.8, // Maximum height
-                  expand: false,
-                  builder: (context, scrollController) {
-                    return SingleChildScrollView(
-                      controller: scrollController,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: MainToolsWidget(context),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.9,
+          child: const MainToolsWidget(),
+        ),
+      ),
     );
   }
 }

@@ -12,21 +12,32 @@ class UserLocationWidget extends StatefulWidget {
 
 class _UserLocationWidgetState extends State<UserLocationWidget> {
   String? _userCity;
+  double? _latitude;
+  double? _longitude;
   bool _loading = true;
   String _error = '';
 
   @override
   void initState() {
     super.initState();
-    _loadUserCity();
+    _loadUserLocation();
   }
 
-  Future<void> _loadUserCity() async {
+  Future<void> _loadUserLocation() async {
     try {
       UserService userService = UserService(context);
-      _userCity = await userService.getUserCity();
+
+      // Load city and location using UserDetailsRequest
+      UserDetailsRequest locationData = await userService.getUserLocation();
+      setState(() {
+        _userCity = locationData.cityName;
+        _latitude = locationData.latitude;
+        _longitude = locationData.longitude;
+      });
     } catch (e) {
-      _error = e.toString();
+      setState(() {
+        _error = e.toString();
+      });
     } finally {
       setState(() {
         _loading = false;
@@ -42,33 +53,43 @@ class _UserLocationWidgetState extends State<UserLocationWidget> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          child: ViewCitiesWidget(), // Show the CitySectionsWidget
+          child: ViewCitiesWidget(), // Show the ViewCitiesWidget
         );
       },
     );
 
     if (selectedCity != null) {
-      setState(() {
-        _userCity = selectedCity.cityName; // Update the user city
-      });
+      try {
+        // Update the user city and location in the widget state
+        setState(() {
+          _userCity = selectedCity.cityName;
+          _latitude = selectedCity.latitude;
+          _longitude = selectedCity.longitude;
+        });
 
-      // Save the selected city to the user repository
-      await _updateUserCity(selectedCity.cityName);
+        // Save the updated city and location to the backend
+        await _updateUserCityAndLocation();
+      } catch (e) {
+        print('Error updating user city and location: $e');
+      }
     }
   }
 
-  Future<void> _updateUserCity(String cityName) async {
+  Future<void> _updateUserCityAndLocation() async {
     try {
       UserService userService = UserService(context);
-      // Create an updated UserDetailsRequest
+
+      // Create updated UserDetailsRequest with city and location
       UserDetailsRequest updatedUserDetails = UserDetailsRequest(
-        cityName: cityName, // Set the new city name
+        cityName: _userCity,
+        latitude: _latitude,
+        longitude: _longitude,
       );
 
-      // Update user details
+      // Save updated details to backend
       await userService.saveOrUpdateUserDetails(updatedUserDetails);
     } catch (e) {
-      print('Failed to update user city: $e'); // Handle errors accordingly
+      print('Failed to update user city and location: $e'); // Handle errors accordingly
     }
   }
 
@@ -110,7 +131,13 @@ class _UserLocationWidgetState extends State<UserLocationWidget> {
                 style: TextStyle(color: Colors.black),
               ),
             ),
-            Icon(Icons.location_on_outlined, color: Colors.black),
+            // Use the asset image for location icon
+            Image.asset(
+              'assets/userlocation.png',
+              height: 24,
+              width: 24,
+              fit: BoxFit.contain,
+            ),
           ],
         ),
       ),

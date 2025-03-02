@@ -84,7 +84,7 @@ class _ViewDisplaysWidgetState extends State<ViewDisplayWidget> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => HomeScreen(context)),
+              MaterialPageRoute(builder: (context) => HomeScreen()),
             );
           },
         ),

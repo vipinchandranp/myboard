@@ -165,29 +165,35 @@ class _LikeDislikeWidgetState extends State<LikeDislikeWidget> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Like button with count
+        // Like button with count using thumpsup.png
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(
-                _isLiked ? Icons.thumb_up : Icons.thumb_up_off_alt,
-                color: _isLiked ? Colors.blue : Colors.grey,
+              iconSize: 24, // Adjusted icon size
+              icon: Image.asset(
+                'assets/thumpsup.png',
+                width: 24,
+                height: 24,
+                color: _isLiked ? null : Colors.grey, // Tint grey if not liked
               ),
               onPressed: _toggleLike,
             ),
             Text('$_likesCount'),
           ],
         ),
-        SizedBox(width: 20),
-        // Dislike button with count
+        const SizedBox(width: 20),
+        // Dislike button with count using thumpsdown.png
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(
-                _isDisliked ? Icons.thumb_down : Icons.thumb_down_off_alt,
-                color: _isDisliked ? Colors.red : Colors.grey,
+              iconSize: 24, // Adjusted icon size
+              icon: Image.asset(
+                'assets/thumpsdown.png',
+                width: 24,
+                height: 24,
+                color: _isDisliked ? null : Colors.grey, // Tint grey if not disliked
               ),
               onPressed: _toggleDislike,
             ),

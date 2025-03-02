@@ -174,15 +174,15 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
     });
 
     try {
-      // Only parse price if enabled; otherwise, set to null.
-      double? price;
-      if (_isPriceEnabled) {
+      // Parse price or default to 0 if not enabled or empty
+      double price = 0.0;
+      if (_isPriceEnabled && _priceController.text.trim().isNotEmpty) {
         price = double.parse(_priceController.text.trim());
       }
 
       SaveDisplay saveDisplay = SaveDisplay(
         displayName: _displayNameController.text.trim(),
-        price: price,
+        price: price, // Always have a valid price
         latitude: _selectedLocation.latitude,
         longitude: _selectedLocation.longitude,
         files: _mediaFiles,
@@ -205,6 +205,7 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
       });
     }
   }
+
 
   @override
   void dispose() {
