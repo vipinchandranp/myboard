@@ -42,7 +42,7 @@ class _ViewCitiesWidgetState extends State<ViewCitiesWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Search Cities', style: Theme.of(context).appBarTheme.titleTextStyle),
+        title: Text('Select Location', style: Theme.of(context).appBarTheme.titleTextStyle),
         centerTitle: true,
       ),
       body: SafeArea(

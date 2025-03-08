@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:myboard/repository/board_repository.dart'; // Ensure this import is correct
 import 'package:myboard/repository/display_repository.dart'; // Ensure this import is correct
-import '../../utils/content_type.dart';
+import '../../utils/ItemType.dart';
 
 class LikeDislikeWidget extends StatefulWidget {
   final String contentId; // The content ID (display or board)
-  final MBContentType contentType; // The type of content (DISPLAY or BOARD)
+  final ItemType contentType; // The type of content (DISPLAY or BOARD)
 
   // New properties: initial counts and reaction status passed in from parent
   final int initialLikes;
@@ -54,9 +54,9 @@ class _LikeDislikeWidgetState extends State<LikeDislikeWidget> {
   Future<void> _performLike() async {
     try {
       bool? success;
-      if (widget.contentType == MBContentType.DISPLAY) {
+      if (widget.contentType == ItemType.DISPLAY) {
         success = await DisplayService(context).likeDisplay(widget.contentId);
-      } else if (widget.contentType == MBContentType.BOARD) {
+      } else if (widget.contentType == ItemType.BOARD) {
         success = await BoardService(context).likeBoard(widget.contentId);
       }
       if (success == true) {
@@ -90,9 +90,9 @@ class _LikeDislikeWidgetState extends State<LikeDislikeWidget> {
   Future<void> _performDislike() async {
     try {
       bool? success;
-      if (widget.contentType == MBContentType.DISPLAY) {
+      if (widget.contentType == ItemType.DISPLAY) {
         success = await DisplayService(context).dislikeDisplay(widget.contentId);
-      } else if (widget.contentType == MBContentType.BOARD) {
+      } else if (widget.contentType == ItemType.BOARD) {
         success = await BoardService(context).dislikeBoard(widget.contentId);
       }
       if (success == true) {
@@ -118,9 +118,9 @@ class _LikeDislikeWidgetState extends State<LikeDislikeWidget> {
   Future<void> _undoLike() async {
     try {
       bool? success;
-      if (widget.contentType == MBContentType.DISPLAY) {
+      if (widget.contentType == ItemType.DISPLAY) {
         success = await DisplayService(context).undoLikeDisplay(widget.contentId);
-      } else if (widget.contentType == MBContentType.BOARD) {
+      } else if (widget.contentType == ItemType.BOARD) {
         success = await BoardService(context).undoLikeBoard(widget.contentId);
       }
       if (success == true) {
@@ -141,9 +141,9 @@ class _LikeDislikeWidgetState extends State<LikeDislikeWidget> {
   Future<void> _undoDislike() async {
     try {
       bool? success;
-      if (widget.contentType == MBContentType.DISPLAY) {
+      if (widget.contentType == ItemType.DISPLAY) {
         success = await DisplayService(context).undoDislikeDisplay(widget.contentId);
-      } else if (widget.contentType == MBContentType.BOARD) {
+      } else if (widget.contentType == ItemType.BOARD) {
         success = await BoardService(context).undoDislikeBoard(widget.contentId);
       }
       if (success == true) {

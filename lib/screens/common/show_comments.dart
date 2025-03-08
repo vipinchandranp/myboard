@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import '../../models/common/comment.dart';
 import '../../repository/display_repository.dart';
 import '../../repository/board_repository.dart';
-import '../../utils/content_type.dart';
+import '../../utils/ItemType.dart';
 
 class ShowComments extends StatefulWidget {
   final String contentId;
-  final MBContentType contentType;
+  final ItemType contentType;
 
   const ShowComments({
     Key? key,
@@ -28,12 +28,12 @@ class _ShowCommentsState extends State<ShowComments> {
   }
 
   // Fetch comments based on contentId and contentType (Display or Board)
-  Future<List<Comment>?> _fetchComments(String contentId, MBContentType contentType) async {
+  Future<List<Comment>?> _fetchComments(String contentId, ItemType contentType) async {
     try {
-      if (contentType == MBContentType.DISPLAY) {
+      if (contentType == ItemType.DISPLAY) {
         // Fetch comments for Display content
         return await DisplayService(context).getComments(contentId);
-      } else if (contentType == MBContentType.BOARD) {
+      } else if (contentType == ItemType.BOARD) {
         // Fetch comments for Board content
         return await BoardService(context).getComments(contentId);
       } else {

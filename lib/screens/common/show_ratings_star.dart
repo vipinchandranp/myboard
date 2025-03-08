@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../repository/board_repository.dart';
 import '../../repository/display_repository.dart';
-import '../../utils/content_type.dart'; // Assuming this is where the content types are defined
+import '../../utils/ItemType.dart'; // Assuming this is where the content types are defined
 
 class ShowRatingStarsWidget extends StatefulWidget {
   final String contentId; // The content ID (display or board)
-  final MBContentType contentType; // The content type (DISPLAY or BOARD)
+  final ItemType contentType; // The content type (DISPLAY or BOARD)
 
   const ShowRatingStarsWidget({
     Key? key,
@@ -32,9 +32,9 @@ class _ShowRatingStarsWidgetState extends State<ShowRatingStarsWidget> {
     try {
       double rating = 0.0;
 
-      if (widget.contentType == MBContentType.DISPLAY) {
+      if (widget.contentType == ItemType.DISPLAY) {
         rating = await DisplayService(context).getDisplayRating(widget.contentId) ?? 0.0;
-      } else if (widget.contentType == MBContentType.BOARD) {
+      } else if (widget.contentType == ItemType.BOARD) {
         rating = await BoardService(context).getBoardRating(widget.contentId) ?? 0.0;
       }
 

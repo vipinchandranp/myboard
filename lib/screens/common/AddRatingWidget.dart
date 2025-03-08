@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../repository/board_repository.dart';
 import '../../repository/display_repository.dart';
-import '../../utils/content_type.dart';
+import '../../utils/ItemType.dart';
 
 class AddRatingWidget extends StatefulWidget {
   final String contentId;  // The ID of the content to be rated
-  final MBContentType contentType;  // The type of content (e.g., MBContentType.BOARD, MBContentType.DISPLAY)
+  final ItemType contentType;  // The type of content (e.g., MBContentType.BOARD, MBContentType.DISPLAY)
 
   AddRatingWidget({required this.contentId, required this.contentType});
 
@@ -34,9 +34,9 @@ class _AddRatingWidgetState extends State<AddRatingWidget> {
     String? result;
 
     // Call the appropriate service based on the content type
-    if (widget.contentType == MBContentType.BOARD) {
+    if (widget.contentType == ItemType.BOARD) {
       result = await BoardService(context).addRating(widget.contentId, _rating);
-    } else if (widget.contentType == MBContentType.DISPLAY) {
+    } else if (widget.contentType == ItemType.DISPLAY) {
       result = await DisplayService(context).addRating(widget.contentId, _rating);
     }
 
@@ -85,7 +85,7 @@ class _AddRatingWidgetState extends State<AddRatingWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Rate ${widget.contentType == MBContentType.BOARD ? 'Board' : 'Display'}:',
+            'Rate ${widget.contentType == ItemType.BOARD ? 'Board' : 'Display'}:',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8),

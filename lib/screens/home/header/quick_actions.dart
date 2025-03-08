@@ -2,12 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:myboard/screens/display/nearby_display_map.dart';
 import 'package:myboard/screens/qrcode/qr_scanner.dart';
 
-import '../../display/create_display.dart';
-import 'package:flutter/material.dart';
-import 'package:myboard/screens/display/nearby_display_map.dart';
-import 'package:myboard/screens/qrcode/qr_scanner.dart';
-
-import '../../display/create_display.dart';
+import '../../common/search/search_common_items.dart';
 
 class QuickActionsWidget extends StatelessWidget {
   const QuickActionsWidget({Key? key}) : super(key: key);
@@ -44,6 +39,16 @@ class QuickActionsWidget extends StatelessWidget {
                 assetPath: 'assets/pin-location.png', // Replace with another asset if needed
                 label: "Explore",
                 onTap: () => _navigateTo(context, NearbyDisplaysMap()),
+              ),
+              const SizedBox(width: 12),
+              _buildQuickActionIcon(
+                assetPath: 'assets/search.png', // Replace with another asset if needed
+                label: "Explore",
+                onTap: () => _navigateTo(
+                  context,
+                  const SearchCommonItems(),
+                ),
+
               ),
             ],
           ),

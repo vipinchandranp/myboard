@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:myboard/repository/board_repository.dart';
 import 'package:myboard/repository/display_repository.dart';
 import '../../models/common/comment.dart';
-import '../../utils/content_type.dart';
+import '../../utils/ItemType.dart';
 import 'AddRatingWidget.dart';
 class CommentsInteractionWidget extends StatefulWidget {
   final String contentId; // The content ID (display or board)
-  final MBContentType contentType; // The type of content (DISPLAY or BOARD)
+  final ItemType contentType; // The type of content (DISPLAY or BOARD)
 
   const CommentsInteractionWidget({
     Key? key,
@@ -35,11 +35,11 @@ class _CommentsInteractionWidgetState extends State<CommentsInteractionWidget> {
   }
 
   Future<List<Comment>?> _fetchComments(
-      String contentId, MBContentType contentType) async {
+      String contentId, ItemType contentType) async {
     try {
-      if (contentType == MBContentType.DISPLAY) {
+      if (contentType == ItemType.DISPLAY) {
         return await DisplayService(context).getComments(contentId);
-      } else if (contentType == MBContentType.BOARD) {
+      } else if (contentType == ItemType.BOARD) {
         return await BoardService(context).getComments(contentId);
       } else {
         print("Unsupported content type");
@@ -55,9 +55,9 @@ class _CommentsInteractionWidgetState extends State<CommentsInteractionWidget> {
     if (commentText.isEmpty) return;
 
     try {
-      if (widget.contentType == MBContentType.DISPLAY) {
+      if (widget.contentType == ItemType.DISPLAY) {
         await DisplayService(context).addComment(widget.contentId, commentText);
-      } else if (widget.contentType == MBContentType.BOARD) {
+      } else if (widget.contentType == ItemType.BOARD) {
         await BoardService(context).addComment(widget.contentId, commentText);
       }
       _commentController.clear();

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../utils/content_type.dart';
+import '../../utils/ItemType.dart';
 
 class RatingWidget extends StatefulWidget {
   final String contentId;
-  final MBContentType contentType;
+  final ItemType contentType;
 
   RatingWidget({required this.contentId, required this.contentType});
 

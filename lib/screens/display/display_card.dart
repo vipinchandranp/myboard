@@ -6,7 +6,7 @@ import 'package:myboard/models/display/bdisplay.dart';
 import 'package:myboard/screens/display/media_carousel.dart';
 import 'package:myboard/utils/utility.dart';
 import 'package:myboard/widgets/round_button.dart';
-import '../../utils/content_type.dart';
+import '../../utils/ItemType.dart';
 import '../common/comments_interaction_widget.dart';
 import '../common/like_dislike_widget.dart';
 import '../common/show_ratings_star.dart';
@@ -92,7 +92,7 @@ class DisplayCardWidget extends StatelessWidget {
 
                 ShowRatingStarsWidget(  // Display rating stars here
                   contentId: display.displayId,
-                  contentType: MBContentType.DISPLAY,
+                  contentType: ItemType.DISPLAY,
                 ),
 
                 const SizedBox(height: 16),
@@ -103,7 +103,7 @@ class DisplayCardWidget extends StatelessWidget {
                   children: [
                     LikeDislikeWidget(
                       contentId: display.displayId,
-                      contentType: MBContentType.DISPLAY,
+                      contentType: ItemType.DISPLAY,
                       initialLikes: display.numberOfLikes,
                       initialDislikes: display.numberOfDislikes,
                       initiallyLiked: display.likedByCurrentUser,
@@ -294,7 +294,7 @@ class DisplayCardWidget extends StatelessWidget {
           builder: (context, scrollController) {
             return CommentsInteractionWidget(
               contentId: display.displayId,
-              contentType: MBContentType.DISPLAY,
+              contentType: ItemType.DISPLAY,
             );
           },
         );

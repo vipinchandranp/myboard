@@ -92,28 +92,6 @@ class _MainHeaderWidgetState extends State<MainHeaderWidget> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: "Search Displays, Boards...",
-                        prefixIcon: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Image.asset(
-                            'assets/search.png',
-                            width: 24,
-                            height: 24,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade200,
-                        border: const OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(24)),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 12),
                   const QuickActionsWidget(),
                   const Padding(

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:myboard/screens/notification/notification_list.dart';
 import '../../themes/app_theme.dart';
+import '../../utils/utility.dart';
 import '../approval/ApproveBoardForDisplay.dart';
 import '../board/create_board.dart';
 import '../display/create_display.dart';
 import '../display/view_displays.dart';
 import '../board/view_boards.dart';
+import '../notification/notification_list.dart';
 import '../user/login_screen.dart';
 import '../user/mb_user_profile.dart';
 
@@ -24,18 +25,18 @@ class MainToolsWidget extends StatelessWidget {
               context,
               title: "Display",
               actions: [
-                _buildQuickActionIcon(
-                  icon: Icons.display_settings,
+                Utility.buildActionIcon(
+                  assetPath: 'assets/create-display.png',
                   label: "Create Display",
                   onTap: () => _navigateTo(context, CreateDisplayWidget()),
                 ),
-                _buildQuickActionIcon(
-                  icon: Icons.view_list,
+                Utility.buildActionIcon(
+                  assetPath: "assets/list.png",
                   label: "My Displays",
                   onTap: () => _navigateTo(context, ViewDisplayWidget()),
                 ),
-                _buildQuickActionIcon(
-                  icon: Icons.approval,
+                Utility.buildActionIcon(
+                  assetPath: 'assets/approvals.png',
                   label: "Approvals",
                   onTap: () => _navigateTo(context, AvailableDatesWidget()),
                 ),
@@ -48,15 +49,20 @@ class MainToolsWidget extends StatelessWidget {
               context,
               title: "Boards",
               actions: [
-                _buildQuickActionIcon(
-                  icon: Icons.create,
+                Utility.buildActionIcon(
+                  assetPath: "assets/create-board.png",
                   label: "Create Board",
                   onTap: () => _navigateTo(context, CreateBoardWidget()),
                 ),
-                _buildQuickActionIcon(
-                  icon: Icons.view_agenda,
+                Utility.buildActionIcon(
+                  assetPath: "assets/list.png",
                   label: "My Boards",
                   onTap: () => _navigateTo(context, ViewBoardsWidget()),
+                ),
+                Utility.buildActionIcon(
+                  assetPath: 'assets/approvals.png',
+                  label: "Approvals",
+                  onTap: () => _navigateTo(context, AvailableDatesWidget()),
                 ),
               ],
             ),
@@ -67,7 +73,7 @@ class MainToolsWidget extends StatelessWidget {
               context,
               title: "Notifications",
               actions: [
-                _buildQuickActionIcon(
+                Utility.buildQuickActionIcon(
                   icon: Icons.notifications,
                   label: "Notifications",
                   onTap: () => _navigateTo(context, NotificationListWidget()),
@@ -81,12 +87,12 @@ class MainToolsWidget extends StatelessWidget {
               context,
               title: "Account",
               actions: [
-                _buildQuickActionIcon(
+                Utility.buildQuickActionIcon(
                   icon: Icons.account_circle,
                   label: "Profile",
-                  onTap: () => _navigateTo(context, MBUserProfile(editable: true,)),
+                  onTap: () => _navigateTo(context, MBUserProfile(editable: true)),
                 ),
-                _buildQuickActionIcon(
+                Utility.buildQuickActionIcon(
                   icon: Icons.logout,
                   label: "Logout",
                   onTap: () => _logout(context),
@@ -149,43 +155,11 @@ class MainToolsWidget extends StatelessWidget {
     );
   }
 
-  void _showFeatureComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("This feature is coming soon!")),
-    );
-  }
-
   void _logout(BuildContext context) {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => LoginScreen()),
           (Route<dynamic> route) => false,
-    );
-  }
-
-  Widget _buildQuickActionIcon({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: AppTheme.lightTheme.primaryColor.withOpacity(0.2),
-            child: Icon(icon, size: 28, color: AppTheme.lightTheme.primaryColor),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
     );
   }
 }

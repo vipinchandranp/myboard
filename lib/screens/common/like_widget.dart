@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:myboard/repository/board_repository.dart';
 import 'package:myboard/repository/display_repository.dart'; // Ensure the correct import for your service
-import '../../utils/content_type.dart'; // Make sure this import is correct
+import '../../utils/ItemType.dart'; // Make sure this import is correct
 
 class LikeWidget extends StatefulWidget {
   final String contentId; // The content ID (display or board)
-  final MBContentType contentType; // The type of content (DISPLAY or BOARD)
+  final ItemType contentType; // The type of content (DISPLAY or BOARD)
 
   LikeWidget({
     required this.contentId,
@@ -29,12 +29,12 @@ class _LikeWidgetState extends State<LikeWidget> {
   // Load the current number of likes for the content
   Future<void> _loadLikesCount() async {
     try {
-      if (widget.contentType == MBContentType.DISPLAY) {
+      if (widget.contentType == ItemType.DISPLAY) {
         final count = await DisplayService(context).getNumberOfLikes(widget.contentId);
         setState(() {
           _likesCount = count ?? 0;
         });
-      } else if (widget.contentType == MBContentType.BOARD) {
+      } else if (widget.contentType == ItemType.BOARD) {
         final count = await BoardService(context).getNumberOfLikes(widget.contentId);
         setState(() {
           _likesCount = count ?? 0;
@@ -48,7 +48,7 @@ class _LikeWidgetState extends State<LikeWidget> {
   // Toggle like status and update the likes count
   Future<void> _toggleLike() async {
     try {
-      if (widget.contentType == MBContentType.DISPLAY) {
+      if (widget.contentType == ItemType.DISPLAY) {
         if (_isLiked) {
           final success = await DisplayService(context).undoLikeDisplay(widget.contentId);
           if (success) {
@@ -72,7 +72,7 @@ class _LikeWidgetState extends State<LikeWidget> {
             print("Failed to like display ${widget.contentId}.");
           }
         }
-      } else if (widget.contentType == MBContentType.BOARD) {
+      } else if (widget.contentType == ItemType.BOARD) {
         // Add board logic if needed
         print("Board functionality not yet implemented.");
       }

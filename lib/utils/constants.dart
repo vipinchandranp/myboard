@@ -1,4 +1,4 @@
-const String google_api_key = "AIzaSyC-K51rMP63i_87vcj5OOx7B9NkY1EKuE4";
+const String google_api_key = "AIzaSyDyHlWy-31umQbIT7mNIwz7pOOG-jyicO0";
 const String appTitle = 'Liceria';
 const String appSubtitle = 'DELIVERY APP';
 const String emailOrPhoneHint = 'Email or Phone';

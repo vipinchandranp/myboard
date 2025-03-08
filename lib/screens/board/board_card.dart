@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/board/board.dart';
 import '../../themes/app_theme.dart';
-import '../../utils/content_type.dart';
+import '../../utils/ItemType.dart';
 import '../../widgets/round_button.dart';
 import '../common/comments_interaction_widget.dart';
 import '../common/like_dislike_widget.dart';
@@ -81,14 +81,14 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
                   const SizedBox(height: 10),
                   ShowRatingStarsWidget(  // Display rating stars here
                     contentId: widget.board.boardId,
-                    contentType: MBContentType.BOARD,
+                    contentType: ItemType.BOARD,
                   ),
                   const SizedBox(height: 10),
                   _buildActionIcons(),
                   const SizedBox(height: 10),
                   LikeDislikeWidget(
                     contentId: widget.board.boardId,
-                    contentType: MBContentType.BOARD,
+                    contentType: ItemType.BOARD,
                     initialLikes: widget.board.numberOfLikes,
                     initialDislikes: widget.board.numberOfDislikes,
                     initiallyLiked: widget.board.likedByCurrentUser,
@@ -256,7 +256,7 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
           builder: (context, scrollController) {
             return CommentsInteractionWidget(
               contentId: widget.board.boardId,
-              contentType: MBContentType.BOARD,
+              contentType: ItemType.BOARD,
             );
           },
         );
