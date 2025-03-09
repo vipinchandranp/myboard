@@ -73,8 +73,8 @@ class MainToolsWidget extends StatelessWidget {
               context,
               title: "Notifications",
               actions: [
-                Utility.buildQuickActionIcon(
-                  icon: Icons.notifications,
+                Utility.buildActionIcon(
+                  assetPath: 'assets/notification.png',
                   label: "Notifications",
                   onTap: () => _navigateTo(context, NotificationListWidget()),
                 ),
@@ -87,13 +87,13 @@ class MainToolsWidget extends StatelessWidget {
               context,
               title: "Account",
               actions: [
-                Utility.buildQuickActionIcon(
-                  icon: Icons.account_circle,
+                Utility.buildActionIcon(
+                  assetPath: 'assets/profile.png',
                   label: "Profile",
                   onTap: () => _navigateTo(context, MBUserProfile(editable: true)),
                 ),
-                Utility.buildQuickActionIcon(
-                  icon: Icons.logout,
+                Utility.buildActionIcon(
+                  assetPath: 'assets/logout.png',
                   label: "Logout",
                   onTap: () => _logout(context),
                 ),

@@ -12,7 +12,7 @@ import 'base_repository.dart';
 
 class DisplayService extends BaseRepository {
   DisplayService(BuildContext context) : super(context);
-// Saves a new display with the given media file and display name
+
   Future<String?> saveDisplay(SaveDisplay saveDisplay) async {
     try {
       // Print field values before sending the request
@@ -42,15 +42,7 @@ class DisplayService extends BaseRepository {
 
       // Convert the streamed response to a regular response using http.Response.fromStream
       final response = await http.Response.fromStream(streamedResponse);
-      String data = extractDataFromResponseBody(response);
-
-      if (response.statusCode == 200) {
-        // Assuming the response body contains the displayId directly
-        return data;
-      } else {
-        handleError(response);
-        return null;
-      }
+      return extractDataFromResponseBody(response);
     } catch (e) {
       print('Error saving display: $e');
       return null;

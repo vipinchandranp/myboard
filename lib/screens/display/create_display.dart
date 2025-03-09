@@ -188,14 +188,7 @@ class _CreateDisplayWidgetState extends State<CreateDisplayWidget> {
         files: _mediaFiles,
       );
 
-      var response = await DisplayService(context).saveDisplay(saveDisplay);
-      if (response != null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(response)));
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Failed to save display.')));
-      }
+     DisplayService(context).saveDisplay(saveDisplay);
     } catch (e) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error saving display: $e')));

@@ -34,7 +34,7 @@ class Utility {
         children: [
           CircleAvatar(
             radius: 30,
-            backgroundColor: Colors.yellowAccent.shade100,
+            backgroundColor: Colors.white,
             child: Image.asset(
               assetPath,
               width: 50,
